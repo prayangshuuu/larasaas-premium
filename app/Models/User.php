@@ -15,7 +15,7 @@ class User extends Authenticatable
     /**
      * The attributes that are mass assignable.
      *
-     * @var list<string>
+     * @var array<int, string>
      */
     protected $fillable = [
         'name',
@@ -23,12 +23,13 @@ class User extends Authenticatable
         'email',
         'password',
         'profile_picture',
+        'role',
     ];
 
     /**
      * The attributes that should be hidden for serialization.
      *
-     * @var list<string>
+     * @var array<int, string>
      */
     protected $hidden = [
         'password',
@@ -51,12 +52,12 @@ class User extends Authenticatable
     }
 
     /**
-     * Accessor: Full URL for profile picture, or default if none uploaded.
+     * Helper function to check if the user has the 'admin' role.
+     *
+     * @return bool
      */
-    public function getProfilePictureUrlAttribute(): string
+    public function isAdmin(): bool
     {
-        return $this->profile_picture
-            ? asset('storage/' . $this->profile_picture)
-            : asset('images/default-avatar.png'); // fallback avatar
+        return $this->role === 'admin';
     }
 }

@@ -10,12 +10,28 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // Demo user
-        User::create([
-            'name' => 'Prayangshu',
-            'username' => 'prayangshu',
-            'email' => 'prayangshu073@gmail.com',
-            'password' => Hash::make('Test@321'),
-        ]);
+        // This will find the user by email or create them if they don't exist.
+        User::firstOrCreate(
+            ['email' => 'prayangshu073@gmail.com'],
+            [
+                'name' => 'Prayangshu',
+                'username' => 'prayangshu',
+                'password' => Hash::make('Test@321'),
+                'role' => 'user',
+                'email_verified_at' => now(),
+            ]
+        );
+
+        // Does the same for the admin user.
+        User::firstOrCreate(
+            ['email' => 'prayangshuuu@gmail.com'],
+            [
+                'name' => 'Admin',
+                'username' => 'admin_prayangshu',
+                'password' => Hash::make('Test@321'),
+                'role' => 'admin',
+                'email_verified_at' => now(),
+            ]
+        );
     }
 }
