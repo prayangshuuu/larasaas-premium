@@ -1,147 +1,227 @@
 <section>
-    {{-- Main card with modern styling --}}
-    <div class="p-4 sm:p-8 bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg">
-        <div class="max-w-xl">
-            <header>
-                <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
-                    {{ __('Profile Information') }}
-                </h2>
-                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                    {{ __("Update your account's profile information, picture, email address, and 2FA settings.") }}
-                </p>
+    <div class="card bg-base-100 border border-base-300 shadow-md rounded-2xl">
+        <div class="card-body p-6 sm:p-8">
+            @php
+                $emailVerified = !($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail) || $user->hasVerifiedEmail();
+                $twofaEnabled  = (bool) auth()->user()->two_factor_secret;
+
+                $progress = 0;
+                if (!empty($user->name)) $progress += 33;
+                if ($emailVerified)       $progress += 33;
+                if (!empty($user->profile_picture)) $progress += 34;
+            @endphp
+
+            {{-- HEADER: left (title+desc+status), right (radial + all set) --}}
+            <header class="grid grid-cols-1 sm:grid-cols-[1fr_auto] items-center gap-4">
+                <div>
+                    <h2 class="card-title text-base-content text-lg">
+                        {{ __('Profile Information') }}
+                    </h2>
+                    <p class="mt-1 text-sm text-base-content/70">
+                        {{ __("Update your account's profile information, picture, email address, and 2FA settings.") }}
+                    </p>
+                    <p class="mt-1 text-sm text-base-content/80">
+                        {{ $emailVerified ? __('Email verified') : __('Email unverified') }},
+                        {{ $twofaEnabled ? __('2FA enabled') : __('2FA disabled') }}
+                    </p>
+                </div>
+
+                {{-- Right side: exact middle, larger circle, All set below --}}
+                <div class="hidden sm:flex flex-col items-center justify-center gap-2 self-stretch">
+                    <div class="tooltip tooltip-left" data-tip="{{ __('Profile completeness') }}">
+                        <div class="radial-progress text-primary"
+                             style="--value: {{ $progress }}; --size: 7rem; --thickness: 8px"
+                             role="progressbar">
+                            <span class="text-sm font-semibold">{{ $progress }}%</span>
+                        </div>
+                    </div>
+                    @if($progress === 100)
+                        <span class="badge badge-success badge-lg gap-2 px-4">
+                            {{-- check-circle --}}
+                            <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                 viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            {{ __('All set') }}
+                        </span>
+                    @endif
+                </div>
             </header>
 
-            <div class="mt-6 space-y-4">
+            <div class="divider my-4"></div>
 
-                {{-- Profile Picture Form --}}
-                <form method="post" action="{{ route('profile.update') }}" enctype="multipart/form-data" class="p-4 border-b dark:border-gray-700 flex justify-between items-center">
-                    @csrf
-                    @method('patch')
+            {{-- Profile Picture (right aligned, click to change, autosave) --}}
+            <form method="post" action="{{ route('profile.update') }}" enctype="multipart/form-data"
+                  class="grid grid-cols-1 sm:grid-cols-3 items-center gap-4">
+                @csrf
+                @method('patch')
 
-                    <div class="w-1/3">
-                        <h3 class="font-medium text-gray-900 dark:text-gray-100">{{ __('Profile Picture') }}</h3>
-                    </div>
+                <label class="text-sm font-medium text-base-content">{{ __('Profile Picture') }}</label>
 
-                    <div class="w-1/3 flex justify-center">
-                        {{-- This is the line that styles your image. --}}
-                        {{-- The 'object-cover' class makes the image fill the circular space without distortion. This is the correct class to use. --}}
-                        <img class="h-20 w-20 rounded-full object-cover" src="{{ $user->profile_picture ? Storage::url($user->profile_picture) : asset('images/default-avatar.png') }}" alt="{{ $user->name }}">
-                    </div>
+                <div class="hidden sm:block"></div>
 
-                    <div class="w-1/3 text-right">
-                        <label for="profile_picture" class="cursor-pointer inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-500 rounded-md font-semibold text-xs text-gray-700 dark:text-gray-300 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 disabled:opacity-25 transition ease-in-out duration-150">
-                            {{ __('Update') }}
+                <div class="flex justify-end">
+                    <div class="relative group">
+                        <input id="profile_picture" name="profile_picture" type="file"
+                               class="sr-only" accept="image/png,image/jpeg"
+                               onchange="this.form.submit()">
+
+                        <div class="avatar">
+                            <div class="w-24 h-24 mask mask-circle ring ring-primary ring-offset-base-100 ring-offset-2">
+                                <img class="object-cover"
+                                     src="{{ $user->profile_picture ? Storage::url($user->profile_picture) : asset('images/default-avatar.png') }}"
+                                     alt="{{ $user->name }}">
+                            </div>
+                        </div>
+
+                        <label for="profile_picture"
+                               class="absolute inset-0 grid place-items-center rounded-full
+                                      bg-base-100/70 opacity-0 group-hover:opacity-100
+                                      transition cursor-pointer text-sm font-medium">
+                            {{ __('Change') }}
                         </label>
-                        <input id="profile_picture" name="profile_picture" type="file" class="hidden" onchange="this.form.submit()">
-                        <x-input-error class="mt-2 text-left" :messages="$errors->get('profile_picture')" />
-                    </div>
-                </form>
-
-                {{-- Other form sections below... --}}
-                <div class="p-4 border-b dark:border-gray-700 flex justify-between items-center">
-                    <div class="w-2/3">
-                        <h3 class="font-medium text-gray-900 dark:text-gray-100">{{ __('Two-Factor Authentication (2FA)') }}</h3>
-                        @if (auth()->user()->two_factor_secret)
-                            <p class="mt-1 text-xs text-green-500">{{ __('2FA is currently ENABLED.') }}</p>
-                        @else
-                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ __('2FA is currently DISABLED.') }}</p>
-                        @endif
-                    </div>
-                    <div class="w-1/3 text-right">
-                        @if (auth()->user()->two_factor_secret)
-                            <form method="POST" action="{{ url('/user/two-factor-authentication') }}">
-                                @csrf
-                                @method('DELETE')
-                                <x-secondary-button type="submit">{{ __('Disable 2FA') }}</x-secondary-button>
-                            </form>
-                        @else
-                            <form method="POST" action="{{ url('/user/two-factor-authentication') }}">
-                                @csrf
-                                <x-primary-button type="submit">{{ __('Enable 2FA') }}</x-primary-button>
-                            </form>
-                        @endif
+                        @error('profile_picture') <p class="text-error text-sm mt-2">{{ $message }}</p> @enderror
                     </div>
                 </div>
+            </form>
 
-                <div class="p-4 border-b dark:border-gray-700 flex justify-between items-center">
-                    <div class="w-1/3">
-                        <h3 class="font-medium text-gray-900 dark:text-gray-100">{{ __('Username') }}</h3>
-                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ __('Your username cannot be changed.') }}</p>
-                    </div>
-                    <div class="w-2/3 text-left pl-4">
-                        <span class="text-gray-700 dark:text-gray-300">{{ $user->username }}</span>
-                    </div>
+            <div class="divider my-6"></div>
+
+            {{-- Icon – Label – Field (single-line rows, uniform sizes) --}}
+            <form method="post" action="{{ route('profile.update') }}" class="space-y-4">
+                @csrf
+                @method('patch')
+
+                {{-- Name --}}
+                <div class="flex items-center gap-3">
+                    <span class="btn btn-ghost btn-square pointer-events-none" aria-hidden="true">
+                        {{-- user icon --}}
+                        <svg class="w-5 h-5 opacity-80" xmlns="http://www.w3.org/2000/svg" fill="none"
+                             viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M15.75 7.5a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 19.5a7.5 7.5 0 0115 0v.75H4.5v-.75z"/>
+                        </svg>
+                    </span>
+                    <label for="name" class="w-36 shrink-0 text-sm font-medium text-base-content">
+                        {{ __('Name') }}
+                    </label>
+                    <input id="name" name="name" type="text"
+                           class="input input-bordered h-12 w-full"
+                           value="{{ old('name', $user->name) }}" required autocomplete="name" />
+                </div>
+                @error('name') <p class="text-error text-sm">{{ $message }}</p> @enderror
+
+                {{-- Email --}}
+                <div class="flex items-center gap-3">
+                    <span class="btn btn-ghost btn-square pointer-events-none" aria-hidden="true">
+                        {{-- envelope icon --}}
+                        <svg class="w-5 h-5 opacity-80" xmlns="http://www.w3.org/2000/svg" fill="none"
+                             viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25H4.5a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5H4.5A2.25 2.25 0 002.25 6.75m19.5 0L12 12.75 2.25 6.75" />
+                        </svg>
+                    </span>
+                    <label for="email" class="w-36 shrink-0 text-sm font-medium text-base-content">
+                        {{ __('Email') }}
+                    </label>
+                    <input id="email" name="email" type="email"
+                           class="input input-bordered h-12 w-full"
+                           value="{{ old('email', $user->email) }}" required autocomplete="username" />
+                </div>
+                @error('email') <p class="text-error text-sm">{{ $message }}</p> @enderror
+
+                {{-- Username (read-only) --}}
+                <div class="flex items-center gap-3">
+                    <span class="btn btn-ghost btn-square pointer-events-none" aria-hidden="true">
+                        {{-- at-symbol icon --}}
+                        <svg class="w-5 h-5 opacity-80" xmlns="http://www.w3.org/2000/svg" fill="none"
+                             viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M16.5 12a4.5 4.5 0 11-2.64-4.11m2.64 4.11v1.5a1.5 1.5 0 003 0V12a7.5 7.5 0 10-2.2 5.3" />
+                        </svg>
+                    </span>
+                    <span class="w-36 shrink-0 text-sm font-medium text-base-content">
+                        {{ __('Username') }}
+                    </span>
+                    <input type="text" class="input input-bordered h-12 w-full"
+                           value="{{ $user->username }}" disabled />
                 </div>
 
-                <div x-data="{ editing: {{ $errors->has('name') ? 'true' : 'false' }} }" class="p-4 border-b dark:border-gray-700 flex justify-between items-center">
-                    <h3 class="w-1/3 font-medium text-gray-900 dark:text-gray-100">{{ __('Name') }}</h3>
-                    <div class="w-2/3">
-                        <form method="post" action="{{ route('profile.update') }}" class="flex justify-between items-center">
-                            @csrf
-                            @method('patch')
-                            <div class="flex-grow">
-                                <span x-show="!editing" class="text-gray-700 dark:text-gray-300">{{ $user->name }}</span>
-                                <div x-show="editing" x-cloak>
-                                    <x-text-input id="name" name="name" type="text" class="block w-full" :value="old('name', $user->name)" required autofocus autocomplete="name" />
-                                    <x-input-error class="mt-2" :messages="$errors->get('name')" />
-                                </div>
-                            </div>
-                            <div class="ml-4 flex-shrink-0">
-                                <button type="button" x-show="!editing" @click="editing = true" class="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-500 rounded-md font-semibold text-xs text-gray-700 dark:text-gray-300 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700">
-                                    {{ __('Update') }}
-                                </button>
-                                <div x-show="editing" x-cloak class="flex items-center gap-4">
-                                    <x-primary-button>{{ __('Save') }}</x-primary-button>
-                                    <button type="button" @click="editing = false" class="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100">{{ __('Cancel') }}</button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
+                <div class="card-actions justify-end pt-2">
+                    <button type="submit" class="btn btn-primary h-12 min-w-40">
+                        {{ __('Save changes') }}
+                    </button>
+                    @if (session('status') === 'profile-updated')
+                        <span class="badge badge-success badge-outline">{{ __('Saved') }}</span>
+                    @endif
                 </div>
+            </form>
 
-                <div x-data="{ editing: {{ $errors->has('email') ? 'true' : 'false' }} }" class="p-4 flex justify-between items-center">
-                    <h3 class="w-1/3 font-medium text-gray-900 dark:text-gray-100">{{ __('Email') }}</h3>
-                    <div class="w-2/3">
-                        <form method="post" action="{{ route('profile.update') }}" class="flex justify-between items-center">
-                            @csrf
-                            @method('patch')
-                            <div class="flex-grow">
-                                <span x-show="!editing" class="text-gray-700 dark:text-gray-300">{{ $user->email }}</span>
-                                <div x-show="editing" x-cloak>
-                                    <x-text-input id="email" name="email" type="email" class="block w-full" :value="old('email', $user->email)" required autocomplete="username" />
-                                    <x-input-error class="mt-2" :messages="$errors->get('email')" />
-                                </div>
-                            </div>
-                            <div class="ml-4 flex-shrink-0">
-                                <button type="button" x-show="!editing" @click="editing = true" class="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-500 rounded-md font-semibold text-xs text-gray-700 dark:text-gray-300 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700">
-                                    {{ __('Update') }}
-                                </button>
-                                <div x-show="editing" x-cloak class="flex items-center gap-4">
-                                    <x-primary-button>{{ __('Save') }}</x-primary-button>
-                                    <button type="button" @click="editing = false" class="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100">{{ __('Cancel') }}</button>
-                                </div>
-                            </div>
-                        </form>
+            {{-- Email verification notices --}}
+            @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
+                <div class="alert alert-warning mt-6">
+                    <div class="flex items-center gap-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 shrink-0" fill="none"
+                             viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M12 9v2m0 4h.01M4.93 19.07A10 10 0 1119.07 4.93 10 10 0 014.93 19.07z"/>
+                        </svg>
+                        <span>{{ __('Your email address is unverified.') }}</span>
                     </div>
+                    <form id="send-verification" method="post" action="{{ route('verification.send') }}" class="inline-block ml-2">
+                        @csrf
+                        <button class="btn btn-sm btn-outline btn-primary">
+                            {{ __('Resend verification email') }}
+                        </button>
+                    </form>
                 </div>
-
-                {{-- Email Verification Notice --}}
-                @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
-                    <div class="p-4 -mt-4">
-                        <form id="send-verification" method="post" action="{{ route('verification.send') }}" class="hidden"> @csrf </form>
-                        <p class="text-sm text-gray-800 dark:text-gray-200">
-                            {{ __('Your email address is unverified.') }}
-                            <button form="send-verification" class="underline text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800">
-                                {{ __('Click here to re-send the verification email.') }}
-                            </button>
-                        </p>
-                        @if (session('status') === 'verification-link-sent')
-                            <p class="mt-2 font-medium text-sm text-green-600 dark:text-green-400">
-                                {{ __('A new verification link has been sent to your email address.') }}
-                            </p>
-                        @endif
+                @if (session('status') === 'verification-link-sent')
+                    <div class="alert alert-success mt-3">
+                        <span>{{ __('A new verification link has been sent to your email address.') }}</span>
                     </div>
                 @endif
+            @endif
+
+            <div class="divider my-6"></div>
+
+            {{-- Two-Factor Authentication --}}
+            <div class="grid grid-cols-1 sm:grid-cols-3 items-start gap-4">
+                <div class="sm:col-span-2">
+                    <h3 class="font-medium text-base-content flex items-center gap-2">
+                        {{-- shield icon --}}
+                        <svg class="w-5 h-5 opacity-80" xmlns="http://www.w3.org/2000/svg" fill="none"
+                             viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M12 6.253l7.5 4.327v5.62A2.75 2.75 0 0116.75 19H7.25A2.75 2.75 0 014.5 16.2v-5.62L12 6.253z"/>
+                        </svg>
+                        {{ __('Two-Factor Authentication (2FA)') }}
+                        <span class="badge {{ $twofaEnabled ? 'badge-primary' : 'badge-ghost' }} ml-2">
+                            {{ $twofaEnabled ? __('Enabled') : __('Disabled') }}
+                        </span>
+                    </h3>
+                    <p class="mt-1 text-xs text-base-content/70">
+                        {{ __('Use an authenticator app (TOTP) for stronger security.') }}
+                    </p>
+                </div>
+                <div class="sm:text-right">
+                    @if ($twofaEnabled)
+                        <form method="POST" action="{{ url('/user/two-factor-authentication') }}" class="inline-flex">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-outline btn-error">
+                                {{ __('Disable 2FA') }}
+                            </button>
+                        </form>
+                    @else
+                        <form method="POST" action="{{ url('/user/two-factor-authentication') }}" class="inline-flex">
+                            @csrf
+                            <button type="submit" class="btn btn-outline btn-primary">
+                                {{ __('Enable 2FA') }}
+                            </button>
+                        </form>
+                    @endif
+                </div>
             </div>
         </div>
     </div>

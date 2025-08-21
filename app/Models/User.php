@@ -12,25 +12,16 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable, TwoFactorAuthenticatable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
         'name',
         'username',
         'email',
+        'role',          // legacy support
         'password',
         'profile_picture',
-        'role',
+        'is_admin',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
@@ -38,26 +29,33 @@ class User extends Authenticatable
         'two_factor_secret',
     ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
             'email_verified_at' => 'datetime',
-            'password' => 'hashed',
+            'is_admin'          => 'boolean',
+            'password'          => 'hashed',
         ];
     }
 
     /**
-     * Helper function to check if the user has the 'admin' role.
-     *
-     * @return bool
+     * Prefer boolean column, fall back to legacy role.
      */
     public function isAdmin(): bool
     {
-        return $this->role === 'admin';
+        if (!is_null($this->is_admin)) {
+            return (bool) $this->is_admin;
+        }
+        return isset($this->role) && $this->role === 'admin';
+    }
+
+    /**
+     * Optional helper for queries (supports both schemas).
+     */
+    public function scopeAdmins($query)
+    {
+        return $query->where(function ($q) {
+            $q->where('is_admin', true)->orWhere('role', 'admin');
+        });
     }
 }

@@ -2,8 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
@@ -13,15 +11,15 @@ class DashboardController extends Controller
      */
     public function index()
     {
-        // Check if the authenticated user is an admin
-        if (Auth::user()->isAdmin()) {
-            // If yes, get the count of all users
-            $userCount = User::count();
-            // and return the admin dashboard view with the user count
-            return view('admindashboard', ['userCount' => $userCount]);
+        // Routes already use 'auth' middleware; this ensures safety if called elsewhere
+        $user = Auth::user();
+
+        // Admins go to the dedicated admin dashboard (protected by gate/middleware)
+        if ($user && method_exists($user, 'isAdmin') && $user->isAdmin()) {
+            return redirect()->route('admin.dashboard');
         }
 
-        // If not an admin, return the default user dashboard
+        // Non-admins see the regular user dashboard
         return view('dashboard');
     }
 }

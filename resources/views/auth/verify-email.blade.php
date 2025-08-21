@@ -1,31 +1,46 @@
-<x-guest-layout>
-    <div class="mb-4 text-sm text-gray-600 dark:text-gray-400">
-        {{ __('Thanks for signing up! Before getting started, could you verify your email address by clicking on the link we just emailed to you? If you didn\'t receive the email, we will gladly send you another.') }}
+{{-- resources/views/auth/verify-email.blade.php --}}
+@extends('layouts.guest')
+
+@section('content')
+    {{-- Header: logo centered inside a circle (same as login/register) --}}
+    <div class="flex flex-col items-center text-center space-y-3 mb-6">
+        <div class="w-16 h-16 rounded-full bg-base-200 ring-2 ring-primary ring-offset-2 ring-offset-base-100 flex items-center justify-center">
+            <x-application-logo class="h-9 w-9 text-primary" />
+        </div>
+        <h1 class="text-lg font-semibold text-base-content">Verify your email</h1>
+        <p class="text-sm text-base-content/70">
+            We’ve sent a verification link to your email. Click the link to finish setting up your account.
+            If you didn’t receive it, you can request another one below.
+        </p>
     </div>
 
-    @if (session('status') == 'verification-link-sent')
-        <div class="mb-4 font-medium text-sm text-green-600 dark:text-green-400">
-            {{ __('A new verification link has been sent to the email address you provided during registration.') }}
+    {{-- Success notice when a new link was sent --}}
+    @if (session('status') === 'verification-link-sent')
+        <div class="alert alert-success mb-5">
+            <span>A new verification link has been sent to the email address you provided during registration.</span>
         </div>
     @endif
 
-    <div class="mt-4 flex items-center justify-between">
-        <form method="POST" action="{{ route('verification.send') }}">
-            @csrf
+    {{-- Resend verification link --}}
+    <form method="POST" action="{{ route('verification.send') }}" class="space-y-5">
+        @csrf
 
-            <div>
-                <x-primary-button>
-                    {{ __('Resend Verification Email') }}
-                </x-primary-button>
-            </div>
-        </form>
+        <button type="submit" class="btn btn-primary w-full h-11 rounded-xl font-semibold">
+            Resend Verification Email
+        </button>
 
-        <form method="POST" action="{{ route('logout') }}">
-            @csrf
+        {{-- Secondary actions: consistent fonts & spacing --}}
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <a href="{{ route('profile.edit') }}" class="btn btn-outline w-full h-11 rounded-xl font-semibold">
+                Edit Profile
+            </a>
 
-            <button type="submit" class="underline text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800">
-                {{ __('Log Out') }}
-            </button>
-        </form>
-    </div>
-</x-guest-layout>
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <button type="submit" class="btn btn-ghost w-full h-11 rounded-xl font-semibold border border-base-300">
+                    Log Out
+                </button>
+            </form>
+        </div>
+    </form>
+@endsection
