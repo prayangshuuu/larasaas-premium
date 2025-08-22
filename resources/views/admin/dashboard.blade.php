@@ -8,13 +8,18 @@
         <div class="flex items-center justify-between">
             <div>
                 <h1 class="text-2xl font-semibold text-base-content">Admin Dashboard</h1>
-                <p class="text-sm text-base-content/70">
-                    Overview & controls for administrators.
-                </p>
+                <p class="text-sm text-base-content/70">Overview &amp; controls for administrators.</p>
+            </div>
+            <div class="flex gap-2">
+                <a href="{{ route('admin.users.index') }}" class="btn btn-primary rounded-xl">Manage Users</a>
+                <a href="{{ route('admin.audit.index') }}" class="btn btn-outline rounded-xl">Audit Log</a>
+                @if (Route::has('admin.settings.index'))
+                    <a href="{{ route('admin.settings.index') }}" class="btn btn-secondary rounded-xl">System Settings</a>
+                @endif
             </div>
         </div>
 
-        {{-- Overview card (stats + theme + quick state) --}}
+        {{-- Overview card (stats + theme + quick links) --}}
         <div class="card bg-base-100 border border-base-300 shadow-md rounded-2xl">
             <div class="card-body p-6 sm:p-8">
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -50,20 +55,12 @@
 
                     {{-- Quick actions --}}
                     <div class="grid grid-cols-1 gap-3">
-                        <a href="{{ route('profile.edit') }}" class="btn btn-ghost rounded-xl border border-base-300 h-11">
-                            My Account
-                        </a>
-                        {{-- Add your real admin routes here when available --}}
-                        <a href="#" class="btn btn-primary rounded-xl h-11">Admin Action</a>
-                        <form method="POST" action="{{ route('logout') }}">
-                            @csrf
-                            <button type="submit"
-                                    class="btn rounded-xl h-11 w-full
-                                       bg-neutral text-neutral-content hover:opacity-95
-                                       dark:bg-neutral-content dark:text-neutral dark:border-base-300">
-                                Log Out
-                            </button>
-                        </form>
+                        <a href="{{ route('admin.users.create') }}" class="btn btn-primary rounded-xl h-11">Create Admin/User</a>
+                        <a href="{{ route('admin.users.index') }}" class="btn btn-ghost rounded-xl border border-base-300 h-11">User Directory</a>
+                        <a href="{{ route('admin.audit.index') }}" class="btn btn-outline rounded-xl h-11">View Audit Log</a>
+                        @if (Route::has('admin.settings.index'))
+                            <a href="{{ route('admin.settings.index') }}" class="btn btn-secondary rounded-xl h-11">System Settings</a>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -74,6 +71,7 @@
             <div class="card-body p-6 sm:p-8">
                 <div class="flex items-center justify-between">
                     <h2 class="card-title text-base-content text-lg">Recent Users</h2>
+                    <a href="{{ route('admin.users.index') }}" class="btn btn-sm btn-outline rounded-xl">View all</a>
                 </div>
 
                 <div class="overflow-x-auto mt-4">

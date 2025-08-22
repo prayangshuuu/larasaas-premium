@@ -18,8 +18,31 @@
 </head>
 <body class="bg-base-100 text-base-content font-sans antialiased">
 <div class="min-h-screen">
-    {{-- Top navigation (uses DaisyUI + global theme toggle) --}}
+    {{-- Top navigation (DaisyUI + global theme toggle via window.toggleTheme) --}}
     @include('layouts.navigation')
+
+    {{-- Impersonation banner (feature-flagged) --}}
+    @if (config('features.impersonation', false) && session('impersonating'))
+        <div class="bg-warning/15 border-b border-warning/30">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+                <div class="alert bg-warning/10 text-warning-content rounded-xl border border-warning/30">
+                    <span class="font-semibold">
+                        {{ __('You are impersonating') }}
+                        <span class="underline underline-offset-4">
+                            {{ \Illuminate\Support\Facades\Auth::user()->name ?? __('this user') }}
+                        </span>
+                    </span>
+                    <div class="flex-1"></div>
+                    <form method="POST" action="{{ route('admin.impersonate.stop') }}">
+                        @csrf
+                        <button type="submit" class="btn btn-sm btn-warning">
+                            {{ __('Stop impersonation') }}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endif
 
     {{-- Optional page header (DaisyUI-styled) --}}
     @isset($header)

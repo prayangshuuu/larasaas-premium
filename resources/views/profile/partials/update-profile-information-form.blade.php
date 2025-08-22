@@ -2,16 +2,21 @@
     <div class="card bg-base-100 border border-base-300 shadow-md rounded-2xl">
         <div class="card-body p-6 sm:p-8">
             @php
+                /** @var \App\Models\User $user */
                 $emailVerified = !($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail) || $user->hasVerifiedEmail();
                 $twofaEnabled  = (bool) auth()->user()->two_factor_secret;
 
                 $progress = 0;
-                if (!empty($user->name)) $progress += 33;
-                if ($emailVerified)       $progress += 33;
-                if (!empty($user->profile_picture)) $progress += 34;
+                if (!empty($user->name))             $progress += 33;
+                if ($emailVerified)                   $progress += 33;
+                if (!empty($user->profile_picture))   $progress += 34;
+
+                // Username edit policy via settings (feature flag)
+                $settings          = \App\Models\Setting::instance();
+                $canEditUsername   = (bool) $settings->feature_usernames_editable;
             @endphp
 
-            {{-- HEADER: left (title+desc+status), right (radial + all set) --}}
+            {{-- HEADER: left (title+desc+status), right (radial + All set) --}}
             <header class="grid grid-cols-1 sm:grid-cols-[1fr_auto] items-center gap-4">
                 <div>
                     <h2 class="card-title text-base-content text-lg">
@@ -26,11 +31,11 @@
                     </p>
                 </div>
 
-                {{-- Right side: exact middle, larger circle, All set below --}}
+                {{-- Right side: centered column, larger circle, All set below --}}
                 <div class="hidden sm:flex flex-col items-center justify-center gap-2 self-stretch">
                     <div class="tooltip tooltip-left" data-tip="{{ __('Profile completeness') }}">
                         <div class="radial-progress text-primary"
-                             style="--value: {{ $progress }}; --size: 7rem; --thickness: 8px"
+                             style="--value: {{ $progress }}; --size: 8rem; --thickness: 8px"
                              role="progressbar">
                             <span class="text-sm font-semibold">{{ $progress }}%</span>
                         </div>
@@ -51,7 +56,7 @@
 
             <div class="divider my-4"></div>
 
-            {{-- Profile Picture (right aligned, click to change, autosave) --}}
+            {{-- Profile Picture (right aligned, click to change → auto-submit) --}}
             <form method="post" action="{{ route('profile.update') }}" enctype="multipart/form-data"
                   class="grid grid-cols-1 sm:grid-cols-3 items-center gap-4">
                 @csrf
@@ -131,7 +136,7 @@
                 </div>
                 @error('email') <p class="text-error text-sm">{{ $message }}</p> @enderror
 
-                {{-- Username (read-only) --}}
+                {{-- Username (editable only when feature flag is ON) --}}
                 <div class="flex items-center gap-3">
                     <span class="btn btn-ghost btn-square pointer-events-none" aria-hidden="true">
                         {{-- at-symbol icon --}}
@@ -141,11 +146,21 @@
                                   d="M16.5 12a4.5 4.5 0 11-2.64-4.11m2.64 4.11v1.5a1.5 1.5 0 003 0V12a7.5 7.5 0 10-2.2 5.3" />
                         </svg>
                     </span>
-                    <span class="w-36 shrink-0 text-sm font-medium text-base-content">
+                    <label for="username" class="w-36 shrink-0 text-sm font-medium text-base-content">
                         {{ __('Username') }}
-                    </span>
-                    <input type="text" class="input input-bordered h-12 w-full"
-                           value="{{ $user->username }}" disabled />
+                    </label>
+
+                    @if($canEditUsername)
+                        <input id="username" name="username" type="text"
+                               class="input input-bordered h-12 w-full"
+                               value="{{ old('username', $user->username) }}" autocomplete="username" />
+                        @error('username') <p class="text-error text-sm">{{ $message }}</p> @enderror
+                    @else
+                        {{-- keep layout consistent; disabled and no name attribute --}}
+                        <input id="username" type="text"
+                               class="input input-bordered h-12 w-full"
+                               value="{{ $user->username }}" disabled />
+                    @endif
                 </div>
 
                 <div class="card-actions justify-end pt-2">
