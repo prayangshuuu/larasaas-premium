@@ -1,21 +1,48 @@
+{{-- resources/views/profile/partials/update-profile-information-form.blade.php --}}
 <section>
+    @php
+        /** @var \App\Models\User $user */
+        $emailVerified = !($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail) || $user->hasVerifiedEmail();
+        $twofaEnabled  = (bool) auth()->user()->two_factor_secret;
+
+        // Detect "confirmed" state (Fortify supports a confirmed timestamp)
+        $twofaConfirmed = false;
+        if (method_exists($user, 'hasConfirmedTwoFactor')) {
+            $twofaConfirmed = $user->hasConfirmedTwoFactor();
+        } else {
+            $twofaConfirmed = !empty($user->two_factor_confirmed_at);
+        }
+
+        $progress = 0;
+        if (!empty($user->name))           $progress += 33;
+        if ($emailVerified)                 $progress += 33;
+        if (!empty($user->profile_picture)) $progress += 34;
+
+        // Username edit policy via settings (feature flag)
+        $settings        = \App\Models\Setting::instance();
+        $canEditUsername = (bool) $settings->feature_usernames_editable;
+
+        // Fortify sets this when 2FA just got enabled; use it to auto-open the modal
+        $showTwoFactorSetup = session('status') === 'two-factor-authentication-enabled';
+    @endphp
+
+    {{-- Auto-open the 2FA setup modal after enabling --}}
+    @includeIf('profile.partials.two-factor-setup-modal', ['show' => $showTwoFactorSetup])
+
+    {{-- Success/Info toasts for key 2FA events --}}
+    @if (session('status') === 'two-factor-authentication-confirmed')
+        <div class="alert alert-success rounded-2xl mb-4">
+            <span>{{ __('Two-factor authentication confirmed.') }}</span>
+        </div>
+    @endif
+    @if (session('status') === 'recovery-codes-generated')
+        <div class="alert alert-success rounded-2xl mb-4">
+            <span>{{ __('New recovery codes generated.') }}</span>
+        </div>
+    @endif
+
     <div class="card bg-base-100 border border-base-300 shadow-md rounded-2xl">
         <div class="card-body p-6 sm:p-8">
-            @php
-                /** @var \App\Models\User $user */
-                $emailVerified = !($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail) || $user->hasVerifiedEmail();
-                $twofaEnabled  = (bool) auth()->user()->two_factor_secret;
-
-                $progress = 0;
-                if (!empty($user->name))             $progress += 33;
-                if ($emailVerified)                   $progress += 33;
-                if (!empty($user->profile_picture))   $progress += 34;
-
-                // Username edit policy via settings (feature flag)
-                $settings          = \App\Models\Setting::instance();
-                $canEditUsername   = (bool) $settings->feature_usernames_editable;
-            @endphp
-
             {{-- HEADER: left (title+desc+status), right (radial + All set) --}}
             <header class="grid grid-cols-1 sm:grid-cols-[1fr_auto] items-center gap-4">
                 <div>
@@ -27,7 +54,11 @@
                     </p>
                     <p class="mt-1 text-sm text-base-content/80">
                         {{ $emailVerified ? __('Email verified') : __('Email unverified') }},
-                        {{ $twofaEnabled ? __('2FA enabled') : __('2FA disabled') }}
+                        @if ($twofaEnabled)
+                            {{ $twofaConfirmed ? __('2FA confirmed') : __('2FA pending confirmation') }}
+                        @else
+                            {{ __('2FA disabled') }}
+                        @endif
                     </p>
                 </div>
 
@@ -42,7 +73,6 @@
                     </div>
                     @if($progress === 100)
                         <span class="badge badge-success badge-lg gap-2 px-4">
-                            {{-- check-circle --}}
                             <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none"
                                  viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -69,13 +99,15 @@
                 <div class="flex justify-end">
                     <div class="relative group">
                         <input id="profile_picture" name="profile_picture" type="file"
-                               class="sr-only" accept="image/png,image/jpeg"
+                               class="sr-only" accept="image/png,image/jpeg,image/webp"
                                onchange="this.form.submit()">
 
                         <div class="avatar">
                             <div class="w-24 h-24 mask mask-circle ring ring-primary ring-offset-base-100 ring-offset-2">
                                 <img class="object-cover"
-                                     src="{{ $user->profile_picture ? Storage::url($user->profile_picture) : asset('images/default-avatar.png') }}"
+                                     src="{{ $user->profile_picture
+                                            ? \Illuminate\Support\Facades\Storage::url($user->profile_picture)
+                                            : asset('images/default-avatar.png') }}"
                                      alt="{{ $user->name }}">
                             </div>
                         </div>
@@ -132,7 +164,7 @@
                     </label>
                     <input id="email" name="email" type="email"
                            class="input input-bordered h-12 w-full"
-                           value="{{ old('email', $user->email) }}" required autocomplete="username" />
+                           value="{{ old('email', $user->email) }}" required autocomplete="email" />
                 </div>
                 @error('email') <p class="text-error text-sm">{{ $message }}</p> @enderror
 
@@ -211,33 +243,85 @@
                                   d="M12 6.253l7.5 4.327v5.62A2.75 2.75 0 0116.75 19H7.25A2.75 2.75 0 014.5 16.2v-5.62L12 6.253z"/>
                         </svg>
                         {{ __('Two-Factor Authentication (2FA)') }}
-                        <span class="badge {{ $twofaEnabled ? 'badge-primary' : 'badge-ghost' }} ml-2">
-                            {{ $twofaEnabled ? __('Enabled') : __('Disabled') }}
+                        <span class="badge {{ $twofaEnabled ? ($twofaConfirmed ? 'badge-primary' : 'badge-warning') : 'badge-ghost' }} ml-2">
+                            {{ $twofaEnabled ? ($twofaConfirmed ? __('Confirmed') : __('Pending')) : __('Disabled') }}
                         </span>
                     </h3>
                     <p class="mt-1 text-xs text-base-content/70">
                         {{ __('Use an authenticator app (TOTP) for stronger security.') }}
                     </p>
                 </div>
-                <div class="sm:text-right">
+
+                <div class="sm:text-right space-x-2 space-y-2 sm:space-y-0">
                     @if ($twofaEnabled)
                         <form method="POST" action="{{ url('/user/two-factor-authentication') }}" class="inline-flex">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="btn btn-outline btn-error">
+                            <button type="submit" class="btn btn-outline btn-error rounded-xl">
                                 {{ __('Disable 2FA') }}
                             </button>
                         </form>
                     @else
                         <form method="POST" action="{{ url('/user/two-factor-authentication') }}" class="inline-flex">
                             @csrf
-                            <button type="submit" class="btn btn-outline btn-primary">
+                            <button type="submit" class="btn btn-outline btn-primary rounded-xl">
                                 {{ __('Enable 2FA') }}
                             </button>
                         </form>
                     @endif
                 </div>
             </div>
+
+            {{-- If enabled but not confirmed, show inline confirm form as a backup --}}
+            @if ($twofaEnabled && ! $twofaConfirmed)
+                <div class="alert alert-info mt-4">
+                    <span>{{ __('Enter the 6-digit code from your authenticator app to finish setup.') }}</span>
+                </div>
+                <form method="POST" action="{{ url('/user/confirmed-two-factor-authentication') }}" class="mt-3">
+                    @csrf
+                    <div class="flex items-center gap-3">
+                        <label for="code" class="w-36 shrink-0 text-sm font-medium text-base-content">
+                            {{ __('Confirmation code') }}
+                        </label>
+                        <input id="code" name="code" inputmode="numeric" pattern="[0-9]*" maxlength="6"
+                               class="input input-bordered h-12 w-full sm:max-w-xs"
+                               placeholder="123456" required />
+                        <button type="submit" class="btn btn-primary h-12">
+                            {{ __('Confirm') }}
+                        </button>
+                    </div>
+                    @error('code') <p class="text-error text-sm mt-2">{{ $message }}</p> @enderror
+                </form>
+            @endif
+
+            {{-- Recovery code actions (available after enabling) --}}
+            @if ($twofaEnabled)
+                <div class="divider my-6"></div>
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div>
+                        <div class="font-medium text-base-content">{{ __('Recovery Codes') }}</div>
+                        <div class="text-sm text-base-content/70">
+                            {{ __('Keep these safe. You can view them (after password confirmation) or regenerate new ones.') }}
+                        </div>
+                    </div>
+
+                    <div class="space-x-2">
+                        <a href="{{ route('two-factor.codes.show') }}" class="btn btn-ghost rounded-xl border border-base-300">
+                            {{ __('Show Codes') }}
+                        </a>
+
+                        <form method="POST" action="{{ url('/user/two-factor-recovery-codes') }}"
+                              class="inline-flex"
+                              onsubmit="return confirm('{{ __('Regenerate recovery codes? Old codes will stop working.') }}');">
+                            @csrf
+                            <button type="submit" class="btn btn-outline btn-primary rounded-xl">
+                                {{ __('Regenerate') }}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            @endif
+
         </div>
     </div>
 </section>

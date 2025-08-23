@@ -13,20 +13,30 @@ use App\Http\Controllers\Admin\ImpersonationController;
 use App\Http\Controllers\Admin\SystemSettingsController;
 
 use App\Http\Controllers\ImpersonationCodeController;
+use App\Http\Controllers\TwoFactorRecoveryCodesController;
+use App\Http\Controllers\Auth\SocialiteController;
 
 /*
 |--------------------------------------------------------------------------
 | Public landing page
 |--------------------------------------------------------------------------
 */
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', fn () => view('welcome'));
+
+/*
+|--------------------------------------------------------------------------
+| Social Login (Google)
+| Requires: config/services.php 'google' + .env GOOGLE_* + SocialiteController
+|--------------------------------------------------------------------------
+*/
+Route::get('/auth/google/redirect', [SocialiteController::class, 'redirect'])
+    ->name('oauth.google.redirect');
+Route::get('/auth/google/callback', [SocialiteController::class, 'callback'])
+    ->name('oauth.google.callback');
 
 /*
 |--------------------------------------------------------------------------
 | User dashboard (non-admin)
-| DashboardController redirects admins to admin.dashboard.
 |--------------------------------------------------------------------------
 */
 Route::get('/dashboard', [DashboardController::class, 'index'])
@@ -44,10 +54,21 @@ Route::middleware(['auth', 'verified', 'not-banned'])->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // Persist theme choice
+    // Theme (toggle light/dark etc.)
     Route::post('/theme', [ThemeController::class, 'update'])->name('theme.update');
 
-    // User-generated “share access code” (for consented impersonation)
+    // 2FA recovery codes (guarded by recent password confirmation)
+    Route::get('/two-factor/recovery-codes', [TwoFactorRecoveryCodesController::class, 'show'])
+        ->middleware('password.confirm')
+        ->name('two-factor.codes.show');
+    Route::post('/two-factor/recovery-codes', [TwoFactorRecoveryCodesController::class, 'regenerate'])
+        ->middleware('password.confirm')
+        ->name('2fa.codes.regenerate');
+    Route::get('/two-factor/recovery-codes/download', [TwoFactorRecoveryCodesController::class, 'download'])
+        ->middleware('password.confirm')
+        ->name('2fa.codes.download');
+
+    // Admin requests user consent code for impersonation (per-user)
     Route::post('/impersonation-code',   [ImpersonationCodeController::class, 'store'])->name('impersonation.code.store');
     Route::delete('/impersonation-code', [ImpersonationCodeController::class, 'destroy'])->name('impersonation.code.destroy');
 });
@@ -58,12 +79,15 @@ Route::middleware(['auth', 'verified', 'not-banned'])->group(function () {
 | Requires: auth + verified + admin + not-banned + impersonation guard
 | Prefix: /admin   Names: admin.*
 |--------------------------------------------------------------------------
+|
+| Impersonation notes:
+| - Guard 'impersonation' blocks ALL admin.* while impersonating (read-only unless 'full'),
+|   except admin.impersonate.stop which is always allowed so you can exit.
 */
 Route::middleware(['auth', 'verified', 'admin', 'not-banned', 'impersonation'])
     ->prefix('admin')
     ->as('admin.')
     ->group(function () {
-
         // Default redirect
         Route::redirect('/', '/admin/dashboard');
 
@@ -74,20 +98,25 @@ Route::middleware(['auth', 'verified', 'admin', 'not-banned', 'impersonation'])
         |------------------------------------------------------------------
         | System Settings (App / SMTP / Features)
         |------------------------------------------------------------------
-        | Names aligned to Blade:
-        |   admin.settings.index
-        |   admin.settings.app.update
-        |   admin.settings.app.logo
-        |   admin.settings.smtp.update
-        |   admin.settings.features.update
         */
-        Route::prefix('settings')->as('settings.')->controller(SystemSettingsController::class)->group(function () {
-            Route::get('/',            'index')->name('index');                 // GET  /admin/settings
-            Route::post('/app',        'updateApp')->name('app.update');        // POST /admin/settings/app
-            Route::post('/app/logo',   'uploadLogo')->name('app.logo');         // POST /admin/settings/app/logo
-            Route::post('/smtp',       'updateSmtp')->name('smtp.update');      // POST /admin/settings/smtp
-            Route::post('/features',   'updateFeatures')->name('features.update'); // POST /admin/settings/features
-        });
+        Route::prefix('settings')
+            ->as('settings.')
+            ->controller(SystemSettingsController::class)
+            ->group(function () {
+                // Main page
+                Route::get('/', 'index')->name('index'); // GET /admin/settings
+
+                // Friendly GET fallbacks → index (prevents 405s if someone visits these URLs)
+                Route::get('/features', fn () => redirect()->route('admin.settings.index'))->name('features');
+                Route::get('/app',      fn () => redirect()->route('admin.settings.index'))->name('app');
+                Route::get('/smtp',     fn () => redirect()->route('admin.settings.index'))->name('smtp');
+
+                // Actual update endpoints (POST)
+                Route::post('/app',        'updateApp')->name('app.update');           // POST /admin/settings/app
+                Route::post('/app/logo',   'uploadLogo')->name('app.logo');            // POST /admin/settings/app/logo
+                Route::post('/smtp',       'updateSmtp')->name('smtp.update');         // POST /admin/settings/smtp
+                Route::post('/features',   'updateFeatures')->name('features.update'); // POST /admin/settings/features
+            });
 
         /*
         |------------------------------------------------------------------
@@ -126,19 +155,22 @@ Route::middleware(['auth', 'verified', 'admin', 'not-banned', 'impersonation'])
 
         /*
         |------------------------------------------------------------------
-        | Impersonation (feature-flagged; MFA here only)
+        | Impersonation
         |------------------------------------------------------------------
+        | START requires admin MFA and feature flag.
+        | STOP is always available so you can exit impersonation even if feature was turned off.
         */
-        if (config('features.impersonation', false)) {
-            Route::prefix('impersonate')
-                ->as('impersonate.')
-                ->controller(ImpersonationController::class)
-                ->middleware('admin.mfa')
-                ->group(function () {
-                    Route::post('/start/{user}', 'start')->name('start'); // begin impersonation
-                    Route::post('/stop',         'stop')->name('stop');   // end impersonation
-                });
-        }
+        Route::prefix('impersonate')
+            ->as('impersonate.')
+            ->controller(ImpersonationController::class)
+            ->group(function () {
+                Route::post('/start/{user}', 'start')
+                    ->middleware(['admin.mfa', 'feature:features.impersonation'])
+                    ->name('start');
+
+                Route::post('/stop', 'stop')
+                    ->name('stop'); // no 'feature' / 'admin.mfa' on purpose
+            });
     });
 
 /*
@@ -146,4 +178,4 @@ Route::middleware(['auth', 'verified', 'admin', 'not-banned', 'impersonation'])
 | Auth scaffolding
 |--------------------------------------------------------------------------
 */
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

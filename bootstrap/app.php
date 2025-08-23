@@ -11,17 +11,20 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // Register middleware ALIASES (route-scoped; not global)
+        // Route middleware aliases
         $middleware->alias([
             'admin'         => \App\Http\Middleware\AdminOnly::class,
             'not-banned'    => \App\Http\Middleware\EnsureUserIsNotBanned::class,
-            'admin.mfa'     => \App\Http\Middleware\EnsureAdminHasMfa::class,   // ← used only on impersonation routes
-            'impersonation' => \App\Http\Middleware\ImpersonationGuard::class,
+            'admin.mfa'     => \App\Http\Middleware\EnsureAdminHasMfa::class,   // used only on impersonation routes
+            'impersonation' => \App\Http\Middleware\ImpersonationGuard::class, // protects actions while impersonating
+            'feature'       => \App\Http\Middleware\FeatureEnabled::class,     // feature gate: feature:<setting.key>
         ]);
 
-        // IMPORTANT:
-        // Do NOT add 'admin.mfa' to any global stack. Keep it route-scoped:
-        // $middleware->appendToGroup('web', [\App\Http\Middleware\ImpersonationGuard::class]);
+        // Apply impersonation protections across ALL web routes (so non-admin pages are read-only too).
+        // Admin area is additionally protected by AdminOnly.
+        $middleware->appendToGroup('web', \App\Http\Middleware\ImpersonationGuard::class);
+
+        // (Keep other sensitive middleware route-scoped; don't globally add admin.mfa, etc.)
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Unauthenticated -> redirect to login for web, JSON for APIs
@@ -38,6 +41,17 @@ return Application::configure(basePath: dirname(__DIR__))
                 return response()->json(['message' => $e->getMessage() ?: 'Forbidden.'], 403);
             }
             abort(403, $e->getMessage() ?: 'This action is unauthorized.');
+        });
+
+        // Gracefully handle accidental GETs to POST-only settings endpoints
+        $exceptions->renderable(function (\Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException $e, $request) {
+            if ($request->is('admin/settings/features') ||
+                $request->is('admin/settings/app') ||
+                $request->is('admin/settings/app/logo') ||
+                $request->is('admin/settings/smtp')) {
+                return redirect()->route('admin.settings.index');
+            }
+            return null; // let the default handler run
         });
 
         // Model not found -> 404

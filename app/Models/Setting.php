@@ -10,24 +10,19 @@ class Setting extends Model
 {
     protected $table = 'settings';
 
-    // Allow both KV and column-based attributes for mass update safety
-    protected $fillable = [
-        'key', 'value',
-        'app_name', 'app_logo_path',
-        'smtp_host', 'smtp_port', 'smtp_username', 'smtp_password', 'smtp_encryption',
-        'smtp_from_address', 'smtp_from_name',
-        'feature_impersonation', 'feature_usernames_editable',
-        'security_require_admin_mfa_for_impersonation',
-    ];
+    // Keep mass-assignable minimal & schema-agnostic
+    protected $fillable = ['key', 'value'];
 
     /**
-     * Map friendly dot-keys -> column names when using "single row / many columns" schema.
-     * If you're on a key/value schema, this map is ignored.
+     * Dot-key → column mapping (only used if you actually have a column-based schema).
+     * Includes dual-logo keys; keeps legacy single-logo for backward compatibility.
      */
     private const MAP = [
         // App
-        'app.name'       => 'app_name',
-        'app.logo_path'  => 'app_logo_path',
+        'app.name'             => 'app_name',
+        'app.logo_path'        => 'app_logo_path',        // legacy single-logo (BC)
+        'app.logo_light_path'  => 'app_logo_light_path',  // light theme logo
+        'app.logo_dark_path'   => 'app_logo_dark_path',   // dark theme logo
 
         // SMTP
         'mail.smtp.host'       => 'smtp_host',
@@ -39,33 +34,38 @@ class Setting extends Model
         'mail.from.name'       => 'smtp_from_name',
 
         // Features / Security
-        'features.impersonation'                        => 'feature_impersonation',
-        'features.allow_username_change'                => 'feature_usernames_editable',
-        'security.require_admin_mfa_for_impersonation'  => 'security_require_admin_mfa_for_impersonation',
+        'features.impersonation'                       => 'feature_impersonation',
+        'features.allow_username_change'               => 'feature_usernames_editable',
+        'security.require_admin_mfa_for_impersonation' => 'security_require_admin_mfa_for_impersonation',
     ];
 
-    /** Cached schema detection (true = KV table with key/value; false = column-based table) */
-    private static ?bool $kv = null;
+    /** Cache the detection result (true = KV table) */
+    private static ?bool $isKv = null;
 
+    /** Detect whether the table is KV (has key + value). */
     protected static function isKvSchema(): bool
     {
-        if (static::$kv !== null) {
-            return static::$kv;
+        if (static::$isKv !== null) {
+            return static::$isKv;
         }
 
         $hasKey   = Schema::hasColumn('settings', 'key');
         $hasValue = Schema::hasColumn('settings', 'value');
 
-        // KV schema requires both 'key' and 'value' columns present
-        static::$kv = $hasKey && $hasValue;
-        return static::$kv;
+        static::$isKv = $hasKey && $hasValue;
+        return static::$isKv;
+    }
+
+    /** Map dot-key → column name (null if unmapped). */
+    private static function mapKeyToColumn(string $key): ?string
+    {
+        return self::MAP[$key] ?? null;
     }
 
     /**
      * Get a setting (cached 5 minutes).
-     * Works with both schemas:
-     *  - KV:    SELECT value FROM settings WHERE key=?
-     *  - Cols:  SELECT {column} FROM settings LIMIT 1
+     * - KV schema: fetch by {key}
+     * - Column schema: fetch from first row's mapped column (if it exists)
      */
     public static function get(string $key, $default = null)
     {
@@ -77,7 +77,6 @@ class Setting extends Model
                 return $row ? static::decodeValue($row->value, $default) : $default;
             }
 
-            // Column-schema
             $column = static::mapKeyToColumn($key);
             if (!$column || !Schema::hasColumn('settings', $column)) {
                 return $default;
@@ -92,16 +91,12 @@ class Setting extends Model
         });
     }
 
-    /**
-     * Get a boolean setting with a boolean default.
-     */
+    /** Get a boolean setting with a sane default. */
     public static function bool(string $key, bool $default = false): bool
     {
         $val = static::get($key, $default);
 
-        if (is_bool($val)) {
-            return $val;
-        }
+        if (is_bool($val)) return $val;
 
         if (is_string($val)) {
             $lower = strtolower($val);
@@ -117,31 +112,31 @@ class Setting extends Model
     }
 
     /**
-     * Put (upsert) a setting and clear its cache.
-     * Arrays/objects are JSON-encoded automatically.
-     * Supports both KV and column-based schemas.
+     * Put (upsert) a setting and clear caches.
+     * - KV schema: upsert row {key,value}
+     * - Column schema: if mapped column exists, update first row; else fallback to KV row if available
+     *   (safe no-op if neither mapped column nor KV columns exist).
      */
     public static function put(string $key, $value): void
     {
-        $storeVal = static::encodeValue($value);
-
         if (static::isKvSchema()) {
+            $storeVal = static::encodeValue($value);
             static::query()->updateOrCreate(['key' => $key], ['value' => $storeVal]);
         } else {
             $column = static::mapKeyToColumn($key);
 
-            if (!$column) {
-                // Column not mapped: if KV columns also exist, fallback to KV row
-                if (Schema::hasColumn('settings', 'key') && Schema::hasColumn('settings', 'value')) {
-                    static::query()->updateOrCreate(['key' => $key], ['value' => $storeVal]);
-                }
-            } else {
-                $row = static::query()->first();
-                if (!$row) {
-                    $row = new static();
-                }
-                $row->{$column} = $storeVal;
+            if ($column && Schema::hasColumn('settings', $column)) {
+                $row = static::query()->first() ?: new static();
+                // IMPORTANT: for column schema, coerce to the right storage type per column
+                $row->{$column} = static::encodeForColumn($column, $value);
                 $row->save();
+            } elseif (Schema::hasColumn('settings', 'key') && Schema::hasColumn('settings', 'value')) {
+                // Fallback to KV row even if we initially detected column schema
+                $storeVal = static::encodeValue($value);
+                static::query()->updateOrCreate(['key' => $key], ['value' => $storeVal]);
+            } else {
+                // Nowhere to store (neither mapped col nor KV). Do nothing gracefully.
+                return;
             }
         }
 
@@ -149,9 +144,7 @@ class Setting extends Model
         Cache::forget('settings.__all');
     }
 
-    /**
-     * Forget a single key from cache.
-     */
+    /** Forget a single key from cache. */
     public static function forget(string $key): void
     {
         Cache::forget("settings.$key");
@@ -160,7 +153,7 @@ class Setting extends Model
     /**
      * Return ALL settings as key => decoded value (cached 5 minutes).
      * - KV schema: dump all rows
-     * - Col schema: map the single row into dot-keys via MAP
+     * - Column schema: map first row to dot-keys via MAP (only existing columns)
      */
     public static function allPairs(): array
     {
@@ -175,32 +168,30 @@ class Setting extends Model
             }
 
             $row = static::query()->first();
-            if (!$row) {
-                return $pairs;
-            }
+            if (!$row) return $pairs;
 
             foreach (self::MAP as $dot => $col) {
                 if (Schema::hasColumn('settings', $col)) {
                     $pairs[$dot] = static::decodeValue($row->{$col}, null);
                 }
             }
-
             return $pairs;
         });
     }
 
     /**
-     * Convenience DTO exposing frequently-used flags/properties as attributes.
-     * Maps dot-keys to simple snake_case properties.
+     * Convenience DTO exposing common settings on simple properties.
      */
     public static function instance(): object
     {
         return (object) [
-            // App
-            'app_name'  => static::get('app.name', config('app.name')),
-            'app_logo_path' => static::get('app.logo_path'),
+            // App (legacy + new dual-logo)
+            'app_name'            => static::get('app.name', config('app.name')),
+            'app_logo_path'       => static::get('app.logo_path'),        // legacy single
+            'app_logo_light_path' => static::get('app.logo_light_path'),  // new
+            'app_logo_dark_path'  => static::get('app.logo_dark_path'),   // new
 
-            // Features
+            // Features / security
             'feature_impersonation'                        => static::bool('features.impersonation', false),
             'feature_usernames_editable'                   => static::bool('features.allow_username_change', true),
             'security_require_admin_mfa_for_impersonation' => static::bool('security.require_admin_mfa_for_impersonation', true),
@@ -216,19 +207,15 @@ class Setting extends Model
         ];
     }
 
-    /** Map dot-key => column (null if unmapped) */
-    private static function mapKeyToColumn(string $key): ?string
-    {
-        return self::MAP[$key] ?? null;
-    }
+    /* ---------------------------- Value coders ---------------------------- */
 
-    /** Decode stored scalar/JSON strings back into PHP values */
+    /** Decode stored scalar/JSON strings back into PHP values. */
     private static function decodeValue($val, $default = null)
     {
         if ($val === null)   return $default;
         if ($val === 'null') return null;
 
-        if (is_string($val) && strlen($val) > 0 && in_array($val[0], ['{', '['], true)) {
+        if (is_string($val) && $val !== '' && in_array($val[0], ['{', '['], true)) {
             try {
                 return json_decode($val, true, 512, JSON_THROW_ON_ERROR);
             } catch (\Throwable $e) {
@@ -242,7 +229,7 @@ class Setting extends Model
         return $val;
     }
 
-    /** Encode arrays/objects to JSON; booleans/null to strings; leave scalars as-is */
+    /** Encode arrays/objects to JSON; booleans/null to strings; leave scalars as-is (KV schema). */
     private static function encodeValue($value)
     {
         if (is_array($value) || is_object($value)) {
@@ -252,5 +239,59 @@ class Setting extends Model
         if ($value === true)  return 'true';
         if ($value === false) return 'false';
         return $value;
+    }
+
+    /**
+     * Encode with the right storage type for a known COLUMN.
+     * - Booleans → 1/0 (also accepts "true"/"false","1"/"0","yes"/"no","on"/"off")
+     * - smtp_port → int|null
+     * - arrays/objects → json
+     * - scalars → as-is
+     */
+    private static function encodeForColumn(string $column, $value)
+    {
+        // Known boolean columns
+        static $boolCols = [
+            'feature_impersonation',
+            'feature_usernames_editable',
+            'security_require_admin_mfa_for_impersonation',
+        ];
+        if (in_array($column, $boolCols, true)) {
+            $b = static::parseBoolLike($value);
+            return $b ? 1 : 0; // default false if unparsable
+        }
+
+        // Known integer columns
+        if ($column === 'smtp_port') {
+            if ($value === null || $value === '') return null;
+            return (int) $value;
+        }
+
+        // String-ish columns: host/user/pass/encryption/names/paths etc.
+        if (is_array($value) || is_object($value)) {
+            return json_encode($value, JSON_UNESCAPED_UNICODE);
+        }
+
+        // If a raw boolean sneaks in here
+        if ($value === true)  return 1;
+        if ($value === false) return 0;
+
+        return $value; // string|int|null as-is
+    }
+
+    /** Parse many boolean-like inputs to true/false. */
+    private static function parseBoolLike($val): bool
+    {
+        if (is_bool($val)) return $val;
+        if (is_int($val))  return $val === 1;
+        if (is_numeric($val)) return ((int)$val) === 1;
+
+        if (is_string($val)) {
+            $lower = trim(strtolower($val));
+            if (in_array($lower, ['1','true','yes','on'], true))  return true;
+            if (in_array($lower, ['0','false','no','off',''], true)) return false;
+        }
+
+        return (bool)$val;
     }
 }

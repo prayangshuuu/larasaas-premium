@@ -1,6 +1,13 @@
 {{-- resources/views/layouts/navigation.blade.php --}}
 <style>[x-cloak]{display:none!important}</style>
 
+@php
+    $appName    = \App\Models\Setting::get('app.name', config('app.name', 'IELTSBandBooster'));
+    $logoLight  = \App\Models\Setting::get('app.logo_light_path'); // white logo for dark theme
+    $logoDark   = \App\Models\Setting::get('app.logo_dark_path');  // black logo for light theme
+    $logoLegacy = \App\Models\Setting::get('app.logo_path');       // legacy single logo (fallback)
+@endphp
+
 <nav class="bg-base-100 border-b border-base-300 shadow-md"
      x-data="{ mobileOpen:false, dark: (localStorage.getItem('theme') === 'dim') }">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -8,8 +15,25 @@
             {{-- LEFT: Logo + links --}}
             <div class="flex items-center gap-6">
                 <a href="{{ route('dashboard') }}" class="inline-flex items-center gap-2">
-                    <x-application-logo class="block h-10 w-auto text-primary" />
-                    <span class="hidden sm:inline font-semibold text-base-content">IELTSBandBooster</span>
+                    {{-- Circle logo that swaps with theme --}}
+                    <div class="avatar">
+                        <div class="w-10 h-10 rounded-full border border-base-300 bg-base-200 overflow-hidden relative">
+                            {{-- Light theme (nord) → use dark/black logo --}}
+                            <img x-cloak x-show="!dark"
+                                 src="{{ $logoDark ? asset($logoDark) : ($logoLegacy ? asset($logoLegacy) : asset('images/logo-dark.png')) }}"
+                                 alt="{{ $appName }} logo (light mode)"
+                                 class="absolute inset-0 w-full h-full object-cover object-center pointer-events-none select-none">
+                            {{-- Dark theme (dim) → use light/white logo --}}
+                            <img x-cloak x-show="dark"
+                                 src="{{ $logoLight ? asset($logoLight) : ($logoLegacy ? asset($logoLegacy) : asset('images/logo-light.png')) }}"
+                                 alt="{{ $appName }} logo (dark mode)"
+                                 class="absolute inset-0 w-full h-full object-cover object-center pointer-events-none select-none">
+                        </div>
+                    </div>
+
+                    <span class="hidden sm:inline font-semibold text-base-content">
+                        {{ $appName }}
+                    </span>
                 </a>
 
                 <div class="hidden md:flex items-center gap-6">
@@ -63,7 +87,7 @@
                          x-transition:leave-end="opacity-0 scale-95 -translate-y-1"
                          class="absolute right-0 mt-3 w-80 z-50 bg-base-100 rounded-2xl shadow-xl border border-base-200 overflow-hidden">
 
-                        {{-- THEME MODE (in dropdown) – exactly like guest.blade.php --}}
+                        {{-- THEME MODE --}}
                         <div class="px-4 py-4 border-b border-base-200">
                             <div class="flex items-center justify-between">
                                 <span class="text-sm font-medium text-base-content">{{ __('Theme mode') }}</span>
@@ -75,8 +99,8 @@
                                         <div class="w-full h-full rounded-full transition-colors bg-base-300"></div>
                                         <div class="absolute top-0.5 left-0.5 w-6 h-6 rounded-full shadow flex items-center justify-center transition-all duration-300 group-active:scale-95"
                                              :class="{
-                                               'translate-x-7 bg-base-100': dark,   /* dim → light knob w/ moon */
-                                               'translate-x-0 bg-neutral'  : !dark  /* nord → dark knob w/ sun  */
+                                               'translate-x-7 bg-base-100': dark,
+                                               'translate-x-0 bg-neutral'  : !dark
                                              }">
                                             <!-- Sun -->
                                             <svg class="w-3.5 h-3.5 text-warning transition-opacity duration-200"
@@ -100,7 +124,7 @@
                             </div>
                         </div>
 
-                        {{-- LOGOUT (Light → dark button, Dark → white button like guest login) --}}
+                        {{-- LOGOUT (Light → dark button, Dark → white button) --}}
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
                             <div class="px-4 py-4">
@@ -203,7 +227,7 @@
                             <span class="text-sm">Dashboard</span>
                         </a>
 
-                        {{-- THEME TOGGLE (mobile) — EXACTLY LIKE guest.blade.php --}}
+                        {{-- THEME TOGGLE (mobile) --}}
                         <button type="button"
                                 class="w-full inline-flex items-center justify-center rounded-xl px-3 py-2 hover:bg-base-200 transition"
                                 @click="dark = !dark; window.toggleTheme(dark)"
@@ -325,11 +349,11 @@
 </style>
 
 <script>
-    // GLOBAL helpers (so Alpine in any partial can call them)
+    // GLOBAL helpers
     window.setTheme = function(theme){
         try { localStorage.setItem("theme", theme); } catch(e) {}
         document.documentElement.setAttribute("data-theme", theme);
-        // optional: if you use Tailwind `dark:` utilities anywhere, also keep this line:
+        // If you also rely on Tailwind "dark:" utilities, uncomment:
         // document.documentElement.classList.toggle('dark', theme === 'dim');
     };
     window.toggleTheme = function(dark){
