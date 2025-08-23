@@ -96,7 +96,7 @@ Route::middleware(['auth', 'verified', 'admin', 'not-banned', 'impersonation'])
 
         /*
         |------------------------------------------------------------------
-        | System Settings (App / SMTP / Features)
+        | System Settings (App / SMTP / Features / API Keys)
         |------------------------------------------------------------------
         */
         Route::prefix('settings')
@@ -110,12 +110,20 @@ Route::middleware(['auth', 'verified', 'admin', 'not-banned', 'impersonation'])
                 Route::get('/features', fn () => redirect()->route('admin.settings.index'))->name('features');
                 Route::get('/app',      fn () => redirect()->route('admin.settings.index'))->name('app');
                 Route::get('/smtp',     fn () => redirect()->route('admin.settings.index'))->name('smtp');
+                Route::get('/api-tokens', fn () => redirect()->route('admin.settings.index'))->name('api');
 
-                // Actual update endpoints (POST)
-                Route::post('/app',        'updateApp')->name('app.update');           // POST /admin/settings/app
-                Route::post('/app/logo',   'uploadLogo')->name('app.logo');            // POST /admin/settings/app/logo
-                Route::post('/smtp',       'updateSmtp')->name('smtp.update');         // POST /admin/settings/smtp
-                Route::post('/features',   'updateFeatures')->name('features.update'); // POST /admin/settings/features
+                // Actual update endpoints (POST/DELETE)
+                Route::post('/app',        'updateApp')->name('app.update');              // POST /admin/settings/app
+                Route::post('/app/logo',   'uploadLogo')->name('app.logo');               // POST /admin/settings/app/logo
+                Route::post('/smtp',       'updateSmtp')->name('smtp.update');            // POST /admin/settings/smtp
+                Route::post('/features',   'updateFeatures')->name('features.update');    // POST /admin/settings/features
+
+                // API Keys (Sanctum) — create, reveal, revoke (current admin only)
+                Route::post('/api-tokens', 'createApiToken')->name('api.create');           // POST   /admin/settings/api-tokens
+                Route::post('/api-tokens/{token}/reveal', 'revealApiToken')                 // POST   /admin/settings/api-tokens/{token}/reveal
+                ->middleware('password.confirm')                                        // optional but recommended
+                ->name('api.reveal');
+                Route::delete('/api-tokens/{token}', 'revokeApiToken')->name('api.revoke'); // DELETE /admin/settings/api-tokens/{token}
             });
 
         /*
@@ -171,7 +179,24 @@ Route::middleware(['auth', 'verified', 'admin', 'not-banned', 'impersonation'])
                 Route::post('/stop', 'stop')
                     ->name('stop'); // no 'feature' / 'admin.mfa' on purpose
             });
+
+        /*
+        |------------------------------------------------------------------
+        | API Docs (admin-scoped view)  →  /admin/api/docs
+        |------------------------------------------------------------------
+        */
+        Route::view('/api/docs', 'admin.api.docs')->name('docs.api');
     });
+
+/*
+|--------------------------------------------------------------------------
+| Optional public alias to API docs (still requires admin access)
+| Avoid chaining ->middleware()->view() which throws in some setups.
+|--------------------------------------------------------------------------
+*/
+Route::view('/docs', 'admin.api.docs')
+    ->middleware(['auth', 'verified', 'admin', 'not-banned', 'impersonation'])
+    ->name('docs');
 
 /*
 |--------------------------------------------------------------------------

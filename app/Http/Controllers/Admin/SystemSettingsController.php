@@ -4,13 +4,19 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UpdateAppSettingsRequest;
-use App\Http\Requests\Admin\UpdateSmtpSettingsRequest;
 use App\Http\Requests\Admin\UpdateFeatureFlagsRequest;
+use App\Http\Requests\Admin\UpdateSmtpSettingsRequest;
 use App\Models\AuditLog;
 use App\Models\Setting;
+use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class SystemSettingsController extends Controller
 {
@@ -24,7 +30,7 @@ class SystemSettingsController extends Controller
 
     /**
      * GET /admin/settings  (admin.settings.index)
-     * Provide data for App / SMTP / Feature Flags cards.
+     * Provide data for App / SMTP / Feature Flags cards + API tokens card.
      */
     public function edit()
     {
@@ -34,6 +40,36 @@ class SystemSettingsController extends Controller
         $singleLogo = $s->app_logo_dark_path
             ?? $s->app_logo_light_path
             ?? $s->app_logo_path;
+
+        // Base columns to select for tokens
+        $select = [
+            'id',
+            'name',
+            'abilities',
+            'last_used_at',
+            'expires_at',
+            'created_at',
+        ];
+
+        // Only add reveal columns if they exist (prevents "Unknown column" SQL error)
+        if (Schema::hasColumns('personal_access_tokens', [
+            'token_plain_encrypted',
+            'token_plain_show_count',
+            'token_plain_last_shown_at',
+        ])) {
+            $select = array_merge($select, [
+                'token_plain_encrypted',
+                'token_plain_show_count',
+                'token_plain_last_shown_at',
+            ]);
+        }
+
+        // Current admin's tokens (each admin manages only their own)
+        $apiTokens = PersonalAccessToken::query()
+            ->where('tokenable_type', User::class)
+            ->where('tokenable_id', Auth::id())
+            ->orderByDesc('id')
+            ->get($select);
 
         return view('admin.settings.index', [
             // App identity
@@ -47,7 +83,7 @@ class SystemSettingsController extends Controller
                 'host'       => $s->smtp_host,
                 'port'       => $s->smtp_port,
                 'username'   => $s->smtp_username,
-                'password'   => $s->smtp_password,    // not shown; just present for completeness
+                'password'   => $s->smtp_password,    // not shown; present for completeness
                 'encryption' => $s->smtp_encryption,  // '', 'tls', 'ssl'
                 'from_name'  => $s->smtp_from_name,
                 'from_addr'  => $s->smtp_from_addr,
@@ -59,6 +95,12 @@ class SystemSettingsController extends Controller
                 'allow_username_change'               => Setting::bool('features.allow_username_change', true),
                 'require_admin_mfa_for_impersonation' => Setting::bool('security.require_admin_mfa_for_impersonation', true),
             ],
+
+            // API keys (Sanctum)
+            'api_tokens' => $apiTokens,
+
+            // Back-compat for older Blade that expects $tokens
+            'tokens' => $apiTokens,
         ]);
     }
 
@@ -159,6 +201,177 @@ class SystemSettingsController extends Controller
         $this->logAudit('settings.update', 'Updated feature flags', $v);
 
         return redirect()->route('admin.settings.index')->with('status', 'settings-features-updated');
+    }
+
+    /* =======================
+     |  API keys (Sanctum)
+     | =======================*/
+
+    /**
+     * POST /admin/settings/api-tokens  (admin.settings.api.create)
+     * Create a personal access token for the current admin.
+     * Accepts either "token_name" or legacy "name".
+     */
+    public function createApiToken(Request $request)
+    {
+        Gate::authorize('access-admin'); // defense in depth
+
+        // Accept both token_name and legacy name
+        if (!$request->filled('token_name') && $request->filled('name')) {
+            $request->merge(['token_name' => $request->input('name')]);
+        }
+
+        $data = $request->validate([
+            'token_name' => ['required', 'string', 'max:100'],
+            'abilities'  => ['nullable', 'string'], // CSV or space e.g. "*", "read,write", "read write"
+            'expires'    => ['nullable', 'string'], // "7 days" or "2026-01-01 23:59"
+        ]);
+
+        // Parse abilities: allow comma or whitespace separated; default "*"
+        $abilities = ['*'];
+        if (isset($data['abilities']) && trim($data['abilities']) !== '') {
+            $abilities = array_values(array_filter(preg_split('/[\s,]+/', trim($data['abilities'])) ?: []));
+            if (empty($abilities)) {
+                $abilities = ['*'];
+            }
+        }
+
+        $expiresAt = null;
+        if (!empty($data['expires'])) {
+            try {
+                $expiresAt = Carbon::parse($data['expires']);
+            } catch (\Throwable $e) {
+                $expiresAt = null; // fall back to non-expiring if parse fails
+            }
+        }
+
+        /** @var \App\Models\User $user */
+        $user   = Auth::user();
+        $issued = $user->createToken($data['token_name'], $abilities, $expiresAt);
+
+        $plain = $issued->plainTextToken;     //  "{id}|{random}"
+        $model = $issued->accessToken;        //  PersonalAccessToken Eloquent model
+
+        // Store encrypted plaintext for always-on reveal (requires migration columns)
+        try {
+            $model->forceFill([
+                'token_plain_encrypted'     => Crypt::encryptString($plain),
+                'token_plain_show_count'    => (int) ($model->token_plain_show_count ?? 0),
+                'token_plain_last_shown_at' => null,
+            ])->save();
+        } catch (\Throwable $e) {
+            // If columns don't exist yet, do not fail token creation
+        }
+
+        $this->logAudit('settings.api-token.create', 'Created API token', [
+            'token_id'   => $model->id,
+            'name'       => $data['token_name'],
+            'abilities'  => $abilities,
+            'expires_at' => $model->expires_at?->toDateTimeString(),
+        ]);
+
+        // Flash both modern and legacy keys so any Blade variant works
+        return redirect()
+            ->route('admin.settings.index')
+            ->with('status', 'settings-api-token-created')
+            ->with('new_token_plain', $plain)
+            ->with('new_token', $plain)
+            ->with('new_token_id', $model->id);
+    }
+
+    /**
+     * POST /admin/settings/api-tokens/{token}/reveal  (admin.settings.api.reveal)
+     * Reveal the plaintext token (we decrypt what we stored at creation).
+     * Returns JSON when requested, otherwise flashes to session.
+     */
+    public function revealApiToken(Request $request, PersonalAccessToken $token)
+    {
+        Gate::authorize('access-admin');
+
+        // Ensure it belongs to the current admin
+        if ($token->tokenable_type !== User::class || (int) $token->tokenable_id !== (int) Auth::id()) {
+            abort(403, 'You can only reveal your own tokens.');
+        }
+
+        // Decrypt stored value
+        $plain = null;
+        try {
+            $enc = $token->token_plain_encrypted ?? null;
+            if ($enc) {
+                $plain = Crypt::decryptString($enc);
+            }
+        } catch (\Throwable $e) {
+            $plain = null;
+        }
+
+        if (!$plain) {
+            // Either older token (created before column existed) or missing storage
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'ok'      => false,
+                    'message' => 'Plain token is not stored for this key.',
+                ], 404);
+            }
+
+            return back()->with('error', 'Plain token is not stored for this key.');
+        }
+
+        // Audit + bump counters (best effort)
+        try {
+            $token->forceFill([
+                'token_plain_show_count'     => (int) ($token->token_plain_show_count ?? 0) + 1,
+                'token_plain_last_shown_at'  => now(),
+            ])->save();
+        } catch (\Throwable $e) {
+            // ignore
+        }
+
+        $this->logAudit('settings.api-token.reveal', 'Revealed API token plaintext', [
+            'token_id' => $token->id,
+            'name'     => $token->name,
+        ]);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'ok'    => true,
+                'token' => $plain,
+            ]);
+        }
+
+        // Flash for the page to show in a banner/modal
+        return back()
+            ->with('status', 'settings-api-token-revealed')
+            ->with('reveal_token_plain', $plain)
+            ->with('reveal_token_id', $token->id);
+    }
+
+    /**
+     * DELETE /admin/settings/api-tokens/{token} (admin.settings.api.revoke)
+     * Revoke a personal access token that belongs to the current admin.
+     */
+    public function revokeApiToken(PersonalAccessToken $token, Request $request)
+    {
+        Gate::authorize('access-admin'); // defense in depth
+
+        // Ensure it belongs to this admin
+        if ($token->tokenable_type !== User::class || (int) $token->tokenable_id !== (int) Auth::id()) {
+            abort(403, 'You can only revoke your own tokens.');
+        }
+
+        $id   = $token->id;
+        $name = $token->name;
+
+        $token->delete();
+
+        $this->logAudit('settings.api-token.revoke', 'Revoked API token', [
+            'token_id' => $id,
+            'name'     => $name,
+        ]);
+
+        // Flash both modern and legacy keys so older Blade shows a nice message
+        return redirect()
+            ->route('admin.settings.index')
+            ->with('status', 'settings-api-token-revoked');
     }
 
     /* ---------------------------------------------------------------------

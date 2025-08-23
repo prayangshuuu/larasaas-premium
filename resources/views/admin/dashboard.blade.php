@@ -10,12 +10,20 @@
                 <h1 class="text-2xl font-semibold text-base-content">Admin Dashboard</h1>
                 <p class="text-sm text-base-content/70">Overview &amp; controls for administrators.</p>
             </div>
-            <div class="flex gap-2">
+            <div class="flex flex-wrap gap-2">
                 <a href="{{ route('admin.users.index') }}" class="btn btn-primary rounded-xl">Manage Users</a>
                 <a href="{{ route('admin.audit.index') }}" class="btn btn-outline rounded-xl">Audit Log</a>
                 @if (Route::has('admin.settings.index'))
                     <a href="{{ route('admin.settings.index') }}" class="btn btn-secondary rounded-xl">System Settings</a>
                 @endif
+
+                {{-- API Docs link (prefers named admin route; falls back to /docs) --}}
+                @php
+                    $apiDocsUrl = Route::has('admin.docs.api')
+                        ? route('admin.docs.api')
+                        : (Route::has('docs') ? route('docs') : url('/docs'));
+                @endphp
+                <a href="{{ $apiDocsUrl }}" class="btn btn-accent rounded-xl">API Documentation</a>
             </div>
         </div>
 
@@ -61,6 +69,8 @@
                         @if (Route::has('admin.settings.index'))
                             <a href="{{ route('admin.settings.index') }}" class="btn btn-secondary rounded-xl h-11">System Settings</a>
                         @endif
+                        {{-- Duplicate API Docs quick action for convenience --}}
+                        <a href="{{ $apiDocsUrl }}" class="btn btn-accent rounded-xl h-11">API Documentation</a>
                     </div>
                 </div>
             </div>

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -28,7 +29,7 @@ class User extends Authenticatable
     ];
 
     /**
-     * Hidden attributes for serialization.
+     * Hidden attributes for arrays / JSON.
      */
     protected $hidden = [
         'password',
@@ -47,35 +48,36 @@ class User extends Authenticatable
             'two_factor_confirmed_at'  => 'datetime',
             'banned_at'                => 'datetime',
             'is_admin'                 => 'boolean',
-            'password'                 => 'hashed',
+            'password'                 => 'hashed', // Laravel hashing cast
         ];
     }
 
     /**
-     * Normalize email and username (Fortify config expects lowercase).
+     * Normalize email (lowercase + trim).
      */
     public function setEmailAttribute(?string $value): void
     {
         $this->attributes['email'] = is_null($value) ? null : Str::lower(trim($value));
     }
 
+    /**
+     * Normalize username (lowercase + trim).
+     */
     public function setUsernameAttribute(?string $value): void
     {
-        // Keep exact value but lowercase for consistency
         $this->attributes['username'] = is_null($value) ? null : Str::lower(trim($value));
     }
 
     /**
-     * Prefer boolean column; fall back to legacy role.
+     * True when the user is an admin.
+     * Prefers boolean column; falls back to legacy 'role' column.
      */
     public function isAdmin(): bool
     {
-        // If the boolean column exists and is set, trust it.
-        if (!is_null($this->is_admin)) {
+        if (! is_null($this->is_admin)) {
             return (bool) $this->is_admin;
         }
 
-        // Fallback for older rows that only have 'role'
         return isset($this->role) && $this->role === 'admin';
     }
 
@@ -84,26 +86,36 @@ class User extends Authenticatable
      */
     public function isBanned(): bool
     {
-        return !is_null($this->banned_at);
+        return ! is_null($this->banned_at);
     }
 
+    /* -----------------------------------------------------------------
+     | Query Scopes
+     |-----------------------------------------------------------------*/
+
     /**
-     * Handy scopes.
+     * Scope: admins (supports legacy role column).
      */
-    public function scopeAdmins($query)
+    public function scopeAdmins(Builder $query): Builder
     {
         return $query->where(function ($q) {
             $q->where('is_admin', true)
-                ->orWhere('role', 'admin'); // legacy fallback
+                ->orWhere('role', 'admin');
         });
     }
 
-    public function scopeBanned($query)
+    /**
+     * Scope: banned users only.
+     */
+    public function scopeBanned(Builder $query): Builder
     {
         return $query->whereNotNull('banned_at');
     }
 
-    public function scopeNotBanned($query)
+    /**
+     * Scope: not banned users.
+     */
+    public function scopeNotBanned(Builder $query): Builder
     {
         return $query->whereNull('banned_at');
     }
