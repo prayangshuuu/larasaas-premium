@@ -25,6 +25,7 @@ class User extends Authenticatable
         'password',
         'profile_picture',
         'is_admin',
+        'email_verified_at', // Allow admin to set this
         'banned_at',        // admin ban/unban
     ];
 

@@ -35,19 +35,25 @@ class UserController extends Controller
             ->paginate(12)->withQueryString();
 
         return view('admin.users.index', compact('users','q','role','state'));
-        // View code in step 5
     }
 
     public function create()
     {
-        // No managedUser passed in create mode; Blade will treat as "new"
         return view('admin.users.form');
     }
 
     public function store(StoreUserRequest $request)
     {
         $data = $request->validated();
+
+        // Handle password
         $data['password'] = Hash::make($data['password']);
+
+        // Handle boolean flags -> timestamps/booleans
+        $data['is_admin']          = $request->boolean('is_admin');
+        $data['email_verified_at'] = $request->boolean('verified') ? now() : null;
+        $data['banned_at']         = $request->boolean('banned') ? now() : null;
+
         $user = User::create($data);
 
         AuditLog::write($user, 'user.create', 'Admin created a user', ['fields'=>array_keys($data)]);
@@ -56,15 +62,37 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
-        // Pass the model as $managedUser to avoid colliding with any globally shared $user
         return view('admin.users.form', ['managedUser' => $user]);
     }
 
     public function update(UpdateUserRequest $request, User $user)
     {
         $data = $request->validated();
-        if (!empty($data['password'])) $data['password'] = Hash::make($data['password']);
-        else unset($data['password']);
+
+        // Handle password
+        if (!empty($data['password'])) {
+            $data['password'] = Hash::make($data['password']);
+        } else {
+            unset($data['password']);
+        }
+
+        // Handle boolean flags
+        $data['is_admin'] = $request->boolean('is_admin');
+
+        // Handle verified: if checked, ensure it has a timestamp; if unchecked, null it.
+        if ($request->boolean('verified')) {
+            // If already verified, keep original timestamp; otherwise set now
+            $data['email_verified_at'] = $user->email_verified_at ?? now();
+        } else {
+            $data['email_verified_at'] = null;
+        }
+
+        // Handle banned: if checked, ensure timestamp; if unchecked, null it.
+        if ($request->boolean('banned')) {
+            $data['banned_at'] = $user->banned_at ?? now();
+        } else {
+            $data['banned_at'] = null;
+        }
 
         $user->update($data);
         AuditLog::write($user, 'user.update', 'Admin updated user', ['fields'=>array_keys($data)]);
