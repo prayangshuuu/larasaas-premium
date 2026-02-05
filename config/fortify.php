@@ -71,9 +71,10 @@ return [
     |--------------------------------------------------------------------------
     | Register View Routes
     |--------------------------------------------------------------------------
-    | Keep "true" so your Blade views (DaisyUI) render for auth screens.
+    | Set to FALSE - Breeze handles all auth routes in routes/auth.php.
+    | Fortify provides backend logic only (2FA, password updates, etc.)
     */
-    'views' => true,
+    'views' => false,
 
     /*
     |--------------------------------------------------------------------------
@@ -85,7 +86,7 @@ return [
     'features' => [
         Features::registration(),
         Features::resetPasswords(),
-        Features::emailVerification(),          // ← ENABLED
+        // Features::emailVerification(),          // ← DISABLED (handled by Breeze auth.php routes)
         Features::updateProfileInformation(),
         Features::updatePasswords(),
         Features::twoFactorAuthentication([
