@@ -192,13 +192,27 @@ This will create all necessary tables including:
 - `settings` - System settings
 - And more...
 
-### Step 7: Seed the Database (Optional)
+### Step 7: Seed the Database (Demo Users)
 
-If you have seeders configured, run:
+The application includes a database seeder that creates demo users for testing:
 
 ```bash
 php artisan db:seed
 ```
+
+This will create the following demo accounts:
+
+| Role | Email | Password | Username |
+|------|-------|----------|----------|
+| **Admin** | admin@demo.com | password | admin |
+| **User** | user@demo.com | password | user |
+
+> **Note**: These are demo accounts for testing purposes. In production, you should either:
+> - Remove these demo accounts from the seeder
+> - Change the passwords immediately after deployment
+> - Or skip running the seeder entirely
+
+You can now login with either account to test the application!
 
 ### Step 8: Create Storage Link
 
@@ -246,8 +260,9 @@ cp .env.example .env
 php artisan key:generate
 
 # Configure database (edit .env first!)
-# Then run migrations
+# Then run migrations and seed demo users
 php artisan migrate
+php artisan db:seed
 
 # Build assets and start server
 npm run build
@@ -258,9 +273,18 @@ php artisan serve
 
 ## 👤 Creating Your First Admin User
 
-After installation, you'll need to create an admin user. You can do this in several ways:
+After installation, you have several options to create an admin user:
 
-### Option 1: Using Tinker (Recommended)
+### Option 1: Use Demo Seeder (Easiest)
+
+If you ran `php artisan db:seed` during installation, you already have a demo admin account:
+
+- **Email**: admin@demo.com
+- **Password**: password
+
+Simply login at `/login` with these credentials!
+
+### Option 2: Using Tinker
 
 ```bash
 php artisan tinker
