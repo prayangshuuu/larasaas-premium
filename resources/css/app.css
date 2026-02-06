@@ -1,51 +1,15 @@
 @import "tailwindcss";
-
+@config "../../tailwind.config.js";
 
 @source "../views";
 
-
 /* 
-  Custom styles can be minimal now as we rely on DaisyUI components 
-  and Tailwind utilities. 
+  Aceternity UI requires base Tailwind utilities.
+  Custom configuration is handled in tailwind.config.js
 */
 
-@theme {
-    --font-sans: "Instrument Sans", "Figtree", sans-serif;
-
-    /* Retain animations if needed, but DaisyUI has some built-in */
-    --animate-fade-in: fadeIn 0.5s ease-in-out;
-    --animate-slide-up: slideUp 0.3s ease-out;
-
-    @keyframes fadeIn {
-        0% {
-            opacity: 0;
-        }
-
-        100% {
-            opacity: 1;
-        }
-    }
-
-    @keyframes slideUp {
-        0% {
-            transform: translateY(10px);
-            opacity: 0;
-        }
-
-        100% {
-            transform: translateY(0);
-            opacity: 1;
-        }
-    }
-}
-
-/* 
-  Fix for SVGs in Laravel components if they misbehave, 
-  otherwise default Tailwind behavior is usually fine.
-*/
-@layer base {
-    svg {
-        display: inline-block;
-        vertical-align: middle;
-    }
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
 }

@@ -2,11 +2,232 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="max-w-6xl mx-auto">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        {{-- Header Section --}}
+        <div class="relative bg-zinc-900 border border-zinc-800 rounded-2xl p-8 mb-8 overflow-hidden group">
+             <div class="absolute inset-0 bg-indigo-500/5 opacity-50 blur-3xl rounded-full pointer-events-none -z-10 group-hover:opacity-75 transition duration-700"></div>
+             
+             <div class="flex flex-col lg:flex-row gap-8 items-center">
+                {{-- Icon --}}
+                <div class="shrink-0">
+                    <div class="w-20 h-20 rounded-2xl bg-zinc-800 border border-zinc-700 flex items-center justify-center shadow-lg relative">
+                        <div class="absolute inset-0 bg-indigo-500/20 blur opacity-0 group-hover:opacity-100 transition duration-500 rounded-2xl"></div>
+                        <svg class="w-10 h-10 text-indigo-500 relative z-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                        </svg>
+                    </div>
+                </div>
 
-        {{-- Page header --}}
-        <div class="hero bg-base-200 rounded-2xl border border-base-300">
-            <div class="hero-content w-full flex-col lg:flex-row gap-8 p-8">
+                <div class="flex-1 text-center lg:text-left">
+                    <div class="flex items-center justify-center lg:justify-start gap-3 mb-2">
+                        <h1 class="text-3xl font-bold tracking-tight text-white">API Documentation</h1>
+                        <span class="inline-flex items-center rounded-full bg-indigo-500/10 px-2.5 py-0.5 text-xs font-medium text-indigo-400 border border-indigo-500/20">v1.0</span>
+                        <span class="inline-flex items-center rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-400 border border-emerald-500/20">Stable</span>
+                    </div>
+                    <p class="text-zinc-400 max-w-2xl">
+                        Secure, JSON-based endpoints for your app & admin workflows. Integrate programmatically with our platform.
+                    </p>
+                    
+                    {{-- Base URL --}}
+                    <div class="mt-6 flex flex-col sm:flex-row gap-3 max-w-xl mx-auto lg:mx-0">
+                        <div class="relative flex-grow">
+                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-500 text-xs font-mono">
+                                BASE
+                            </div>
+                            <input type="text" readonly value="{{ url('/api/v1') }}" 
+                                   class="block w-full rounded-md border-0 bg-zinc-950/50 py-2 pl-12 pr-4 text-zinc-300 ring-1 ring-inset ring-zinc-800 placeholder:text-zinc-500 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 font-mono">
+                        </div>
+                        <button onclick="navigator.clipboard.writeText('{{ url('/api/v1') }}')" class="inline-flex items-center justify-center rounded-md bg-zinc-800 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-zinc-700 ring-1 ring-inset ring-zinc-700 transition-colors">
+                            <svg class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
+                            Copy URL
+                        </button>
+                    </div>
+                </div>
+
+                {{-- Quick Links --}}
+                 <div class="flex flex-col gap-3">
+                    <a href="{{ url('/admin/settings') }}" class="inline-flex items-center justify-center rounded-lg bg-zinc-800 px-4 py-2.5 text-sm font-semibold text-white hover:bg-zinc-700 border border-zinc-700 transition-all hover:scale-105 active:scale-95">
+                        <svg class="w-4 h-4 mr-2 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                        API Settings
+                    </a>
+                </div>
+             </div>
+        </div>
+
+        {{-- Authentication Section --}}
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+            <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-6 shadow-xl">
+                 <h2 class="text-lg font-semibold text-white mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                    Authentication
+                </h2>
+                <div class="text-sm text-zinc-400 space-y-4">
+                     <p>
+                        API authentication uses <span class="text-white font-medium">Sanctum Personal Access Tokens</span>.
+                        Include the token in the `Authorization` header of every request.
+                    </p>
+                    <div class="bg-zinc-950 rounded-lg border border-zinc-800 p-4 font-mono text-xs text-indigo-300 overflow-x-auto">
+                        Authorization: Bearer &lt;your-token&gt;
+                        <br>
+                        Accept: application/json
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-6 shadow-xl">
+                <h2 class="text-lg font-semibold text-white mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3" /></svg>
+                    CLI Helpers
+                </h2>
+                <div class="space-y-4">
+                     <div class="relative group">
+                        <div class="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onclick="copyCode('cli-create', this)" class="text-xs bg-zinc-700 text-white px-2 py-1 rounded hover:bg-zinc-600">Copy</button>
+                        </div>
+                        <pre id="cli-create" class="bg-black/50 text-zinc-300 font-mono text-xs rounded-lg p-3 border border-zinc-800 overflow-x-auto">php artisan sanctum:token:create "admin@example.com" --name="dev" --abilities="*"</pre>
+                    </div>
+                    <div class="relative group">
+                          <div class="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onclick="copyCode('cli-list', this)" class="text-xs bg-zinc-700 text-white px-2 py-1 rounded hover:bg-zinc-600">Copy</button>
+                        </div>
+                        <pre id="cli-list" class="bg-black/50 text-zinc-300 font-mono text-xs rounded-lg p-3 border border-zinc-800 overflow-x-auto">php artisan sanctum:token:list --active</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Endpoints Section --}}
+        <div class="space-y-6">
+            <h2 class="text-xl font-bold text-white mb-6">Endpoints</h2>
+
+            {{-- Users --}}
+            <div class="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+                <div class="px-6 py-4 border-b border-zinc-800 bg-zinc-800/50 flex items-center justify-between">
+                    <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+                         <svg class="w-4 h-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                        Users <span class="bg-zinc-700 text-zinc-300 text-xs px-2 py-0.5 rounded ml-2">Admin Only</span>
+                    </h3>
+                </div>
+                <div class="divide-y divide-zinc-800">
+                    {{-- User List --}}
+                    <div x-data="{ open: false }" class="bg-zinc-900">
+                        <button @click="open = !open" class="w-full px-6 py-4 flex items-center justify-between hover:bg-zinc-800/50 transition-colors">
+                            <div class="flex items-center gap-4">
+                                <span class="px-2 py-1 rounded text-xs font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">GET</span>
+                                <code class="text-sm text-zinc-300">/admin/users</code>
+                            </div>
+                            <svg class="w-5 h-5 text-zinc-500 transform transition-transform" :class="{'rotate-180': open}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                        </button>
+                        <div x-show="open" class="px-6 pb-4 pt-2 border-t border-zinc-800/50 bg-black/20">
+                            <p class="text-sm text-zinc-400 mb-2">Retrieve a paginated list of all registered users.</p>
+                            <div class="relative group">
+                                <button onclick="copyCode('users-index', this)" class="absolute right-2 top-2 text-xs bg-zinc-800 text-zinc-300 px-2 py-1 rounded border border-zinc-700 opacity-0 group-hover:opacity-100 transition-opacity">Copy</button>
+                                <pre id="users-index" class="text-xs font-mono text-zinc-400 bg-zinc-950 p-3 rounded border border-zinc-800 overflow-x-auto">curl -H "Authorization: Bearer &lt;token&gt;" {{ url('/api/v1/admin/users') }}</pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- User Create --}}
+                     <div x-data="{ open: false }" class="bg-zinc-900">
+                        <button @click="open = !open" class="w-full px-6 py-4 flex items-center justify-between hover:bg-zinc-800/50 transition-colors">
+                            <div class="flex items-center gap-4">
+                                <span class="px-2 py-1 rounded text-xs font-bold bg-green-500/10 text-green-400 border border-green-500/20">POST</span>
+                                <code class="text-sm text-zinc-300">/admin/users</code>
+                            </div>
+                             <svg class="w-5 h-5 text-zinc-500 transform transition-transform" :class="{'rotate-180': open}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                        </button>
+                        <div x-show="open" class="px-6 pb-4 pt-2 border-t border-zinc-800/50 bg-black/20">
+                             <p class="text-sm text-zinc-400 mb-2">Create a new user account.</p>
+                            <div class="relative group">
+                                <button onclick="copyCode('users-store', this)" class="absolute right-2 top-2 text-xs bg-zinc-800 text-zinc-300 px-2 py-1 rounded border border-zinc-700 opacity-0 group-hover:opacity-100 transition-opacity">Copy</button>
+                                <pre id="users-store" class="text-xs font-mono text-zinc-400 bg-zinc-950 p-3 rounded border border-zinc-800 overflow-x-auto">curl -X POST \
+  -H "Authorization: Bearer &lt;token&gt;" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Jane Doe","email":"jane@example.com","password":"secret","is_admin":false}' \
+  {{ url('/api/v1/admin/users') }}</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Audit Logs --}}
+            <div class="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+                <div class="px-6 py-4 border-b border-zinc-800 bg-zinc-800/50 flex items-center justify-between">
+                     <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+                        <svg class="w-4 h-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>
+                        Audit Logs
+                    </h3>
+                </div>
+                 <div class="divide-y divide-zinc-800">
+                    <div x-data="{ open: false }" class="bg-zinc-900">
+                        <button @click="open = !open" class="w-full px-6 py-4 flex items-center justify-between hover:bg-zinc-800/50 transition-colors">
+                            <div class="flex items-center gap-4">
+                                <span class="px-2 py-1 rounded text-xs font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">GET</span>
+                                <code class="text-sm text-zinc-300">/admin/audit</code>
+                            </div>
+                             <svg class="w-5 h-5 text-zinc-500 transform transition-transform" :class="{'rotate-180': open}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                        </button>
+                        <div x-show="open" class="px-6 pb-4 pt-2 border-t border-zinc-800/50 bg-black/20">
+                            <p class="text-sm text-zinc-400 mb-2">Retrieve system audit logs. Supports pagination.</p>
+                            <div class="relative group">
+                                <button onclick="copyCode('audit-index', this)" class="absolute right-2 top-2 text-xs bg-zinc-800 text-zinc-300 px-2 py-1 rounded border border-zinc-700 opacity-0 group-hover:opacity-100 transition-opacity">Copy</button>
+                                <pre id="audit-index" class="text-xs font-mono text-zinc-400 bg-zinc-950 p-3 rounded border border-zinc-800 overflow-x-auto">curl -H "Authorization: Bearer &lt;token&gt;" "{{ url('/api/v1/admin/audit') }}?page=1&per_page=20"</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+             {{-- Settings --}}
+            <div class="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+                <div class="px-6 py-4 border-b border-zinc-800 bg-zinc-800/50 flex items-center justify-between">
+                     <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+                        <svg class="w-4 h-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                        System Settings
+                    </h3>
+                </div>
+                 <div class="divide-y divide-zinc-800">
+                    <div x-data="{ open: false }" class="bg-zinc-900">
+                        <button @click="open = !open" class="w-full px-6 py-4 flex items-center justify-between hover:bg-zinc-800/50 transition-colors">
+                            <div class="flex items-center gap-4">
+                                <span class="px-2 py-1 rounded text-xs font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">GET</span>
+                                <code class="text-sm text-zinc-300">/admin/settings</code>
+                            </div>
+                             <svg class="w-5 h-5 text-zinc-500 transform transition-transform" :class="{'rotate-180': open}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                        </button>
+                         <div x-show="open" class="px-6 pb-4 pt-2 border-t border-zinc-800/50 bg-black/20">
+                            <p class="text-sm text-zinc-400 mb-2">List all system settings.</p>
+                            <div class="relative group">
+                                <button onclick="copyCode('settings-index', this)" class="absolute right-2 top-2 text-xs bg-zinc-800 text-zinc-300 px-2 py-1 rounded border border-zinc-700 opacity-0 group-hover:opacity-100 transition-opacity">Copy</button>
+                                <pre id="settings-index" class="text-xs font-mono text-zinc-400 bg-zinc-950 p-3 rounded border border-zinc-800 overflow-x-auto">curl -H "Authorization: Bearer &lt;token&gt;" {{ url('/api/v1/admin/settings') }}</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function copyCode(codeId, btn) {
+            const code = document.getElementById(codeId);
+            if (!code) return;
+            const text = code.innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                const oldText = btn.textContent;
+                btn.textContent = 'Copied';
+                btn.classList.add('text-green-400');
+                setTimeout(() => { 
+                    btn.textContent = oldText; 
+                    btn.classList.remove('text-green-400');
+                }, 1500);
+            });
+        }
+    </script>
+@endsection
 
                 {{-- API tile (centered) --}}
                 <div class="shrink-0">
