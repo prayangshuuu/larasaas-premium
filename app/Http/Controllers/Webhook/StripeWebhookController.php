@@ -12,6 +12,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Stripe\Webhook;
 use Stripe\Exception\SignatureVerificationException;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\SubscriptionWelcome;
+use App\Mail\InvoicePaid;
 
 class StripeWebhookController extends Controller
 {
@@ -99,6 +102,13 @@ class StripeWebhookController extends Controller
             
             Log::info("Subscription created for User {$userId}, Plan {$planId}");
 
+            // Send Welcome Email
+            $plan = Plan::find($planId);
+            $user = User::find($userId);
+            if ($user && $plan) {
+                Mail::to($user)->send(new SubscriptionWelcome($plan));
+            }
+
         } catch (\Exception $e) {
              Log::error('Error fetching subscription in checkout session completed: ' . $e->getMessage());
         }
@@ -142,6 +152,9 @@ class StripeWebhookController extends Controller
                          'current_period_end' => Carbon::createFromTimestamp($stripeSubscription->current_period_end),
                      ]);
                      Log::info("Subscription updated via Invoice for User {$user->id}");
+                     
+                     // Send Invoice Paid Email
+                     Mail::to($user)->send(new InvoicePaid(Invoice::where('stripe_invoice_id', $invoice->id)->first()));
                  } catch (\Exception $e) {
                       Log::error('Error updating subscription in invoice payment succeeded: ' . $e->getMessage());
                  }

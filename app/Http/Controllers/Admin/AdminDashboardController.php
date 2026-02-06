@@ -20,11 +20,17 @@ class AdminDashboardController extends Controller
             ->take(8)
             ->get(['id', 'name', 'email', 'email_verified_at', 'created_at']);
 
+        // Billing Stats
+        $totalRevenue = \App\Models\Invoice::where('status', 'paid')->sum('amount');
+        $activeSubscribers = \App\Models\Subscription::where('status', 'active')->count();
+
         return view('admin.dashboard', compact(
             'userCount',
             'verifiedCount',
             'twofaCount',
-            'recentUsers'
+            'recentUsers',
+            'totalRevenue',
+            'activeSubscribers'
         ));
     }
 }

@@ -33,23 +33,29 @@
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {{-- Stats --}}
                 <div class="col-span-2 space-y-4">
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="p-4 bg-zinc-950/50 rounded-lg border border-zinc-800">
+                            <div class="text-sm font-medium text-zinc-400">Total Revenue</div>
+                            <div class="mt-2 text-3xl font-bold text-emerald-400">${{ number_format($totalRevenue, 2) }}</div>
+                            <div class="text-xs text-zinc-500 mt-1">Lifetime earnings</div>
+                        </div>
+
+                        <div class="p-4 bg-zinc-950/50 rounded-lg border border-zinc-800">
+                            <div class="text-sm font-medium text-zinc-400">Active Subscribers</div>
+                            <div class="mt-2 text-3xl font-bold text-indigo-400">{{ number_format($activeSubscribers) }}</div>
+                            <div class="text-xs text-zinc-500 mt-1">Current active plans</div>
+                        </div>
+
                         <div class="p-4 bg-zinc-950/50 rounded-lg border border-zinc-800">
                             <div class="text-sm font-medium text-zinc-400">Users</div>
-                            <div class="mt-2 text-3xl font-bold text-indigo-400">{{ number_format($userCount) }}</div>
+                            <div class="mt-2 text-3xl font-bold text-white">{{ number_format($userCount) }}</div>
                             <div class="text-xs text-zinc-500 mt-1">Total registered</div>
                         </div>
 
                         <div class="p-4 bg-zinc-950/50 rounded-lg border border-zinc-800">
                             <div class="text-sm font-medium text-zinc-400">Verified</div>
-                            <div class="mt-2 text-3xl font-bold text-green-400">{{ number_format($verifiedCount) }}</div>
+                            <div class="mt-2 text-3xl font-bold text-zinc-200">{{ number_format($verifiedCount) }}</div>
                             <div class="text-xs text-zinc-500 mt-1">Email verified</div>
-                        </div>
-
-                        <div class="p-4 bg-zinc-950/50 rounded-lg border border-zinc-800">
-                            <div class="text-sm font-medium text-zinc-400">2FA Enabled</div>
-                            <div class="mt-2 text-3xl font-bold text-white">{{ number_format($twofaCount) }}</div>
-                            <div class="text-xs text-zinc-500 mt-1">Security active</div>
                         </div>
                     </div>
 
