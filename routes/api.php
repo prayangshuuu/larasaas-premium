@@ -46,6 +46,13 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
             // STOP is always available to exit impersonation
             Route::post('impersonate/stop', [ApiAdminImpersonationController::class, 'stop'])
                 ->name('impersonate.stop');
+
+            // Subscription Plans
+            Route::apiResource('plans', \App\Http\Controllers\Admin\PlanController::class);
+
+            // System Settings (Subscription Module)
+            Route::put('system-settings', [\App\Http\Controllers\Admin\SystemSettingController::class, 'update'])->name('system-settings.update');
+            Route::get('system-settings/{key}', [\App\Http\Controllers\Admin\SystemSettingController::class, 'show'])->name('system-settings.show');
         });
     });
 });

@@ -151,8 +151,31 @@ class User extends Authenticatable
     /**
      * Scope: not banned users.
      */
+    /**
+     * Scope: not banned users.
+     */
     public function scopeNotBanned(Builder $query): Builder
     {
         return $query->whereNull('banned_at');
+    }
+
+    /* -----------------------------------------------------------------
+     | Relationships
+     |-----------------------------------------------------------------*/
+
+    /**
+     * Get the subscriptions for the user.
+     */
+    public function subscriptions(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Subscription::class);
+    }
+
+    /**
+     * Get the invoices for the user.
+     */
+    public function invoices(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Invoice::class);
     }
 }
