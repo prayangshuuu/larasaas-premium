@@ -223,6 +223,46 @@
             </form>
         </div>
 
+        {{-- Subscription Settings --}}
+        <div class="bg-zinc-900 border border-zinc-800 shadow-xl rounded-xl p-6 sm:p-8">
+            <h2 class="text-xl font-semibold text-white">Subscription Settings</h2>
+            <p class="text-sm text-zinc-400 mt-1">Configure global billing and payment module behavior.</p>
+
+            <form method="POST" action="{{ route('admin.settings.subscription.update') }}" class="mt-8 space-y-6">
+                @csrf
+                
+                <div class="flex items-center justify-between py-4 border-b border-zinc-800/50">
+                    <div>
+                        <div class="font-medium text-zinc-200">enable Subscription Module</div>
+                        <div class="text-sm text-zinc-500">Enable or disable the entire subscription system.</div>
+                    </div>
+                    <label class="flex items-center cursor-pointer">
+                        <input type="hidden" name="subscription_module_enabled" value="0">
+                        <input type="checkbox" name="subscription_module_enabled" value="1"
+                               class="rounded border-zinc-700 bg-zinc-800 text-indigo-600 focus:ring-indigo-600/50 h-5 w-5"
+                               {{ old('subscription_module_enabled', (int)($features['subscription_module_enabled'] ?? 0)) ? 'checked' : '' }}>
+                    </label>
+                </div>
+
+                <div class="flex items-center justify-between py-4">
+                    <div>
+                        <div class="font-medium text-zinc-200">Enable Stripe Payments</div>
+                        <div class="text-sm text-zinc-500">Enable real payment processing via Stripe.</div>
+                    </div>
+                    <label class="flex items-center cursor-pointer">
+                        <input type="hidden" name="stripe_payment_enabled" value="0">
+                        <input type="checkbox" name="stripe_payment_enabled" value="1"
+                               class="rounded border-zinc-700 bg-zinc-800 text-indigo-600 focus:ring-indigo-600/50 h-5 w-5"
+                               {{ old('stripe_payment_enabled', (int)($features['stripe_payment_enabled'] ?? 0)) ? 'checked' : '' }}>
+                    </label>
+                </div>
+
+                <div class="flex justify-end pt-4">
+                    <button type="submit" class="inline-flex items-center justify-center rounded-md bg-indigo-600 px-6 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 transition-colors">Save Subscription Settings</button>
+                </div>
+            </form>
+        </div>
+
         {{-- Feature Flags --}}
         <div class="bg-zinc-900 border border-zinc-800 shadow-xl rounded-xl p-6 sm:p-8">
             <h2 class="text-xl font-semibold text-white">Features</h2>

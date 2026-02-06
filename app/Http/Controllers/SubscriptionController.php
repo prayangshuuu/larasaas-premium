@@ -22,12 +22,20 @@ class SubscriptionController extends Controller
     {
         $user = $request->user();
 
-        // 1. Create Checkout Session
-        // Note: Service handles customer creation and dynamic price creation if needed.
-        $session = $this->stripeService->createCheckoutSession($user, $plan);
+        try {
+            // 1. Create Checkout Session
+            // Note: Service handles customer creation and dynamic price creation if needed.
+            $session = $this->stripeService->createCheckoutSession($user, $plan);
 
-        // 2. Redirect to Stripe
-        return redirect()->away($session->url);
+            // 2. Redirect to Stripe
+            return redirect()->away($session->url);
+        } catch (\Stripe\Exception\AuthenticationException $e) {
+            \Illuminate\Support\Facades\Log::error('Stripe Authentication Error: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Billing configuration error: Invalid API Keys. Please contact support.');
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Stripe Checkout Error: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Unable to initiate checkout: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -48,9 +56,18 @@ class SubscriptionController extends Controller
     /**
      * Resume subscription (Optional placeholder).
      */
+    /**
+     * Resume subscription.
+     */
     public function resume(Request $request)
     {
-        // Implementation for resuming would go here (e.g., Stripe update subscription to remove cancel_at_period_end)
-        return redirect()->back()->with('info', 'Resume feature not yet implemented.');
+        $user = $request->user();
+
+        try {
+            $this->stripeService->resumeSubscription($user);
+            return redirect()->route('dashboard')->with('success', 'Subscription resumed successfully.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Unable to resume subscription: ' . $e->getMessage());
+        }
     }
 }

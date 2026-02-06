@@ -88,6 +88,7 @@ Route::middleware(['auth', 'verified', 'not-banned', 'subscription.enabled'])
     ->group(function () {
         // Billing Hub (Plans / Manage)
         Route::get('/', [\App\Http\Controllers\BillingController::class, 'index'])->name('index');
+        Route::get('/portal', [\App\Http\Controllers\BillingController::class, 'portal'])->name('portal');
 
         // Subscription Management
         Route::get('/checkout/{plan}', [SubscriptionController::class, 'checkout'])->name('checkout');
@@ -102,13 +103,15 @@ Route::middleware(['auth', 'verified', 'not-banned', 'subscription.enabled'])
         // Success/Cancel Redirects from Stripe
         Route::get('/success', fn() => view('billing.success'))->name('success');
         Route::get('/cancel', fn() => view('billing.cancel'))->name('cancel-return');
+
+        // Example: Rate limiting based on plan features
+        Route::get('/test-limit', function () {
+            return "You have access to this feature!";
+        })->middleware('plan.limit:ai_generations');
     });
 
 // Stripe Webook (CSRF excluded in bootstrap/app.php)
-Route::post('stripe/webhook', function () {
-    // Webhook logic here or controller invocation
-    return response('Webhook Handled', 200);
-})->name('stripe.webhook');
+// Stripe Webhook is handled in api.php
 
 /*
 |--------------------------------------------------------------------------
@@ -187,6 +190,10 @@ Route::middleware(['auth', 'verified', 'admin', 'not-banned', 'impersonation'])
             Route::post('/{user}/unban',   'unban')->name('unban');
             Route::post('/{user}/promote', 'promote')->name('promote');
             Route::post('/{user}/demote',  'demote')->name('demote');
+            
+            // Manual Subscription Management (Admin)
+            Route::post('/{user}/subscriptions', [\App\Http\Controllers\Admin\UserSubscriptionController::class, 'store'])->name('subscriptions.store');
+            Route::delete('/{user}/subscriptions/{subscription}', [\App\Http\Controllers\Admin\UserSubscriptionController::class, 'destroy'])->name('subscriptions.destroy');
 
             // Bulk actions (ids[]; action=ban|unban|delete|promote|demote)
             Route::post('/bulk', 'bulk')->name('bulk');

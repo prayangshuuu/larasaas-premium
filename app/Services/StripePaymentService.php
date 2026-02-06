@@ -2,43 +2,54 @@
 
 namespace App\Services;
 
-use App\Models\Plan;
-use App\Models\SystemSetting;
 use App\Models\User;
-use Exception;
-use Stripe\StripeClient;
+use App\Models\Plan;
 use Illuminate\Support\Facades\Log;
+use Stripe\StripeClient;
 
 class StripePaymentService
 {
-    protected StripeClient $stripe;
+    protected $stripe;
+    protected $isMock = false;
 
     public function __construct()
     {
-        // Optional: Check if Stripe is enabled in settings before initializing
-        // detailed check can be done in methods if we want to allow read-only ops
         $secret = config('services.stripe.secret');
+
         if (!$secret) {
-            // We might not want to throw immediately on construct if we use this service for other things, 
-            // but for now it's safer to ensure config exists.
-            // Log::warning('Stripe secret key is not configured.');
+            throw new \RuntimeException('Stripe Secret Key is missing. Please set STRIPE_SECRET in your .env file.');
         }
-        
-        $this->stripe = new StripeClient($secret ?? 'sk_test_placeholder');
+
+        // Mock detection
+        if (str_contains($secret, 'placeholder')) {
+            $this->isMock = true;
+            // No need to instantiate real client if mocking
+            return;
+        }
+
+        $this->stripe = new StripeClient($secret);
     }
 
     /**
-     * Create or Retrieve Stripe Customer for a User.
+     * Create or retrieve Stripe Customer for User.
      */
-    public function getCustomer(User $user)
+    public function createCustomer(User $user)
     {
-         if ($user->stripe_id) {
-            try {
-                return $this->stripe->customers->retrieve($user->stripe_id);
-            } catch (\Exception $e) {
-                // If deleted in Stripe but exists in DB, ignore and create new
-                Log::warning("Stripe customer {$user->stripe_id} not found, creating new one.");
+        if ($this->isMock) {
+            if (!$user->stripe_id) {
+                // Generate a fake stripe ID
+                $user->update(['stripe_id' => 'cus_mock_' . uniqid()]);
             }
+            // Return a mock object compatible with Stripe Customer
+            return (object) [
+                'id' => $user->stripe_id,
+                'email' => $user->email,
+                'name' => $user->name,
+            ];
+        }
+
+        if ($user->stripe_id) {
+            return $this->stripe->customers->retrieve($user->stripe_id);
         }
 
         $customer = $this->stripe->customers->create([
@@ -49,40 +60,36 @@ class StripePaymentService
             ],
         ]);
 
-        $user->stripe_id = $customer->id;
-        $user->save();
+        $user->update(['stripe_id' => $customer->id]);
 
         return $customer;
     }
 
     /**
-     * Create a Checkout Session for a Plan subscription.
-     *
-     * @param User $user
-     * @param Plan $plan
-     * @return \Stripe\Checkout\Session
-     * @throws Exception
+     * Create a Checkout Session for a subscription.
      */
     public function createCheckoutSession(User $user, Plan $plan)
     {
-        $customer = $this->getCustomer($user);
+        $this->createCustomer($user);
 
-        // 1. Ensure Plan has a Stripe Price ID
-        if (!$plan->stripe_price_id) {
-            $this->createStripePriceForPlan($plan);
+        if ($this->isMock) {
+            // Return mock session
+            return (object) [
+                'id' => 'cs_mock_' . uniqid(),
+                'url' => route('billing.index', ['checkout' => 'success']),
+            ];
         }
 
-        // 2. Create Session
-        $session = $this->stripe->checkout->sessions->create([
-            'customer' => $customer->id,
-            'success_url' => url('/billing/success?session_id={CHECKOUT_SESSION_ID}'),
-            'cancel_url' => url('/billing/cancel'),
+        return $this->stripe->checkout->sessions->create([
+            'customer' => $user->stripe_id,
             'payment_method_types' => ['card'],
-            'mode' => 'subscription',
             'line_items' => [[
                 'price' => $plan->stripe_price_id,
                 'quantity' => 1,
             ]],
+            'mode' => 'subscription',
+            'success_url' => route('billing.index', ['checkout' => 'success']),
+            'cancel_url' => route('billing.index', ['checkout' => 'cancel']),
             'metadata' => [
                 'user_id' => $user->id,
                 'plan_id' => $plan->id,
@@ -91,63 +98,91 @@ class StripePaymentService
                 'metadata' => [
                     'user_id' => $user->id,
                     'plan_id' => $plan->id,
-                ]
-            ]
+                ],
+            ],
         ]);
-
-        return $session;
     }
 
     /**
-     * Cancel the user's active subscription at period end.
-     *
-     * @param User $user
-     * @return void
-     * @throws Exception
+     * Cancel a subscription at period end.
      */
     public function cancelSubscription(User $user)
     {
-        // Find active subscription from DB
-        $subscription = $user->subscriptions()->where('status', 'active')->first();
+        $subscription = $user->subscriptions()->where('status', 'active')->firstOrFail();
 
-        if (!$subscription || !$subscription->stripe_subscription_id) {
-            throw new Exception("No active subscription found to cancel.");
+        if ($this->isMock) {
+            $subscription->update(['status' => 'canceled']);
+            return (object) ['id' => $subscription->stripe_subscription_id, 'status' => 'canceled'];
         }
 
-        // Call Stripe
-        $this->stripe->subscriptions->update(
+        $stripeSub = $this->stripe->subscriptions->update(
             $subscription->stripe_subscription_id,
             ['cancel_at_period_end' => true]
         );
+
+        // Local update to reflect pending cancellation (grace period)
+        // We might want to keep status 'active' but relying on specific flag or check 'current_period_end'
+        // For simplicity, we keep it as is, or mark a local "cancels_at" if column existed. 
+        // Standard Stripe logic: It stays active until period end.
+        // We can optionally set a local status like 'canceled' if your app logic treats grace period that way, 
+        // but usually 'active' + 'ends_at' future date is better. 
+        // Given the prompt asks to check `$subscription->status === 'canceled'` for grace period, 
+        // I will update the status to 'canceled' BUT ensure logic knows it's grace period if end date is future.
+        // ACTUALLY: The prompt view logic implies:
+        // "Active" check: @if($subscription->status === 'active')
+        // "Generic Canceled/Grace": @if($subscription->status === 'canceled')
+        // So I will set it to 'canceled' here to match the requested View logic.
+        
+        $subscription->update([
+            'status' => 'canceled', 
+            // 'current_period_end' is already set to the end date
+        ]);
+
+        return $stripeSub;
     }
 
     /**
-     * Helper: Create Product and Price in Stripe for a Plan
-     *
-     * @param Plan $plan
-     * @return void
+     * Resume a canceled subscription.
      */
-    public function createStripePriceForPlan(Plan $plan)
+    public function resumeSubscription(User $user)
     {
-        // Create Product
-        $product = $this->stripe->products->create([
-            'name' => $plan->name,
-            'metadata' => [
-                'plan_id' => $plan->id,
-            ],
-        ]);
+        // Find latest canceled subscription that hasn't expired yet
+        $subscription = $user->subscriptions()
+            ->where('status', 'canceled')
+            ->where('current_period_end', '>', now())
+            ->firstOrFail();
 
-        // Create Price
-        $price = $this->stripe->prices->create([
-            'unit_amount' => (int)($plan->price * 100), // cents
-            'currency' => strtolower($plan->currency),
-            'recurring' => ['interval' => $plan->interval],
-            'product' => $product->id,
-        ]);
+        if ($this->isMock) {
+            $subscription->update(['status' => 'active']);
+            return (object) ['id' => $subscription->stripe_subscription_id, 'status' => 'active'];
+        }
 
-        // Update Plan
-        $plan->update([
-            'stripe_price_id' => $price->id,
+        $stripeSub = $this->stripe->subscriptions->update(
+            $subscription->stripe_subscription_id,
+            ['cancel_at_period_end' => false]
+        );
+
+        $subscription->update(['status' => 'active']);
+
+        return $stripeSub;
+    }
+
+    /**
+     * Create a Stripe Billing Portal session.
+     */
+    public function createBillingPortalSession(User $user)
+    {
+        $this->createCustomer($user);
+
+        if ($this->isMock) {
+            return (object) [
+                'url' => route('billing.index', ['portal' => 'mock_success']),
+            ];
+        }
+
+        return $this->stripe->billingPortal->sessions->create([
+            'customer' => $user->stripe_id,
+            'return_url' => route('billing.index'),
         ]);
     }
 }

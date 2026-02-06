@@ -41,6 +41,9 @@ class StripeWebhookController extends Controller
             case 'invoice.payment_failed':
                 $this->handleInvoicePaymentFailed($event->data->object);
                 break;
+            case 'checkout.session.completed':
+                $this->handleCheckoutSessionCompleted($event->data->object);
+                break;
             case 'customer.subscription.deleted':
                 $this->handleSubscriptionDeleted($event->data->object);
                 break;
@@ -50,6 +53,55 @@ class StripeWebhookController extends Controller
         }
 
         return response('Webhook Handled', 200);
+    }
+
+    /**
+     * Handle Checkout Session Completed.
+     * This is where we strictly create the subscription record.
+     */
+    /**
+     * Handle Checkout Session Completed.
+     * This is where we strictly create the subscription record.
+     */
+    protected function handleCheckoutSessionCompleted($session)
+    {
+        Log::info('Handling checkout.session.completed', ['session_id' => $session->id]);
+
+        if ($session->mode !== 'subscription') {
+            return;
+        }
+
+        $userId = $session->metadata->user_id ?? null;
+        $planId = $session->metadata->plan_id ?? null;
+
+        if (!$userId || !$planId) {
+            Log::error('Missing user_id or plan_id in Checkout Session metadata.');
+            return;
+        }
+
+        $subscriptionId = $session->subscription;
+        
+        // Fetch subscription details from Stripe to get period end
+        try {
+            $stripe = new \Stripe\StripeClient(config('services.stripe.secret'));
+            $stripeSubscription = $stripe->subscriptions->retrieve($subscriptionId);
+
+            Subscription::updateOrCreate(
+                ['stripe_subscription_id' => $subscriptionId],
+                [
+                    'user_id' => $userId,
+                    'plan_id' => $planId,
+                    'status' => 'active', 
+                    // Important: Use the period end from Stripe
+                    'current_period_end' => Carbon::createFromTimestamp($stripeSubscription->current_period_end),
+                ]
+            );
+            
+            Log::info("Subscription created for User {$userId}, Plan {$planId}");
+
+        } catch (\Exception $e) {
+             Log::error('Error fetching subscription in checkout session completed: ' . $e->getMessage());
+        }
     }
 
     protected function handleInvoicePaymentSucceeded($invoice)
@@ -69,44 +121,37 @@ class StripeWebhookController extends Controller
                 'user_id' => $user->id,
                 'amount' => $invoice->amount_paid / 100, // Stripe uses cents
                 'status' => 'paid',
-                'invoice_pdf_url' => $invoice->hosted_invoice_url, // or invoice_pdf
+                'invoice_pdf_url' => $invoice->hosted_invoice_url ?? $invoice->invoice_pdf, 
                 'paid_at' => Carbon::createFromTimestamp($invoice->status_transitions->paid_at ?? time()),
             ]
         );
 
         // Update Subscription
-        // Invoices for subscriptions usually have 'subscription' field
         if ($invoice->subscription) {
             $subscription = Subscription::where('stripe_subscription_id', $invoice->subscription)->first();
 
-            // If local subscription doesn't exist yet (first payment), we might need to create it here
-            // OR strict assumption: It was created during Checkout session completion (checkout.session.completed)
-            // But prompt says: "Update subscriptions table: Set status to active and update current_period_end"
-            // Let's safe-guard/find by matching user/plan if strictly relying on this event alone is tricky for Creation.
-            // Assumption: logic assumes subscription row exists or we create it.
-            // Prompt doesn't ask for 'checkout.session.completed'. So we must handle finding it.
-            // If checking out via Session, the subscription ID is generated then.
-            // We'll update if exists.
+            if ($subscription) {
+                 // Update valid status and extend period
+                 // We can fetch the subscription object to be 100% sure about the new period end
+                 try {
+                     $stripe = new \Stripe\StripeClient(config('services.stripe.secret'));
+                     $stripeSubscription = $stripe->subscriptions->retrieve($invoice->subscription);
 
-             if ($subscription) {
-                 // Get latest period end from the line item or fetch subscription from Stripe
-                 // Simplified: relying on invoice line period or just updating status.
-                 // Ideally, we'd fetch the subscription object to get current_period_end reliably.
-                 // For now, let's mark active.
-                 $subscription->update([
-                     'status' => 'active',
-                     // 'current_period_end' => ... // Typically fetched from subscription object or invoice lines
-                 ]);
+                     $subscription->update([
+                         'status' => 'active',
+                         'current_period_end' => Carbon::createFromTimestamp($stripeSubscription->current_period_end),
+                     ]);
+                     Log::info("Subscription updated via Invoice for User {$user->id}");
+                 } catch (\Exception $e) {
+                      Log::error('Error updating subscription in invoice payment succeeded: ' . $e->getMessage());
+                 }
 
-                 // Optional: Fetch fresh subscription data to be precise about period end
-                 // $stripe = new \Stripe\StripeClient(config('services.stripe.secret'));
-                 // $s = $stripe->subscriptions->retrieve($invoice->subscription);
-                 // $subscription->update(['current_period_end' => Carbon::createFromTimestamp($s->current_period_end)]);
             } else {
-                 // Fallback: If creation logic wasn't in Checkout success handler (which isn't built yet, service only returns URL),
-                 // we might be expected to create it here.
-                 // For safety in this delivery, I'll log warning. Real apps should handle checkout.session.completed for creation.
-                 Log::warning("Subscription {$invoice->subscription} not found during invoice payment.");
+                 Log::warning("Subscription {$invoice->subscription} not found during invoice payment. It might not be created yet if Checkout hook hasn't fired.");
+                 // Should we create it here? 
+                 // Ideally Checkout Session handles creation. But redundancy is safe if we had metadata. 
+                 // Invoice object has metadata but it might be on the subscription line item.
+                 // For now, let's rely on Checkout Session or a retry.
             }
         }
     }
@@ -121,7 +166,7 @@ class StripeWebhookController extends Controller
             [
                 'user_id' => $user->id,
                 'amount' => $invoice->amount_due / 100,
-                'status' => 'pending', // or 'past_due' logic on subscription
+                'status' => 'pending', 
                 'invoice_pdf_url' => $invoice->hosted_invoice_url,
                 'paid_at' => null,
             ]

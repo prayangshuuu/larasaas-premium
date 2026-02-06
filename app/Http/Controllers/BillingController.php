@@ -3,32 +3,51 @@
 namespace App\Http\Controllers;
 
 use App\Models\Plan;
+use App\Services\StripePaymentService;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
 
 class BillingController extends Controller
 {
     /**
-     * Display the billing hub.
-     * Checks if the user is subscribed and returns the appropriate view.
+     * Redirect to Stripe Billing Portal.
      */
-    public function index(Request $request): View
+    public function portal(Request $request, StripePaymentService $paymentService)
+    {
+        $user = $request->user();
+        
+        try {
+            $session = $paymentService->createBillingPortalSession($user);
+            return redirect($session->url);
+        } catch (\Exception $e) {
+            return back()->with('error', 'Unable to access billing portal: ' . $e->getMessage());
+        }
+    }
+    /**
+     * Show the billing hub.
+     * If subscribed, show management view.
+     * If not, show plans.
+     */
+    public function index(Request $request)
     {
         $user = $request->user();
 
-        // If user is subscribed (valid subscription)
-        if ($user->subscribed('default')) {
-            $subscription = $user->subscription('default');
-            $plan = Plan::where('stripe_id', $subscription->stripe_price)->first();
-            
+        // Check for active subscription
+        // We consider 'active' or 'canceled' (grace period) as having a subscription to manage.
+        // Assuming single subscription logic for now.
+        $subscription = $user->subscriptions()
+            ->whereIn('status', ['active', 'past_due', 'canceled'])
+            ->latest()
+            ->first();
+
+        if ($subscription && $subscription->current_period_end > now()) {
+            // User is subscribed or on grace period
             return view('billing.manage', [
                 'subscription' => $subscription,
-                'plan' => $plan, // Might be null if plan was deleted locally but active in Stripe
-                'invoices' => $user->invoices(), // Pass invoices to manage view directly or link to invoice index
+                'plan' => $subscription->plan,
             ]);
         }
 
-        // If user is NOT subscribed, show plans
+        // Not subscribed or expired
         $plans = Plan::where('is_active', true)->get();
 
         return view('billing.plans', [

@@ -14,3 +14,6 @@ use Illuminate\Support\Facades\Artisan;
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
+
+// Schedule daily subscription expiry check
+\Illuminate\Support\Facades\Schedule::command('subscription:check-expiry')->daily();

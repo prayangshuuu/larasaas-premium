@@ -21,6 +21,14 @@ class PlanController extends Controller
     }
 
     /**
+     * Show the form for creating a new resource.
+     */
+    public function create()
+    {
+        return view('admin.plans.create');
+    }
+
+    /**
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
@@ -30,7 +38,8 @@ class PlanController extends Controller
             'price' => 'required|numeric|min:0',
             'currency' => 'required|string|size:3',
             'interval' => 'required|in:month,year',
-            'features' => 'nullable|array', // Ensure this comes as array from frontend
+            'features' => 'nullable|string', // Expecting JSON string from generic frontend
+            'stripe_price_id' => 'nullable|string|max:255',
             'is_active' => 'boolean',
         ]);
 
@@ -41,9 +50,30 @@ class PlanController extends Controller
         // Generate slug from name
         $validated['slug'] = Str::slug($validated['name']);
 
+        // Handle JSON features decode
+        if (!empty($validated['features'])) {
+            $decoded = json_decode($validated['features'], true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $validated['features'] = $decoded;
+            } else {
+                 // Fallback or empty if invalid JSON
+                $validated['features'] = [];
+            }
+        } else {
+             $validated['features'] = [];
+        }
+
         Plan::create($validated);
 
         return redirect()->route('admin.plans.index')->with('success', 'Plan created successfully.');
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(Plan $plan)
+    {
+        return view('admin.plans.edit', compact('plan'));
     }
 
     /**
@@ -56,7 +86,8 @@ class PlanController extends Controller
             'price' => 'required|numeric|min:0',
             'currency' => 'required|string|size:3',
             'interval' => 'required|in:month,year',
-            'features' => 'nullable|array',
+            'features' => 'nullable|string',
+            'stripe_price_id' => 'nullable|string|max:255',
             'is_active' => 'boolean',
         ]);
         
@@ -65,6 +96,16 @@ class PlanController extends Controller
 
         // Only update slug if name changed? Or always? Usually sync.
         $validated['slug'] = Str::slug($validated['name']);
+
+        // Handle JSON features decode
+        if (isset($validated['features'])) {
+            $decoded = json_decode($validated['features'], true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $validated['features'] = $decoded;
+            } else {
+                $validated['features'] = [];
+            }
+        }
 
         $plan->update($validated);
 
