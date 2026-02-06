@@ -1,6 +1,6 @@
 {{-- resources/views/layouts/guest.blade.php --}}
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="light">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full bg-white">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -15,132 +15,101 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     
     <script>
-        // Check local storage for theme preference
-        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.setAttribute('data-theme', 'dark');
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark')
         } else {
-            document.documentElement.setAttribute('data-theme', 'light');
+            document.documentElement.classList.remove('dark')
         }
     </script>
-    
     <style>[x-cloak]{display:none!important}</style>
 </head>
-<body class="bg-base-200 font-sans antialiased text-base-content h-screen">
+<body class="h-full font-sans antialiased text-slate-900">
 
-{{-- Modern Split-Screen Layout --}}
-<div class="min-h-screen flex">
-    
-    {{-- LEFT SIDE: Branding & Visual --}}
-    <div class="hidden lg:flex lg:w-1/2 bg-primary relative overflow-hidden flex-col justify-between p-12 text-primary-content">
+<div class="flex min-h-full">
+    {{-- Left Side: Branding --}}
+    <div class="hidden lg:flex lg:w-1/2 lg:flex-col lg:justify-between lg:bg-primary-600 lg:p-12 xl:p-16 relative overflow-hidden">
         {{-- Background Pattern --}}
         <div class="absolute inset-0 opacity-20 pointer-events-none">
-            <div class="absolute top-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl mix-blend-overlay"></div>
-            <div class="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl mix-blend-overlay"></div>
+            <div class="absolute -top-24 -left-24 w-96 h-96 bg-white rounded-full blur-3xl mix-blend-overlay"></div>
+            <div class="absolute -bottom-24 -right-24 w-96 h-96 bg-white rounded-full blur-3xl mix-blend-overlay"></div>
         </div>
-        
-        {{-- Content --}}
+
         <div class="relative z-10">
-            {{-- Logo --}}
-            <a href="{{ url('/') }}" class="inline-flex items-center gap-3">
-                <div class="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/30">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                    </svg>
+            <a href="{{ url('/') }}" class="flex items-center gap-3">
+                <div class="p-2 bg-white/20 backdrop-blur-sm rounded-lg border border-white/30">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                 </div>
-                <span class="text-xl font-bold tracking-wide">IELTSBandBooster</span>
+                <span class="text-xl font-bold text-white tracking-tight">IELTSBandBooster</span>
             </a>
         </div>
-        
-        {{-- Main Message --}}
-        <div class="relative z-10 space-y-6 max-w-lg">
-            <h1 class="text-4xl md:text-5xl font-bold leading-tight">
-                Achieve Your Target IELTS Band Score
+
+        <div class="relative z-10 mt-16 max-w-lg">
+            <h1 class="text-4xl font-bold tracking-tight text-white sm:text-5xl mb-6">
+                Achieve Your Target Band Score
             </h1>
-            <p class="text-xl opacity-90 leading-relaxed">
-                Join thousands of students who have successfully prepared for their IELTS exam with our comprehensive platform.
+            <p class="text-lg text-primary-100 leading-relaxed mb-8">
+                Join thousands of students who have verified their skills and achieved their dreams with our AI-powered platform.
             </p>
             
-            {{-- Features --}}
-            <div class="space-y-4 pt-6">
-                <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                        </svg>
-                    </div>
-                    <span class="text-lg">Personalized study plans</span>
-                </div>
-                <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                        </svg>
-                    </div>
-                    <span class="text-lg">Real-time progress tracking</span>
-                </div>
-                <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                        </svg>
-                    </div>
-                    <span class="text-lg">AI-powered feedback</span>
-                </div>
-            </div>
+            <ul class="space-y-4 text-primary-100">
+                <li class="flex items-center gap-3">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                    <span>Personalized AI feedback loops</span>
+                </li>
+                <li class="flex items-center gap-3">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                    <span>Real-time mock test simulations</span>
+                </li>
+                <li class="flex items-center gap-3">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                    <span>Expert-verified study materials</span>
+                </li>
+            </ul>
         </div>
-        
-        {{-- Footer --}}
-        <div class="relative z-10 opacity-70 text-sm">
-            <p>&copy; {{ date('Y') }} IELTSBandBooster. All rights reserved.</p>
+
+        <div class="relative z-10 mt-16 text-sm text-primary-200">
+            &copy; {{ date('Y') }} IELTSBandBooster. All rights reserved.
         </div>
     </div>
-    
-    {{-- RIGHT SIDE: Form Content --}}
-    <div class="flex-1 flex items-center justify-center p-8 bg-base-100">
-        <div class="w-full max-w-md space-y-8">
+
+    {{-- Right Side: Form --}}
+    <div class="flex flex-1 flex-col justify-center px-4 py-12 sm:px-6 lg:bg-white lg:flex-none lg:px-20 xl:px-24 w-full lg:w-1/2">
+        <div class="mx-auto w-full max-w-sm lg:w-96">
             {{-- Mobile Logo --}}
-            <div class="lg:hidden mb-8 text-center">
-                <a href="{{ url('/') }}" class="inline-flex items-center gap-2 justify-center">
-                    <div class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                        </svg>
+            <div class="lg:hidden text-center mb-10">
+                <a href="{{ url('/') }}" class="inline-flex items-center gap-2">
+                    <div class="p-2 bg-primary-600 rounded-lg text-white">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                     </div>
-                    <span class="text-xl font-bold text-base-content">IELTSBandBooster</span>
+                    <span class="text-xl font-bold text-slate-900 tracking-tight">IELTSBandBooster</span>
                 </a>
             </div>
-            
-            {{-- Error Messages --}}
+
+            {{-- Errors --}}
             @if($errors->any())
-                <div class="alert alert-error mb-6 shadow-md">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    <div>
-                        <h3 class="font-bold">Error!</h3>
-                        <div class="text-xs">
-                             <ul class="list-disc list-inside mt-1">
-                                @foreach($errors->all() as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
-                            </ul>
+                <div class="rounded-md bg-red-50 p-4 mb-6 border border-red-200">
+                    <div class="flex">
+                        <div class="shrink-0">
+                            <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-red-800">There were errors with your submission</h3>
+                            <div class="mt-2 text-sm text-red-700">
+                                <ul role="list" class="list-disc space-y-1 pl-5">
+                                    @foreach($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
                         </div>
                     </div>
                 </div>
             @endif
 
-            {{-- Form Content --}}
-            <div class="animate-fade-in w-full">
-                @yield('content')
-            </div>
-            
-            {{-- Theme Toggle (Mobile/Corner) --}}
-            <div class="absolute top-4 right-4">
-                 <label class="swap swap-rotate btn btn-ghost btn-circle">
-                    <!-- this hidden checkbox controls the state -->
-                    <input type="checkbox" class="theme-controller" value="dark" />
-                    <svg class="swap-off fill-current w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M5.64,17l-.71.71a1,1,0,0,0,0,1.41,1,1,0,0,0,1.41,0l.71-.71A1,1,0,0,0,5.64,17ZM5,12a1,1,0,0,0-1-1H3a1,1,0,0,0,0,2H4A1,1,0,0,0,5,12Zm7-7a1,1,0,0,0,1-1V3a1,1,0,0,0-2,0V4A1,1,0,0,0,12,5ZM5.64,7.05a1,1,0,0,0,.7.29,1,1,0,0,0,.71-.29,1,1,0,0,0,0-1.41l-.71-.71A1,1,0,0,0,4.93,6.34Zm12,.29a1,1,0,0,0,.7-.29l.71-.71a1,1,0,1,0-1.41-1.41L17,5.64a1,1,0,0,0,0,1.41A1,1,0,0,0,17.66,7.34ZM21,11H20a1,1,0,0,0,0,2h1a1,1,0,0,0,0-2Zm-9,8a1,1,0,0,0-1,1v1a1,1,0,0,0,2,0V20A1,1,0,0,0,12,19ZM18.36,17A1,1,0,0,0,17,18.36l.71.71a1,1,0,0,0,1.41,0,1,1,0,0,0,0-1.41ZM12,6.5A5.5,5.5,0,1,0,17.5,12,5.51,5.51,0,0,0,12,6.5Zm0,9A3.5,3.5,0,1,1,15.5,12,3.5,3.5,0,0,1,12,15.5Z"/></svg>
-                    <svg class="swap-on fill-current w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21.64,13a1,1,0,0,0-1.05-.14,8.05,8.05,0,0,1-3.37.73A8.15,8.15,0,0,1,9.08,5.49a8.59,8.59,0,0,1,.25-2A1,1,0,0,0,8,2.36,10.14,10.14,0,1,0,22,14.05,1,1,0,0,0,21.64,13Zm-9.5,6.69A8.14,8.14,0,0,1,7.08,5.22v.27A10.15,10.15,0,0,0,17.22,15.63a9.79,9.79,0,0,0,2.1-.22A8.11,8.11,0,0,1,12.14,19.73Z"/></svg>
-                 </label>
-            </div>
+            {{-- Main Content --}}
+            @yield('content')
         </div>
     </div>
 </div>

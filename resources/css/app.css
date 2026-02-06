@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
-@plugin "daisyui";
 
 @source "../views";
+
 
 /* 
   Custom styles can be minimal now as we rely on DaisyUI components 

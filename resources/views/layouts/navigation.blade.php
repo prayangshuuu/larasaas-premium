@@ -2,15 +2,13 @@
 <style>[x-cloak]{display:none!important}</style>
 
 @php
-    $appName = config('app.name', 'IELTSBandBooster');
-    // Ensure we have a user for the avatar
     $user = Auth::user();
 @endphp
 
 <nav x-data="{ mobileOpen: false, scrolled: false }"
      @scroll.window="scrolled = (window.pageYOffset > 20)"
-     :class="{ 'bg-base-100/80 backdrop-blur-md shadow-sm': scrolled, 'bg-base-100 border-b border-base-300': !scrolled }"
-     class="sticky top-0 z-50 transition-all duration-300 border-b border-base-300">
+     class="sticky top-0 z-50 w-full border-b border-slate-200 transition-all duration-300"
+     :class="{ 'bg-white/80 backdrop-blur-md shadow-sm': scrolled, 'bg-white': !scrolled }">
     
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
@@ -18,8 +16,13 @@
             {{-- Logo --}}
             <div class="flex">
                 <div class="shrink-0 flex items-center">
-                    <a href="{{ route('dashboard') }}" class="btn btn-ghost text-xl gap-2 normal-case px-0 hover:bg-transparent">
-                        <span class="text-primary font-bold text-2xl">IELTS</span><span class="font-semibold text-base-content">BandBooster</span>
+                    <a href="{{ route('dashboard') }}" class="flex items-center gap-2 group">
+                        <div class="p-1.5 bg-primary-600 rounded-lg text-white group-hover:bg-primary-700 transition-colors">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                        </div>
+                        <span class="text-xl font-bold tracking-tight text-slate-900 group-hover:text-primary-600 transition-colors">
+                            IELTS<span class="font-medium text-slate-600">BandBooster</span>
+                        </span>
                     </a>
                 </div>
             </div>
@@ -27,24 +30,39 @@
             {{-- Desktop Actions --}}
             <div class="hidden sm:flex sm:items-center sm:gap-4">
                 
-                {{-- Theme Toggle (Alpine) --}}
-                <div title="Toggle Theme" class="tooltip tooltip-bottom">
-                    <label class="swap swap-rotate btn btn-ghost btn-circle btn-sm">
-                        <input type="checkbox" class="theme-controller" value="dark" />
-                        <svg class="swap-off fill-current w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M5.64,17l-.71.71a1,1,0,0,0,0,1.41,1,1,0,0,0,1.41,0l.71-.71A1,1,0,0,0,5.64,17ZM5,12a1,1,0,0,0-1-1H3a1,1,0,0,0,0,2H4A1,1,0,0,0,5,12Zm7-7a1,1,0,0,0,1-1V3a1,1,0,0,0-2,0V4A1,1,0,0,0,12,5ZM5.64,7.05a1,1,0,0,0,.7.29,1,1,0,0,0,.71-.29,1,1,0,0,0,0-1.41l-.71-.71A1,1,0,0,0,4.93,6.34Zm12,.29a1,1,0,0,0,.7-.29l.71-.71a1,1,0,1,0-1.41-1.41L17,5.64a1,1,0,0,0,0,1.41A1,1,0,0,0,17.66,7.34ZM21,11H20a1,1,0,0,0,0,2h1a1,1,0,0,0,0-2Zm-9,8a1,1,0,0,0-1,1v1a1,1,0,0,0,2,0V20A1,1,0,0,0,12,19ZM18.36,17A1,1,0,0,0,17,18.36l.71.71a1,1,0,0,0,1.41,0,1,1,0,0,0,0-1.41ZM12,6.5A5.5,5.5,0,1,0,17.5,12,5.51,5.51,0,0,0,12,6.5Zm0,9A3.5,3.5,0,1,1,15.5,12,3.5,3.5,0,0,1,12,15.5Z"/></svg>
-                        <svg class="swap-on fill-current w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21.64,13a1,1,0,0,0-1.05-.14,8.05,8.05,0,0,1-3.37.73A8.15,8.15,0,0,1,9.08,5.49a8.59,8.59,0,0,1,.25-2A1,1,0,0,0,8,2.36,10.14,10.14,0,1,0,22,14.05,1,1,0,0,0,21.64,13Zm-9.5,6.69A8.14,8.14,0,0,1,7.08,5.22v.27A10.15,10.15,0,0,0,17.22,15.63a9.79,9.79,0,0,0,2.1-.22A8.11,8.11,0,0,1,12.14,19.73Z"/></svg>
-                    </label>
+                {{-- Theme Switcher (Custom Implementation) --}}
+                <div x-data="{ 
+                        theme: localStorage.theme || 'light',
+                        toggle() {
+                            this.theme = this.theme === 'light' ? 'dark' : 'light';
+                            localStorage.theme = this.theme;
+                            if (this.theme === 'dark') {
+                                document.documentElement.classList.add('dark');
+                            } else {
+                                document.documentElement.classList.remove('dark');
+                            }
+                        }
+                    }"
+                    class="relative"
+                    x-init="$watch('theme', val => console.log('Theme changed to', val))">
+                    
+                    <button @click="toggle()" 
+                            class="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
+                            
+                        <svg x-show="theme === 'light'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                        <svg x-show="theme === 'dark'" x-cloak class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                    </button>
                 </div>
 
-                {{-- Profile Dropdown (Alpine "Headless" Pattern) --}}
+                {{-- Profile Dropdown --}}
                 <div class="relative ml-3" x-data="{ open: false }">
                     <button @click="open = !open" 
                             @click.outside="open = false"
-                            class="btn btn-ghost btn-circle avatar online transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
-                        <div class="w-9 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
-                            <img alt="{{ $user->name }}" 
-                                 src="{{ $user->profile_picture ? Storage::url($user->profile_picture) : 'https://ui-avatars.com/api/?name='.urlencode($user->name) }}" />
-                        </div>
+                            class="flex rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 hover:ring-2 hover:ring-slate-200 transition-all">
+                        <span class="sr-only">Open user menu</span>
+                        <img class="h-9 w-9 rounded-full object-cover border border-slate-200" 
+                             src="{{ $user->profile_picture ? Storage::url($user->profile_picture) : 'https://ui-avatars.com/api/?name='.urlencode($user->name).'&background=6366f1&color=fff' }}" 
+                             alt="{{ $user->name }}" />
                     </button>
 
                     <div x-show="open"
@@ -54,23 +72,21 @@
                          x-transition:leave="transition ease-in duration-75"
                          x-transition:leave-start="opacity-100 scale-100"
                          x-transition:leave-end="opacity-0 scale-95"
-                         class="absolute right-0 z-50 mt-2 w-56 origin-top-right rounded-xl bg-base-100 py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+                         class="absolute right-0 z-50 mt-2 w-56 origin-top-right rounded-lg bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
                          style="display: none;">
                         
-                        <div class="px-4 py-3 border-b border-base-200">
-                            <p class="text-xs text-base-content/70">Signed in as</p>
-                            <p class="truncate text-sm font-semibold text-base-content">{{ $user->email }}</p>
+                        <div class="px-4 py-3 border-b border-slate-100">
+                            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Signed in as</p>
+                            <p class="truncate text-sm font-semibold text-slate-900">{{ $user->email }}</p>
                         </div>
 
-                        <a href="{{ route('profile.edit') }}" class="block px-4 py-2 text-sm text-base-content hover:bg-base-200 transition-colors">
+                        <a href="{{ route('profile.edit') }}" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-primary-600 transition-colors">
                             Profile Settings
                         </a>
                         
-                        {{-- API Tokens link removed as Jetstream is not installed --}}
-
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
-                            <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-error hover:bg-error/10 transition-colors">
+                            <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors">
                                 Log Out
                             </button>
                         </form>
@@ -80,7 +96,9 @@
 
             {{-- Mobile Hamburger --}}
             <div class="-mr-2 flex items-center sm:hidden">
-                <button @click="mobileOpen = !mobileOpen" class="btn btn-ghost btn-circle">
+                <button @click="mobileOpen = !mobileOpen" 
+                        class="inline-flex items-center justify-center p-2 rounded-md text-slate-400 hover:text-slate-500 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500 transition-colors">
+                    <span class="sr-only">Open main menu</span>
                     <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
                         <path :class="{'hidden': mobileOpen, 'inline-flex': !mobileOpen }" class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                         <path :class="{'hidden': !mobileOpen, 'inline-flex': mobileOpen }" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -98,35 +116,35 @@
          x-transition:leave="transition ease-in duration-150"
          x-transition:leave-start="opacity-100 translate-y-0"
          x-transition:leave-end="opacity-0 -translate-y-2"
-         class="sm:hidden border-t border-base-200 bg-base-100 shadow-lg"
+         class="sm:hidden border-t border-slate-200 bg-white"
          @click.outside="mobileOpen = false"
          style="display: none;">
         
         <div class="space-y-1 pt-2 pb-3 px-4">
-            <a href="{{ route('dashboard') }}" class="block rounded-lg py-2 pl-3 pr-4 text-base font-medium {{ request()->routeIs('dashboard') ? 'bg-primary/10 text-primary' : 'text-base-content/70 hover:bg-base-200 hover:text-base-content' }}">
+            <a href="{{ route('dashboard') }}" 
+               class="block rounded-md py-2 px-3 text-base font-medium {{ request()->routeIs('dashboard') ? 'bg-primary-50 text-primary-700 border-l-4 border-primary-600' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
                 Dashboard
             </a>
-            <a href="{{ route('profile.edit') }}" class="block rounded-lg py-2 pl-3 pr-4 text-base font-medium {{ request()->routeIs('profile.edit') ? 'bg-primary/10 text-primary' : 'text-base-content/70 hover:bg-base-200 hover:text-base-content' }}">
+            <a href="{{ route('profile.edit') }}" 
+               class="block rounded-md py-2 px-3 text-base font-medium {{ request()->routeIs('profile.edit') ? 'bg-primary-50 text-primary-700 border-l-4 border-primary-600' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
                 Profile
             </a>
         </div>
 
-        <div class="border-t border-base-200 pb-1 pt-4 px-4 bg-base-100/50">
+        <div class="border-t border-slate-200 pb-3 pt-4 px-4 bg-slate-50">
             <div class="flex items-center gap-3">
-                <div class="avatar">
-                    <div class="w-10 rounded-full">
-                        <img src="{{ $user->profile_picture ? Storage::url($user->profile_picture) : 'https://ui-avatars.com/api/?name='.urlencode($user->name) }}" alt="{{ $user->name }}" />
-                    </div>
+                <div class="shrink-0">
+                    <img class="h-10 w-10 rounded-full border border-slate-200" src="{{ $user->profile_picture ? Storage::url($user->profile_picture) : 'https://ui-avatars.com/api/?name='.urlencode($user->name) }}" alt="{{ $user->name }}" />
                 </div>
                 <div>
-                    <div class="text-base font-medium text-base-content">{{ $user->name }}</div>
-                    <div class="text-sm font-medium text-base-content/70">{{ $user->email }}</div>
+                    <div class="text-base font-medium text-slate-800">{{ $user->name }}</div>
+                    <div class="text-sm font-medium text-slate-500">{{ $user->email }}</div>
                 </div>
             </div>
             <div class="mt-3 space-y-1">
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
-                    <button type="submit" class="btn btn-error btn-outline btn-sm w-full justify-start">
+                    <button type="submit" class="block w-full text-left rounded-md px-3 py-2 text-base font-medium text-slate-600 hover:bg-white hover:text-red-600 hover:shadow-sm transition-all border border-transparent hover:border-slate-200">
                         Log Out
                     </button>
                 </form>

@@ -15,50 +15,41 @@ export default {
             fontFamily: {
                 sans: ['"Instrument Sans"', '"Figtree"', ...defaultTheme.fontFamily.sans],
             },
+            colors: {
+                // SaaS Brand Kit - Indigo & Slate
+                primary: {
+                    50: '#eef2ff',
+                    100: '#e0e7ff',
+                    200: '#c7d2fe',
+                    300: '#a5b4fc',
+                    400: '#818cf8',
+                    500: '#6366f1', // Brand Primary
+                    600: '#4f46e5',
+                    700: '#4338ca',
+                    800: '#3730a3',
+                    900: '#312e81',
+                    950: '#1e1b4b',
+                },
+                slate: {
+                    850: '#151f32', // Custom dark bg
+                    900: '#0f172a',
+                    950: '#020617',
+                }
+            },
+            borderRadius: {
+                'lg': '0.5rem', // 8px - Standard for cards/inputs
+                'xl': '0.75rem', // 12px - Large cards
+                '2xl': '1rem',   // 16px - Modals
+            },
+            boxShadow: {
+                'sm': '0 1px 2px 0 rgb(0 0 0 / 0.05)',
+                'DEFAULT': '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
+                'md': '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+                'lg': '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
+            }
         },
     },
     plugins: [
         typography,
-        daisyui,
     ],
-    daisyui: {
-        themes: [
-            {
-                light: {
-                    ...require("daisyui/src/theming/themes")["light"],
-                    "primary": "#3b82f6", // blue-500
-                    "primary-content": "#ffffff",
-                    "secondary": "#a855f7", // purple-500
-                    "accent": "#f59e0b", // amber-500
-                    "neutral": "#374151", // gray-700
-                    "base-100": "#ffffff",
-                    "base-200": "#f9fafb", // gray-50
-                    "base-300": "#f3f4f6", // gray-100
-                    "info": "#3b82f6",
-                    "success": "#10b981",
-                    "warning": "#f59e0b",
-                    "error": "#ef4444",
-                    "--rounded-box": "1rem",
-                    "--rounded-btn": "0.5rem",
-                },
-                dark: {
-                    ...require("daisyui/src/theming/themes")["dark"],
-                    "primary": "#3b82f6",
-                    "primary-content": "#ffffff",
-                    "secondary": "#a855f7",
-                    "accent": "#fbbf24",
-                    "neutral": "#1f2937",
-                    "base-100": "#0f172a", // slate-900
-                    "base-200": "#1e293b", // slate-800
-                    "base-300": "#334155", // slate-700
-                    "info": "#3b82f6",
-                    "success": "#10b981",
-                    "warning": "#f59e0b",
-                    "error": "#ef4444",
-                    "--rounded-box": "1rem",
-                    "--rounded-btn": "0.5rem",
-                },
-            },
-        ],
-    }
 }

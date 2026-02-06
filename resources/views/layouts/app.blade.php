@@ -1,6 +1,6 @@
 {{-- resources/views/layouts/app.blade.php --}}
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="light">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full bg-slate-50">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -16,22 +16,22 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <script>
-        // Check local storage for theme preference
-        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.setAttribute('data-theme', 'dark');
+        // Check local storage for theme preference and apply 'dark' class
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark')
         } else {
-            document.documentElement.setAttribute('data-theme', 'light');
+            document.documentElement.classList.remove('dark')
         }
     </script>
 
     <style>[x-cloak]{display:none!important}</style>
 </head>
-<body class="bg-base-100 text-base-content font-sans antialiased">
-<div class="min-h-screen">
-    {{-- Top navigation (DaisyUI + global theme toggle via window.toggleTheme) --}}
+<body class="h-full font-sans antialiased text-slate-900">
+<div class="min-h-full">
+    {{-- Top navigation --}}
     @include('layouts.navigation')
 
-    {{-- Impersonation banner (DB flag + only when an ADMIN is impersonating) --}}
+    {{-- Impersonation banner --}}
     @php
         use App\Models\Setting;
         use App\Models\User;
@@ -39,14 +39,13 @@
         use Illuminate\Support\Facades\Route as RouteFacade;
 
         /** @var \App\Models\User|null $authUser */
-        $authUser             = Auth::user(); // current "effective" user (impersonated)
+        $authUser             = Auth::user(); 
         $impersonationEnabled = Setting::bool('features.impersonation', false);
-        $impersonatedById     = session('impersonated_by');               // set by your ImpersonationController@start
+        $impersonatedById     = session('impersonated_by');
         $impersonating        = (bool) $impersonatedById;
-        $mode                 = session('impersonation_mode', 'readonly'); // readonly|full
+        $mode                 = session('impersonation_mode', 'readonly');
         $showStop             = RouteFacade::has('admin.impersonate.stop');
 
-        // Only show the banner if the impersonator is actually an admin
         $isAdminImpersonator  = false;
         if ($impersonating) {
             $actor = User::query()->find($impersonatedById);
@@ -59,39 +58,28 @@
     @endphp
 
     @if($impersonationEnabled && $impersonating && $isAdminImpersonator)
-        <div class="bg-warning/15 border-b border-warning/30">
+        <div class="bg-yellow-50 border-b border-yellow-200">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-                <div class="alert bg-warning/10 text-warning-content rounded-xl border border-warning/30">
-                    <div class="flex items-center gap-2">
-                        {{-- shield icon --}}
-                        <svg class="w-5 h-5 opacity-80" xmlns="http://www.w3.org/2000/svg" fill="none"
-                             viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M12 6.253l7.5 4.327v5.62A2.75 2.75 0 0116.75 19H7.25A2.75 2.75 0 014.5 16.2v-5.62L12 6.253z"/>
-                        </svg>
+                <div class="flex items-center gap-3 text-sm text-yellow-800">
+                    <svg class="w-5 h-5 text-yellow-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5zM10 16a.75.75 0 100-1.5.75.75 0 000 1.5z" clip-rule="evenodd" />
+                    </svg>
 
-                        <span class="font-semibold">
-                            {{ __('Impersonation mode') }}
+                    <div class="flex-1 flex flex-wrap items-center gap-x-2">
+                        <span class="font-semibold">{{ __('Impersonation mode') }}:</span>
+                        <span>
+                            {{ __('Browsing as') }} <span class="font-medium underline">{{ $authUser?->name }}</span>
                         </span>
-
-                        <span class="opacity-80">
-                            {{ __('Admin is browsing as') }}
-                            <span class="underline underline-offset-4">
-                                {{ $authUser?->name ?? __('this user') }}
-                            </span>
-                            <span class="ml-2 badge badge-sm {{ $mode === 'full' ? 'badge-error' : 'badge-ghost' }}">
-                                {{ $mode === 'full' ? __('Full access') : __('Read-only') }}
-                            </span>
+                        <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset {{ $mode === 'full' ? 'bg-red-50 text-red-700 ring-red-600/10' : 'bg-yellow-100 text-yellow-800 ring-yellow-600/20' }}">
+                            {{ $mode === 'full' ? __('Full Access') : __('Read-only') }}
                         </span>
                     </div>
-
-                    <div class="flex-1"></div>
 
                     @if($showStop)
                         <form method="POST" action="{{ route('admin.impersonate.stop') }}">
                             @csrf
-                            <button type="submit" class="btn btn-sm btn-warning">
-                                {{ __('Stop impersonation') }}
+                            <button type="submit" class="rounded-md bg-yellow-100 px-2.5 py-1.5 text-sm font-semibold text-yellow-800 shadow-sm hover:bg-yellow-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-600">
+                                {{ __('Stop') }}
                             </button>
                         </form>
                     @endif
@@ -100,22 +88,24 @@
         </div>
     @endif
 
-    {{-- Optional page header (DaisyUI-styled) --}}
+    {{-- Optional page header --}}
     @isset($header)
-        <header class="bg-base-100 border-b border-base-300">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <header class="bg-white shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                 {{ $header }}
             </div>
         </header>
     @endisset
 
-    {{-- Page Content (supports both $slot and @section) --}}
-    <main class="py-6 px-4 sm:px-6 lg:px-8">
-        @isset($slot)
-            {{ $slot }}
-        @else
-            @yield('content')
-        @endisset
+    {{-- Page Content --}}
+    <main>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            @isset($slot)
+                {{ $slot }}
+            @else
+                @yield('content')
+            @endisset
+        </div>
     </main>
 </div>
 
