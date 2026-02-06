@@ -74,6 +74,54 @@ class CouponController extends Controller
     }
 
     /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(Coupon $coupon)
+    {
+        return view('admin.coupons.edit', compact('coupon'));
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, Coupon $coupon)
+    {
+        $validated = $request->validate([
+            'is_active' => 'boolean',
+            'expires_at' => 'nullable|date|after:today',
+            'max_uses' => 'nullable|integer|min:1',
+            // Code is only editable if it hasn't been used, but Stripe promotion codes are immutable once created.
+            // We only allow updating metadata/status-like fields safely.
+        ]);
+
+        try {
+            // Update Stripe Coupon/Proomo Code state (limited capability in Stripe API for existing objects)
+            // Stripe API mainly allows updating metadata and 'active' status for Promo Codes.
+            if ($coupon->stripe_promotion_code_id) {
+                // If is_active changed, sync with Stripe
+                if (isset($validated['is_active'])) {
+                    $this->stripeService->updateStripePromoCode($coupon->stripe_promotion_code_id, [
+                        'active' => $validated['is_active']
+                    ]);
+                }
+            }
+
+            // Update locally
+            $coupon->update([
+                'is_active' => $validated['is_active'] ?? $coupon->is_active,
+                'expires_at' => $validated['expires_at'],
+                'max_uses' => $validated['max_uses'],
+            ]);
+
+            return redirect()->route('admin.coupons.index')->with('success', 'Coupon updated successfully.');
+
+        } catch (\Exception $e) {
+            Log::error('Coupon update failed: ' . $e->getMessage());
+            return back()->with('error', 'Failed to update coupon: ' . $e->getMessage())->withInput();
+        }
+    }
+
+    /**
      * Remove the specified resource from storage.
      */
     public function destroy(Coupon $coupon)

@@ -137,7 +137,7 @@
                                         {{ $invoice->created_at->format('M d, Y') }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
-                                        {{ $invoice->amount }} <span class="text-zinc-500 text-xs uppercase">{{ $invoice->currency ?? 'USD' }}</span>
+                                        {{ number_format($invoice->amount, 2) }} <span class="text-zinc-500 text-xs uppercase">USD</span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm">
                                         @if($invoice->status === 'paid')
@@ -152,7 +152,7 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-right">
                                         @if($invoice->invoice_pdf_url)
-                                            <a href="{{ $invoice->invoice_pdf_url }}" target="_blank" class="text-indigo-400 hover:text-indigo-300 font-medium inline-flex items-center gap-1">
+                                            <a href="{{ route('billing.invoices.show', $invoice) }}" target="_blank" class="text-indigo-400 hover:text-indigo-300 font-medium inline-flex items-center gap-1">
                                                 Download
                                                 <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                                             </a>

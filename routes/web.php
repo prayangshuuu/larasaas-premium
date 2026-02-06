@@ -177,7 +177,10 @@ Route::middleware(['auth', 'verified', 'admin', 'not-banned', 'impersonation'])
         Route::resource('plans', PlanController::class);
         
         // Coupons Resource
-        Route::resource('coupons', \App\Http\Controllers\Admin\CouponController::class)->except(['show', 'edit', 'update']);
+        Route::resource('coupons', \App\Http\Controllers\Admin\CouponController::class);
+
+        // Global Subscriptions Resource
+        Route::resource('subscriptions', \App\Http\Controllers\Admin\SubscriptionController::class);
 
         /*
         |------------------------------------------------------------------

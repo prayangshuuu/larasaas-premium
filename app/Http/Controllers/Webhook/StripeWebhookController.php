@@ -95,7 +95,6 @@ class StripeWebhookController extends Controller
                     'user_id' => $userId,
                     'plan_id' => $planId,
                     'status' => 'active', 
-                    // Important: Use the period end from Stripe
                     'current_period_end' => Carbon::createFromTimestamp($stripeSubscription->current_period_end),
                 ]
             );
@@ -161,10 +160,6 @@ class StripeWebhookController extends Controller
 
             } else {
                  Log::warning("Subscription {$invoice->subscription} not found during invoice payment. It might not be created yet if Checkout hook hasn't fired.");
-                 // Should we create it here? 
-                 // Ideally Checkout Session handles creation. But redundancy is safe if we had metadata. 
-                 // Invoice object has metadata but it might be on the subscription line item.
-                 // For now, let's rely on Checkout Session or a retry.
             }
         }
     }

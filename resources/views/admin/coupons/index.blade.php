@@ -55,11 +55,14 @@
                                 {{ $coupon->expires_at ? $coupon->expires_at->format('M d, Y') : 'Never' }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <form action="{{ route('admin.coupons.destroy', $coupon) }}" method="POST" onsubmit="return confirm('Are you sure? This will archive the promo code so it cannot be used again.');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="text-red-500 hover:text-red-400">Delete</button>
-                                </form>
+                                    <div class="flex justify-end space-x-2">
+                                        <a href="{{ route('admin.coupons.edit', $coupon) }}" class="text-indigo-400 hover:text-indigo-300 mr-2">Edit</a>
+                                        <form action="{{ route('admin.coupons.destroy', $coupon) }}" method="POST" onsubmit="return confirm('Are you sure? This will archive the promo code so it cannot be used again.');" class="inline">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="text-red-500 hover:text-red-400">Delete</button>
+                                        </form>
+                                    </div>
                             </td>
                         </tr>
                     @empty

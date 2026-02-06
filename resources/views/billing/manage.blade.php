@@ -64,7 +64,7 @@
                 <div class="bg-zinc-900 overflow-hidden shadow-sm sm:rounded-lg border border-zinc-800 p-6">
                      <div class="flex justify-between items-center mb-4">
                         <h3 class="text-lg font-medium leading-6 text-white">Invoice History</h3>
-                        <a href="{{ route('billing.invoices.index') }}" class="text-indigo-400 hover:text-indigo-300 text-sm">View All</a>
+                        <a href="{{ route('billing.index') }}" class="text-indigo-400 hover:text-indigo-300 text-sm">View All</a>
                      </div>
                      
                      <div class="flow-root">
@@ -74,7 +74,7 @@
                                     <div class="flex items-center space-x-4">
                                         <div class="flex-1 min-w-0">
                                             <p class="text-sm font-medium text-white truncate">
-                                                {{ $invoice->number }}
+                                                {{ $invoice->number ?? 'Invoice #' . $invoice->id }}
                                             </p>
                                             <p class="text-sm text-zinc-400 truncate">
                                                 {{ $invoice->created_at->format('M d, Y') }}
@@ -86,11 +86,13 @@
                                             </span>
                                         </div>
                                         <div>
-                                            <a href="{{ $invoice->invoice_pdf_url }}" target="_blank" class="text-zinc-400 hover:text-white">
+                                            @if($invoice->invoice_pdf_url)
+                                            <a href="{{ route('billing.invoices.show', $invoice) }}" target="_blank" class="text-zinc-400 hover:text-white">
                                                 <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                                                 </svg>
                                             </a>
+                                            @endif
                                         </div>
                                     </div>
                                 </li>

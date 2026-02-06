@@ -40,7 +40,7 @@ class BillingController extends Controller
             ->first();
 
         // Fetch invoices
-        $invoices = $user->invoices()->latest()->get();
+        $invoices = $request->user()->invoices()->latest()->get();
 
         return view('billing.index', [
             'subscription' => $subscription,

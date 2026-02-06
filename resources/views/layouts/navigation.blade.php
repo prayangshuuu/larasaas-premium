@@ -27,6 +27,15 @@
             {{-- Desktop Actions --}}
             <div class="hidden sm:flex sm:items-center sm:gap-4">
                 
+                {{-- Admin Navigation --}}
+                @if($user && $user->isAdmin())
+                    <div class="hidden md:flex items-center gap-6 mr-4 border-r border-zinc-800 pr-6">
+                        <a href="{{ route('admin.dashboard') }}" class="text-sm font-medium {{ request()->routeIs('admin.dashboard') ? 'text-indigo-400' : 'text-zinc-400 hover:text-white' }} transition-colors">Admin</a>
+                        <a href="{{ route('admin.coupons.index') }}" class="text-sm font-medium {{ request()->routeIs('admin.coupons.*') ? 'text-indigo-400' : 'text-zinc-400 hover:text-white' }} transition-colors">Coupons</a>
+                        <a href="{{ route('admin.subscriptions.index') }}" class="text-sm font-medium {{ request()->routeIs('admin.subscriptions.*') ? 'text-indigo-400' : 'text-zinc-400 hover:text-white' }} transition-colors">Subscriptions</a>
+                    </div>
+                @endif
+
                 {{-- Profile Dropdown --}}
                 <div class="relative ml-3" x-data="{ open: false }">
                     <button @click="open = !open" 
@@ -109,6 +118,24 @@
                class="block rounded-md py-2 px-3 text-base font-medium {{ request()->routeIs('profile.edit') ? 'bg-indigo-500/10 text-indigo-400' : 'text-zinc-400 hover:bg-zinc-800 hover:text-white' }}">
                 Profile
             </a>
+            
+            @if($user && $user->isAdmin())
+                <div class="border-t border-zinc-800 mt-2 pt-2 pb-1">
+                    <p class="px-3 text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Admin</p>
+                    <a href="{{ route('admin.dashboard') }}" 
+                       class="block rounded-md py-2 px-3 text-base font-medium {{ request()->routeIs('admin.dashboard') ? 'bg-indigo-500/10 text-indigo-400' : 'text-zinc-400 hover:bg-zinc-800 hover:text-white' }}">
+                        Dashboard
+                    </a>
+                    <a href="{{ route('admin.coupons.index') }}" 
+                       class="block rounded-md py-2 px-3 text-base font-medium {{ request()->routeIs('admin.coupons.*') ? 'bg-indigo-500/10 text-indigo-400' : 'text-zinc-400 hover:bg-zinc-800 hover:text-white' }}">
+                        Coupons
+                    </a>
+                    <a href="{{ route('admin.subscriptions.index') }}" 
+                       class="block rounded-md py-2 px-3 text-base font-medium {{ request()->routeIs('admin.subscriptions.*') ? 'bg-indigo-500/10 text-indigo-400' : 'text-zinc-400 hover:bg-zinc-800 hover:text-white' }}">
+                        Subscriptions
+                    </a>
+                </div>
+            @endif
         </div>
 
         <div class="border-t border-zinc-800 pb-3 pt-4 px-4">

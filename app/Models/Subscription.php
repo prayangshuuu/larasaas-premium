@@ -37,4 +37,13 @@ class Subscription extends Model
     {
         return $this->belongsTo(Plan::class);
     }
+
+    /**
+     * Determine if the subscription is on a "generic" grace period.
+     * In our custom logic, if status is 'canceled' but period end is future, it's on grace period.
+     */
+    public function onGracePeriod(): bool
+    {
+        return $this->status === 'canceled' && $this->current_period_end && $this->current_period_end->isFuture();
+    }
 }
