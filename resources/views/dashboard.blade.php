@@ -40,47 +40,29 @@
 
         {{-- IELTS Progress Stats (DaisyUI Stats) --}}
         <div class="stats stats-vertical lg:stats-horizontal shadow-lg w-full bg-base-100 border border-base-200">
-            
-            {{-- Reading --}}
-            <div class="stat">
-                <div class="stat-figure text-primary">
-                    <div class="radial-progress bg-primary/10 text-primary border-4 border-transparent" style="--value:75; --size:3rem;">75%</div>
-                </div>
-                <div class="stat-title font-medium">Reading</div>
-                <div class="stat-value text-primary">7.5</div>
-                <div class="stat-desc">12 tests completed</div>
-            </div>
-            
-            {{-- Writing --}}
-            <div class="stat">
-                <div class="stat-figure text-secondary">
-                     <div class="radial-progress bg-secondary/10 text-secondary border-4 border-transparent" style="--value:65; --size:3rem;">65%</div>
-                </div>
-                <div class="stat-title font-medium">Writing</div>
-                <div class="stat-value text-secondary">6.5</div>
-                <div class="stat-desc">8 essays submitted</div>
-            </div>
-            
-            {{-- Listening --}}
-            <div class="stat">
-                <div class="stat-figure text-accent">
-                     <div class="radial-progress bg-accent/10 text-accent border-4 border-transparent" style="--value:80; --size:3rem;">80%</div>
-                </div>
-                <div class="stat-title font-medium">Listening</div>
-                <div class="stat-value text-accent">8.0</div>
-                <div class="stat-desc">15 tests completed</div>
-            </div>
+            @php
+                $colors = [
+                    'reading' => 'primary',
+                    'writing' => 'secondary',
+                    'listening' => 'accent',
+                    'speaking' => 'info'
+                ];
+            @endphp
 
-             {{-- Speaking --}}
-             <div class="stat">
-                <div class="stat-figure text-info">
-                     <div class="radial-progress bg-info/10 text-info border-4 border-transparent" style="--value:70; --size:3rem;">70%</div>
+            @foreach($stats as $key => $data)
+                @php $color = $colors[$key] ?? 'primary'; @endphp
+                <div class="stat">
+                    <div class="stat-figure text-{{ $color }}">
+                        <div class="radial-progress bg-{{ $color }}/10 text-{{ $color }} border-4 border-transparent" 
+                             style="--value:{{ $data['progress'] }}; --size:3rem;">
+                            {{ $data['progress'] }}%
+                        </div>
+                    </div>
+                    <div class="stat-title font-medium capitalize">{{ $key }}</div>
+                    <div class="stat-value text-{{ $color }}">{{ number_format($data['score'], 1) }}</div>
+                    <div class="stat-desc">{{ $data['desc'] }}</div>
                 </div>
-                <div class="stat-title font-medium">Speaking</div>
-                <div class="stat-value text-info">7.0</div>
-                <div class="stat-desc">6 mock interviews</div>
-            </div>
-            
+            @endforeach
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
