@@ -81,7 +81,7 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
             ->prefix('admin/impersonate')
             ->name('admin.impersonate.')
             ->group(function() {
-                 Route::post('/stop', [ApiAdminImpersonationController::class, 'stop'])->name('stop');
+                 Route::match(['get', 'post'], '/stop', [ApiAdminImpersonationController::class, 'stop'])->name('stop');
             });
     });
 });

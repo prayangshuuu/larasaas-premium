@@ -260,7 +260,7 @@ Route::middleware(['auth', 'verified', 'not-banned'])
     ->as('admin.impersonate.')    // Match Route Name
     ->controller(ImpersonationController::class)
     ->group(function () {
-        Route::post('/stop', 'stop')->name('stop');
+        Route::match(['get', 'post'], '/stop', 'stop')->name('stop');
     });
 
 /*
