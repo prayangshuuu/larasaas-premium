@@ -19,6 +19,15 @@ A comprehensive Laravel 12 web application for IELTS preparation with advanced u
 - **Bulk User Operations** (ban, unban, delete, promote, demote)
 - **CSV Export** of user data
 
+### Subscription & Billing
+- **Stripe Integration** for secure payments
+- **Dynamic Plan Management** (Admin controlled)
+- **User Subscription Flow** (Checkout, Cancel, Resume)
+- **Automated Invoicing** & PDF downloads
+- **System Toggles** for enabling/disabling billing
+- **Feature & Rate Limiting** middleware enforcement
+
+
 ### Admin Features
 - **Admin Dashboard** with system overview
 - **User Management Panel** (CRUD operations)
@@ -40,6 +49,21 @@ A comprehensive Laravel 12 web application for IELTS preparation with advanced u
 - **Headless UI Patterns**: Fully accessible interactive components (Dropdowns, Modals, Mobile Menus) implemented with **Alpine.js**.
 - **ORM-Driven Logic**: Data access decoupled from views using Laravel Eloquent Accessors for cleaner, maintainable code.
 - **Responsive Layout**: Mobile-first design ensuring a consistent experience across all devices.
+
+### Subscription & Billing System
+The application features a complete subscription module powered by **Laravel Cashier (Stripe)**.
+
+*   **Stripe Integration**: Secure payment processing for unified reliable billing.
+*   **Dynamic Plan Management**: Admins can create, update, and delete plans directly from the dashboard. Plans support custom features and limits (e.g., `max_projects`, `api_calls_per_minute`).
+*   **User Subscription Flow**:
+    *   **Subscribe**: Users can view plans and subscribe via a hosted Stripe Checkout session.
+    *   **Manage**: Users can cancel or resume subscriptions at any time.
+    *   **Grace Periods**: Canceled subscriptions remain active until the billing cycle ends.
+*   **Automated Invoicing**: System automatically generates invoices. Users can view history and download PDFs.
+*   **System Control**:
+    *   **Global Toggle**: The entire subscription module can be enabled/disabled via Admin Settings.
+    *   **Feature Gating**: Middleware (`EnsureSubscriptionActive`) automatically restricts access to premium routes based on subscription status.
+
 
 
 ---
@@ -362,15 +386,25 @@ IELTSBandBooster/
 - `/profile` - User profile management
 - `/two-factor/recovery-codes` - 2FA recovery codes
 
+### Billing Routes
+- `/billing/checkout/{plan}` - Initiate subscription
+- `/billing/invoices` - View invoice history
+- `/billing/invoices/{invoice}` - Download invoice PDF
+
 ### Admin Routes (Admin Only)
 - `/admin/dashboard` - Admin dashboard
 - `/admin/users` - User management
+- `/admin/plans` - Subscription plan management
 - `/admin/audit` - Audit logs
 - `/admin/settings` - System settings
 - `/admin/api/docs` - API documentation
 
-### API Routes
-- `/api/*` - API endpoints (require Sanctum authentication)
+### API Routes (v1)
+- `/api/v1/plans` - List active plans
+- `/api/v1/subscriptions/checkout` - Create checkout session
+- `/api/v1/subscriptions/cancel` - Cancel subscription
+- `/api/v1/invoices` - List user invoices
+- `/api/v1/*` - Other authenticated endpoints
 
 ---
 
