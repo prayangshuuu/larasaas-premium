@@ -33,7 +33,7 @@ class ImpersonationGuard
         $route         = $request->route();
         $name          = $route ? $route->getName() : null;
         $path          = ltrim($request->path(), '/');
-        $impersonating = $request->session()->has('impersonated_by');
+        $impersonating = $request->session()->has('impersonator_id');
 
         $isImpersonationAction = $name && str_starts_with($name, 'admin.impersonate.');
         $isStopActionByName    = $name === 'admin.impersonate.stop';
@@ -49,7 +49,7 @@ class ImpersonationGuard
 
             // End any active impersonation if the flag was turned off mid-session.
             if ($impersonating) {
-                $request->session()->forget(['impersonated_by', 'impersonation_mode']);
+                $request->session()->forget(['impersonator_id', 'impersonation_mode']);
             }
 
             // Hide/deny impersonation endpoints entirely when disabled.

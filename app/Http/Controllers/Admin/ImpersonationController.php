@@ -14,6 +14,10 @@ class ImpersonationController extends Controller
      * Start impersonating a user.
      * If feature flag is off, 404 to keep surface minimal.
      */
+    /**
+     * Start impersonating a user.
+     * If feature flag is off, 404 to keep surface minimal.
+     */
     public function start(Request $request, User $user)
     {
         if (!config('features.impersonation')) {
@@ -43,7 +47,8 @@ class ImpersonationController extends Controller
         }
 
         // Stash the admin id; then login as target user
-        session()->put('impersonated_by', $admin->id);
+        // RENAMED session key to 'impersonator_id' per request
+        session()->put('impersonator_id', $admin->id);
         session()->put('impersonation_mode', $mode);
 
         Auth::login($user); // web guard
@@ -65,24 +70,37 @@ class ImpersonationController extends Controller
      */
     public function stop(Request $request)
     {
-        if (!config('features.impersonation')) {
-            abort(404);
+        // 1. Check if we have an impersonator_id
+        $adminId = session('impersonator_id');
+
+        if (!$adminId) {
+            // Fallback: check old key just in case, or just redirect
+            $adminId = session('impersonated_by');
         }
 
-        $adminId = session('impersonated_by');
         if (!$adminId) {
             return redirect()->route('dashboard');
         }
 
+        // 2. Log the event before destroying the session
         $impersonatedUser = Auth::user();
-        AuditLog::write($impersonatedUser, 'impersonation.stop', 'Admin stopped impersonation', [
-            'by' => $adminId,
-            'ip' => $request->ip(),
-        ]);
+        if ($impersonatedUser) {
+            AuditLog::write($impersonatedUser, 'impersonation.stop', 'Admin stopped impersonation', [
+                'by' => $adminId,
+                'ip' => $request->ip(),
+            ]);
+        }
 
-        session()->forget(['impersonated_by', 'impersonation_mode']);
+        // 3. Logout the impersonated user explicitly
+        Auth::logout();
+
+        // 4. Clean up session
+        session()->forget(['impersonator_id', 'impersonated_by', 'impersonation_mode']);
+
+        // 5. Login the original admin
         Auth::loginUsingId($adminId);
 
+        // 6. Redirect to admin dashboard
         return redirect()->route('admin.dashboard')->with([
             'status' => __('Impersonation ended.'),
             'status_type' => 'success',

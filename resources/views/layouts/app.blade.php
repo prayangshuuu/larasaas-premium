@@ -17,6 +17,21 @@
 </head>
 <body class="font-sans antialiased bg-black text-slate-300 selection:bg-indigo-500/30" style="background-color: #000; color: #cbd5e1;">
     <div class="min-h-screen relative w-full flex flex-col">
+        {{-- Impersonation Banner --}}
+        @if(session()->has('impersonator_id'))
+            <div class="bg-red-600 text-white px-4 py-2 text-center text-sm font-bold shadow-lg z-50 sticky top-0 flex items-center justify-center gap-4">
+                <span>
+                    ⚠️ You are currently impersonating <strong>{{ Auth::user()->name }}</strong>.
+                </span>
+                <form action="{{ route('admin.impersonate.stop') }}" method="POST" class="inline">
+                    @csrf
+                    <button type="submit" class="underline hover:text-red-100 focus:outline-none bg-white/20 px-3 py-1 rounded ml-2 text-xs uppercase tracking-wide transition">
+                        Stop Impersonating
+                    </button>
+                </form>
+            </div>
+        @endif
+
         {{-- Navigation can be injected or included here --}}
         @include('layouts.navigation')
 
