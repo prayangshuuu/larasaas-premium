@@ -36,7 +36,7 @@ A comprehensive Laravel 12 web application for IELTS preparation with advanced u
 - **Personal Access Tokens** for API access
 
 ### UI/UX & Architecture
-- **Modern Design System**: Built with **TailwindCSS v4** and **DaisyUI 5**, featuring a robust Dark/Light theming system.
+- **Modern Design System**: Built with **TailwindCSS v4** and **Aceternity UI**, featuring a robust Dark/Light theming system.
 - **Headless UI Patterns**: Fully accessible interactive components (Dropdowns, Modals, Mobile Menus) implemented with **Alpine.js**.
 - **ORM-Driven Logic**: Data access decoupled from views using Laravel Eloquent Accessors for cleaner, maintainable code.
 - **Responsive Layout**: Mobile-first design ensuring a consistent experience across all devices.
@@ -677,7 +677,7 @@ php artisan migrate
 ## 📚 Technology Stack
 
 - **Backend**: Laravel 12.x (PHP 8.2+)
-- **Frontend**: TailwindCSS v4, DaisyUI, Alpine.js
+- **Frontend**: TailwindCSS v4, Aceternity UI, Alpine.js
 - **Database**: MySQL 8.0+
 - **Authentication**: Laravel Fortify + Sanctum
 - **Build Tool**: Vite
@@ -717,7 +717,7 @@ For issues and questions:
 - [Laravel Sanctum](https://laravel.com/docs/sanctum)
 - [TailwindCSS](https://tailwindcss.com/docs)
 - [Alpine.js](https://alpinejs.dev/)
-- [DaisyUI](https://daisyui.com/)
+- [Aceternity UI](https://ui.aceternity.com/)
 
 ---
 
