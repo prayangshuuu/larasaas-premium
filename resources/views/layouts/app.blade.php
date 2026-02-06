@@ -1,6 +1,6 @@
 {{-- resources/views/layouts/app.blade.php --}}
-    <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="nord">
+<!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="light">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -8,11 +8,21 @@
     <title>{{ config('app.name', 'IELTSBandBooster') }}</title>
 
     {{-- Fonts --}}
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Figtree:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
 
     {{-- Assets --}}
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    <script>
+        // Check local storage for theme preference
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        } else {
+            document.documentElement.setAttribute('data-theme', 'light');
+        }
+    </script>
 
     <style>[x-cloak]{display:none!important}</style>
 </head>
@@ -109,6 +119,5 @@
     </main>
 </div>
 
-{{-- No theme scripts here. Global helpers live in resources/js/app.js and are called via window.toggleTheme(dark). --}}
 </body>
 </html>
