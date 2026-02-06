@@ -46,12 +46,10 @@ A comprehensive Laravel 12 web application for IELTS preparation with advanced u
 
 ## 📋 Requirements
 
-- **PHP**: 8.2 or higher
-- **Composer**: Latest version
-- **Node.js**: 18.x or higher
-- **NPM**: Latest version
-- **MySQL**: 5.7+ or 8.0+
-- **Web Server**: Apache/Nginx (or use Laravel's built-in server for development)
+- **Docker Desktop**: Required for running the application via Sail
+- **Git**: For version control
+- **Composer** (Optional): If running locally without Docker
+- **Node.js & NPM** (Optional): If running locally without Docker
 
 ---
 
@@ -64,196 +62,72 @@ git clone <repository-url>
 cd IELTSBandBooster
 ```
 
-### Step 2: Start with Laravel Sail (Docker)
+### Step 2: Start Application (Docker Method - Recommended)
 
-This project is dockerized with Laravel Sail. You can start the environment immediately:
+We recommend using **Laravel Sail** (Docker) for a consistent development environment.
 
+1. **Start the containers** (Database, Redis, Mailpit, App):
 ```bash
 ./vendor/bin/sail up -d
 ```
 
-Sail will start MySQL, Redis, Mailpit, and the Application server.
-
-### Step 3: Install PHP Dependencies
-
+2. **Install Composer Dependencies**:
 ```bash
 ./vendor/bin/sail composer install
 ```
 
-### Step 3: Install Node Dependencies
-
+3. **Install Node Dependencies & Build Assets**:
 ```bash
-npm install
+./vendor/bin/sail npm install
+./vendor/bin/sail npm run build
 ```
 
-### Step 4: Environment Configuration
-
-1. **Copy the example environment file:**
-
+4. **Setup Environment**:
 ```bash
 cp .env.example .env
+./vendor/bin/sail artisan key:generate
 ```
 
-2. **Generate application key:**
-
-```bash
-php artisan key:generate
-```
-
-3. **Configure your `.env` file:**
-
-Open `.env` in your text editor and update the following settings:
-
-#### Database Configuration
-
+5. **Configure Database**:
+Open `.env` and set the following (configured for Docker internal network):
 ```env
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
 DB_PORT=3306
 DB_DATABASE=ieltsbandbooster
-DB_USERNAME=your_database_username
-DB_PASSWORD=your_database_password
+DB_USERNAME=ieltsbandbooster
+DB_PASSWORD=password
 ```
+*Note: We use `127.0.0.1` so you can also access the DB from your local machine tools.*
 
-#### Application Settings
-
-```env
-APP_NAME="IELTS Band Booster"
-APP_ENV=local
-APP_DEBUG=true
-APP_URL=http://localhost:8000
-```
-
-#### Session Configuration
-
-```env
-SESSION_DRIVER=database
-SESSION_LIFETIME=120
-```
-
-#### Mail Configuration (Optional - for email features)
-
-For development, you can use `log` driver:
-
-```env
-MAIL_MAILER=log
-```
-
-For production, configure SMTP:
-
-```env
-MAIL_MAILER=smtp
-MAIL_HOST=smtp.mailtrap.io
-MAIL_PORT=2525
-MAIL_USERNAME=your_username
-MAIL_PASSWORD=your_password
-MAIL_ENCRYPTION=tls
-MAIL_FROM_ADDRESS="noreply@ieltsbandbooster.com"
-MAIL_FROM_NAME="${APP_NAME}"
-```
-
-#### Google OAuth (Optional - for social login)
-
-If you want to enable Google login, add these to your `.env`:
-
-```env
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_client_secret
-GOOGLE_REDIRECT_URI="${APP_URL}/auth/google/callback"
-```
-
-To get Google OAuth credentials:
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project or select an existing one
-3. Enable Google+ API
-4. Create OAuth 2.0 credentials
-5. Add authorized redirect URI: `http://localhost:8000/auth/google/callback`
-
-### Step 5: Create the Database
-
-Create a MySQL database for the application:
-
+6. **Run Migrations & Seed**:
 ```bash
-# Login to MySQL
-mysql -u root -p
-
-# Create database
-CREATE DATABASE ieltsbandbooster CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
-# Create database user (optional but recommended)
-CREATE USER 'ieltsbandbooster'@'localhost' IDENTIFIED BY 'your_secure_password';
-GRANT ALL PRIVILEGES ON ieltsbandbooster.* TO 'ieltsbandbooster'@'localhost';
-FLUSH PRIVILEGES;
-EXIT;
+./vendor/bin/sail artisan migrate --seed
 ```
 
-### Step 6: Run Database Migrations
+### Step 2: Start Application (Manual Method)
 
+If you prefer running PHP and MySQL directly on your machine:
+
+1. Install dependencies:
 ```bash
-php artisan migrate
-```
-
-This will create all necessary tables including:
-- `users` - User accounts
-- `sessions` - Session storage
-- `cache` - Cache storage
-- `jobs` - Queue jobs
-- `personal_access_tokens` - API tokens
-- `audit_logs` - Admin action logs
-- `settings` - System settings
-- And more...
-
-### Step 7: Seed the Database (Demo Users)
-
-The application includes a database seeder that creates demo users for testing:
-
-```bash
-php artisan db:seed
-```
-
-This will create the following demo accounts:
-
-| Role | Email | Password | Username |
-|------|-------|----------|----------|
-| **Admin** | admin@demo.com | password | admin |
-| **User** | user@demo.com | password | user |
-
-> **Note**: These are demo accounts for testing purposes. In production, you should either:
-> - Remove these demo accounts from the seeder
-> - Change the passwords immediately after deployment
-> - Or skip running the seeder entirely
-
-You can now login with either account to test the application!
-
-### Step 8: Create Storage Link
-
-```bash
-php artisan storage:link
-```
-
-This creates a symbolic link from `public/storage` to `storage/app/public` for file uploads.
-
-### Step 9: Build Frontend Assets
-
-For development:
-
-```bash
-npm run dev
-```
-
-For production:
-
-```bash
+composer install
+npm install
 npm run build
 ```
 
-### Step 10: Start the Development Server
+2. Configure `.env` with your local database credentials.
 
+3. Run migrations:
+```bash
+php artisan migrate --seed
+```
+
+4. Start local server:
 ```bash
 php artisan serve
 ```
-
-The application will be available at: **http://127.0.0.1:8000**
+The application will be available at **http://127.0.0.1:8000**.
 
 ---
 
@@ -602,7 +476,7 @@ php artisan queue:work --daemon
 Add to crontab:
 
 ```
-* * * * * cd /path-to-your-project && php artisan schedule:run >> /dev/null 2>&1
+* * * * * cd /path-to-your-project && ./vendor/bin/sail artisan schedule:run >> /dev/null 2>&1
 ```
 
 ### Web Server Configuration
@@ -686,18 +560,18 @@ php artisan view:clear
 
 **5. Database connection errors**
 
-- Verify MySQL is running
-- Check `.env` database credentials
-- Ensure database exists
-- Test connection: `php artisan tinker` then `DB::connection()->getPdo();`
+- **Sail Users**: Check if Docker is running. Ensure `.env` has `DB_HOST=127.0.0.1` (we use port forwarding).
+- **Manual**: Verify local MySQL service is running.
 
-**6. Session errors**
+**6. Database "Access Denied"**
 
-Clear sessions:
+If you see access denied errors with Sail:
 ```bash
-php artisan session:table
-php artisan migrate
+./vendor/bin/sail down -v
+./vendor/bin/sail up -d
+./vendor/bin/sail artisan migrate
 ```
+This resets the database volume to match your `.env` password.
 
 ---
 
