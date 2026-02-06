@@ -3,7 +3,7 @@
 
 @source "../views";
 
-/* 
+/*
   Aceternity UI requires base Tailwind utilities.
   Custom configuration is handled in tailwind.config.js
 */
@@ -12,4 +12,10 @@
   .text-balance {
     text-wrap: balance;
   }
+}
+
+/* Ensure smooth scrolling for anchor links and offset for fixed header */
+html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 6rem; /* Offset for fixed header */
 }

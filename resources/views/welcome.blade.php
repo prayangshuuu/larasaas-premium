@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ config('app.name', 'IELTSBandBooster') }}</title>
-    
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,32 +14,34 @@
 </head>
 <body class="antialiased bg-black text-white font-sans selection:bg-indigo-500/30">
 
-    {{-- Hero Section with Spotlight and Grid --}}
-    <x-ui.background-grid class="min-h-screen relative overflow-hidden flex flex-col items-center pt-32 pb-20 px-4">
-        <x-ui.spotlight className="-top-40 left-0 md:left-60 md:-top-20" fill="white" />
-        
-        {{-- Navigation Placeholder (Absolute) --}}
-        <header class="absolute top-0 inset-x-0 z-50 p-6 flex justify-between items-center max-w-7xl mx-auto w-full">
+    {{-- Fixed Navigation --}}
+    <header class="fixed top-0 inset-x-0 z-50 p-6 border-b border-white/10 bg-black/50 backdrop-blur-md transition-all duration-300">
+        <div class="flex justify-between items-center max-w-7xl mx-auto w-full">
             <div class="flex items-center gap-2">
                  <div class="p-1.5 rounded-lg border border-white/10 bg-black/50 backdrop-blur-md">
                     <svg class="w-6 h-6 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                 </div>
                 <span class="text-xl font-bold">IELTS<span class="text-indigo-500">BandBooster</span></span>
             </div>
-            
+
             @if (Route::has('login'))
-                <nav class="flex gap-4">
+                <nav class="flex items-center gap-4">
                     @auth
                         <a href="{{ url('/dashboard') }}" class="text-sm font-semibold text-zinc-400 hover:text-white transition-colors">Dashboard</a>
                     @else
-                        <a href="{{ route('login') }}" class="text-sm font-semibold text-zinc-400 hover:text-white transition-colors">Log in</a>
+                        <a href="{{ route('login') }}" class="text-sm font-semibold text-zinc-400 hover:text-white transition-colors px-4 py-2">Log in</a>
                         @if (Route::has('register'))
                             <a href="{{ route('register') }}" class="text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-full transition-all hover:shadow-[0_0_20px_rgba(79,70,229,0.5)]">Get Started</a>
                         @endif
                     @endauth
                 </nav>
             @endif
-        </header>
+        </div>
+    </header>
+
+    {{-- Hero Section with Spotlight and Grid --}}
+    <x-ui.background-grid class="min-h-screen relative overflow-hidden flex flex-col items-center pt-32 pb-20 px-4">
+        <x-ui.spotlight className="-top-40 left-0 md:left-60 md:-top-20" fill="white" />
 
         <div class="relative z-10 max-w-4xl mx-auto text-center mt-12">
             <h1 class="text-5xl md:text-7xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-neutral-50 to-neutral-400 bg-opacity-50 tracking-tight mb-8">
@@ -48,12 +50,12 @@
             <p class="mt-4 font-normal text-base text-neutral-300 max-w-lg mx-auto mb-10">
                 Elevate your band score using advanced AI-driven analysis, real-time feedback, and personalized study plans tailored to your weaknesses.
             </p>
-            
+
             <div class="flex items-center justify-center gap-4">
                 <x-ui.button-shimmer href="{{ route('register') }}">
                     Start Your Journey
                 </x-ui.button-shimmer>
-                
+
                 <a href="#features" class="text-sm font-semibold text-zinc-400 hover:text-white transition-colors">
                     Learn more <span aria-hidden="true">→</span>
                 </a>
@@ -70,8 +72,8 @@
             </div>
 
             <x-ui.bento-grid>
-                <x-ui.bento-grid-item 
-                    title="Real-time Writing Analysis" 
+                <x-ui.bento-grid-item
+                    title="Real-time Writing Analysis"
                     description="Get instant feedback on your essays with detailed grammar and vocabulary corrections."
                     className="md:col-span-2"
                 >
@@ -87,12 +89,12 @@
                          </div>
                      </x-slot:header>
                      <x-slot:icon>
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                      </x-slot:icon>
                 </x-ui.bento-grid-item>
 
-                <x-ui.bento-grid-item 
-                    title="Speaking Mock Tests" 
+                <x-ui.bento-grid-item
+                    title="Speaking Mock Tests"
                     description="Practice with AI-simulated examiners covering the latest IELTS topics."
                     className="md:col-span-1"
                 >
@@ -110,11 +112,11 @@
                     </x-slot:header>
                     <x-slot:icon>
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
-                    </x-slot:icon>
+                     </x-slot:icon>
                 </x-ui.bento-grid-item>
 
-                <x-ui.bento-grid-item 
-                    title="Vocabulary Builder" 
+                <x-ui.bento-grid-item
+                    title="Vocabulary Builder"
                     description="Expand your lexical resource with context-aware suggestions."
                     className="md:col-span-1"
                 >
@@ -128,8 +130,8 @@
                     </x-slot:icon>
                 </x-ui.bento-grid-item>
 
-                <x-ui.bento-grid-item 
-                    title="Progress Tracking" 
+                <x-ui.bento-grid-item
+                    title="Progress Tracking"
                     description="Visualize your improvement over time with detailed analytics."
                     className="md:col-span-2"
                 >
@@ -156,7 +158,7 @@
     {{-- Footer --}}
     <footer class="bg-black py-12 border-t border-white/10 relative z-20">
         <div class="max-w-7xl mx-auto px-6 text-center">
-            <p class="text-zinc-500">&copy; {{ date('Y') }} IELTSBandBooster. Built with <span class="text-indigo-500 font-semibold">Aceternity UI</span> port.</p>
+            <p class="text-zinc-500">&copy; 2026 IELTSBandBooster, Build With <span class="text-red-500">&lt;3</span> By Prayangshu</p>
         </div>
     </footer>
 
