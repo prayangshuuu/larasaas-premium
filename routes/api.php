@@ -13,12 +13,19 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     /* ---------- Public ping ---------- */
     Route::get('/ping', fn () => response()->json(['ok' => true, 'time' => now()]));
 
+    /* ---------- Stripe Webhook ---------- */
+    Route::post('/stripe/webhook', [\App\Http\Controllers\Webhook\StripeWebhookController::class, 'handle'])->name('stripe.webhook');
+
     /* ---------- Authenticated (Sanctum) ---------- */
     Route::middleware('auth:sanctum')->group(function () {
 
         // Current user profile
         Route::get('/me', [ApiProfileController::class, 'show'])->name('me.show');
         Route::put('/me', [ApiProfileController::class, 'update'])->name('me.update');
+
+        // User Invoices
+        Route::get('/invoices', [\App\Http\Controllers\User\InvoiceController::class, 'index'])->name('invoices.index');
+        Route::get('/invoices/{invoice}', [\App\Http\Controllers\User\InvoiceController::class, 'show'])->name('invoices.show');
 
         /* ----- Admin area (admin + not-banned + impersonation guard) ----- */
         Route::middleware(['admin', 'not-banned', 'impersonation'])->prefix('admin')->name('admin.')->group(function () {

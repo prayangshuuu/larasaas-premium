@@ -25,6 +25,12 @@ return Application::configure(basePath: dirname(__DIR__))
         // Admin area is additionally protected by AdminOnly.
         $middleware->appendToGroup('web', \App\Http\Middleware\ImpersonationGuard::class);
 
+        // Exclude Stripe Webhook from CSRF
+        $middleware->validateCsrfTokens(except: [
+            'api/v1/stripe/webhook', // API prefix is v1 as seen in routes/api.php
+            'api/stripe/webhook', // Just in case
+        ]);
+
         // (Keep other sensitive middleware route-scoped; don't globally add admin.mfa, etc.)
     })
     ->withExceptions(function (Exceptions $exceptions): void {
