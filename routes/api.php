@@ -12,6 +12,10 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
 
     /* ---------- Public ping ---------- */
     Route::get('/ping', fn () => response()->json(['ok' => true, 'time' => now()]));
+    
+    // Public Plans
+    Route::get('/plans', [\App\Http\Controllers\Api\V1\PlanController::class, 'index'])->name('plans.index');
+
 
     /* ---------- Stripe Webhook ---------- */
     Route::post('/stripe/webhook', [\App\Http\Controllers\Webhook\StripeWebhookController::class, 'handle'])->name('stripe.webhook');
@@ -24,8 +28,14 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::put('/me', [ApiProfileController::class, 'update'])->name('me.update');
 
         // User Invoices
-        Route::get('/invoices', [\App\Http\Controllers\User\InvoiceController::class, 'index'])->name('invoices.index');
-        Route::get('/invoices/{invoice}', [\App\Http\Controllers\User\InvoiceController::class, 'show'])->name('invoices.show');
+        Route::get('/invoices', [\App\Http\Controllers\Api\V1\InvoiceController::class, 'index'])->name('invoices.index');
+
+        Route::get('/invoices/{invoice}', [\App\Http\Controllers\Api\V1\InvoiceController::class, 'show'])->name('invoices.show');
+
+        // Subscription Management
+        Route::post('/subscriptions/checkout', [\App\Http\Controllers\Api\V1\SubscriptionController::class, 'checkout'])->name('subscriptions.checkout');
+        Route::post('/subscriptions/cancel', [\App\Http\Controllers\Api\V1\SubscriptionController::class, 'cancel'])->name('subscriptions.cancel');
+        Route::post('/subscriptions/resume', [\App\Http\Controllers\Api\V1\SubscriptionController::class, 'resume'])->name('subscriptions.resume');
 
         /* ----- Admin area (admin + not-banned + impersonation guard) ----- */
         Route::middleware(['admin', 'not-banned', 'impersonation'])->prefix('admin')->name('admin.')->group(function () {
@@ -54,10 +64,13 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
             Route::post('impersonate/stop', [ApiAdminImpersonationController::class, 'stop'])
                 ->name('impersonate.stop');
 
-            // Subscription Plans
-            Route::apiResource('plans', \App\Http\Controllers\Admin\PlanController::class);
+
+            // Subscription Plans (Admin)
+            Route::apiResource('plans', \App\Http\Controllers\Api\V1\Admin\PlanController::class);
 
             // System Settings (Subscription Module)
+            Route::post('settings/subscription', [\App\Http\Controllers\Api\V1\Admin\SubscriptionSettingsController::class, 'update'])->name('settings.subscription.update');
+            Route::put('system-settings', [\App\Http\Controllers\Admin\SystemSettingController::class, 'update'])->name('system-settings.update');
             Route::put('system-settings', [\App\Http\Controllers\Admin\SystemSettingController::class, 'update'])->name('system-settings.update');
             Route::get('system-settings/{key}', [\App\Http\Controllers\Admin\SystemSettingController::class, 'show'])->name('system-settings.show');
         });

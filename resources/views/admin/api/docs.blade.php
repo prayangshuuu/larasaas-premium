@@ -664,6 +664,137 @@ curl -X POST -H "Authorization: Bearer &lt;admin_token&gt;" {{ url('/api/v1/admi
                         </p>
                     </div>
                 </div>
+
+                {{-- SUBSCRIPTIONS & BILLING --}}
+                <input type="radio" name="apiTabs" role="tab" class="tab" aria-label="Billing" />
+                <div role="tabpanel" class="tab-content bg-base-100 border-base-300 rounded-2xl p-6">
+                     <div class="alert rounded-xl mb-4">
+                        <div><span class="badge badge-ghost mr-2">Public/Auth</span> Manage plans, subscriptions, and invoices.</div>
+                    </div>
+
+                    <div class="space-y-3">
+                         {{-- Plans (Public) --}}
+                        <div class="collapse collapse-arrow border border-base-300 rounded-xl" data-endpoint="plans get list public">
+                            <input type="checkbox" />
+                            <div class="collapse-title text-md font-medium">
+                                <span class="badge badge-outline mr-2">GET</span> /plans (Public)
+                            </div>
+                            <div class="collapse-content">
+                                <p class="text-sm text-base-content/70 mb-2">List all active subscription plans.</p>
+                                <div class="relative group">
+                                    <button class="btn btn-xs btn-ghost absolute right-2 top-2 opacity-0 group-hover:opacity-100"
+                                            onclick="copyCode('plans-index', this)">Copy</button>
+                                    <pre id="plans-index" class="bg-base-200 text-base-content/90 font-mono text-sm rounded-xl p-4 overflow-x-auto select-all">
+curl {{ url('/api/v1/plans') }}</pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Checkout --}}
+                        <div class="collapse collapse-arrow border border-base-300 rounded-xl" data-endpoint="subscriptions checkout post">
+                            <input type="checkbox" />
+                             <div class="collapse-title text-md font-medium">
+                                <span class="badge badge-info mr-2">POST</span> /subscriptions/checkout
+                            </div>
+                            <div class="collapse-content">
+                                 <p class="text-sm text-base-content/70 mb-2">Initiate checkout. Returns a Stripe Checkout URL.</p>
+                                <div class="relative group">
+                                    <button class="btn btn-xs btn-ghost absolute right-2 top-2 opacity-0 group-hover:opacity-100"
+                                            onclick="copyCode('sub-checkout', this)">Copy</button>
+                                    <pre id="sub-checkout" class="bg-base-200 text-base-content/90 font-mono text-sm rounded-xl p-4 overflow-x-auto select-all">
+curl -X POST \
+  -H "Authorization: Bearer &lt;token&gt;" \
+  -H "Content-Type: application/json" \
+  -d '{"plan_id": 1}' \
+  {{ url('/api/v1/subscriptions/checkout') }}</pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Cancel --}}
+                         <div class="collapse collapse-arrow border border-base-300 rounded-xl" data-endpoint="subscriptions cancel post">
+                            <input type="checkbox" />
+                             <div class="collapse-title text-md font-medium">
+                                <span class="badge badge-info mr-2">POST</span> /subscriptions/cancel
+                            </div>
+                            <div class="collapse-content">
+                                <div class="relative group">
+                                    <button class="btn btn-xs btn-ghost absolute right-2 top-2 opacity-0 group-hover:opacity-100"
+                                            onclick="copyCode('sub-cancel', this)">Copy</button>
+                                    <pre id="sub-cancel" class="bg-base-200 text-base-content/90 font-mono text-sm rounded-xl p-4 overflow-x-auto select-all">
+curl -X POST -H "Authorization: Bearer &lt;token&gt;" {{ url('/api/v1/subscriptions/cancel') }}</pre>
+                                </div>
+                            </div>
+                        </div>
+
+                         {{-- Invoices --}}
+                         <div class="collapse collapse-arrow border border-base-300 rounded-xl" data-endpoint="invoices get list">
+                            <input type="checkbox" />
+                            <div class="collapse-title text-md font-medium">
+                                <span class="badge badge-outline mr-2">GET</span> /invoices
+                            </div>
+                            <div class="collapse-content">
+                                <div class="relative group">
+                                    <button class="btn btn-xs btn-ghost absolute right-2 top-2 opacity-0 group-hover:opacity-100"
+                                            onclick="copyCode('invoices-index', this)">Copy</button>
+                                    <pre id="invoices-index" class="bg-base-200 text-base-content/90 font-mono text-sm rounded-xl p-4 overflow-x-auto select-all">
+curl -H "Authorization: Bearer &lt;token&gt;" {{ url('/api/v1/invoices') }}</pre>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                {{-- ADMIN SUBSCRIPTION MANAGEMENT --}}
+                <input type="radio" name="apiTabs" role="tab" class="tab" aria-label="Admin Billing" />
+                <div role="tabpanel" class="tab-content bg-base-100 border-base-300 rounded-2xl p-6">
+                     <div class="alert rounded-xl mb-4">
+                        <div><span class="badge badge-ghost mr-2">Admin</span> Manage plans and subscription settings.</div>
+                    </div>
+                     <div class="space-y-3">
+                         {{-- Admin Plans --}}
+                        <div class="collapse collapse-arrow border border-base-300 rounded-xl" data-endpoint="admin plans crud">
+                             <input type="checkbox" />
+                            <div class="collapse-title text-md font-medium">
+                                <span class="badge badge-outline mr-2">CRUD</span> /admin/plans
+                            </div>
+                            <div class="collapse-content">
+                                <p class="text-sm text-base-content/70 mb-2">Standard Resource: GET, POST, PUT, DELETE.</p>
+                                <div class="relative group">
+                                    <button class="btn btn-xs btn-ghost absolute right-2 top-2 opacity-0 group-hover:opacity-100"
+                                            onclick="copyCode('admin-plans', this)">Copy</button>
+                                    <pre id="admin-plans" class="bg-base-200 text-base-content/90 font-mono text-sm rounded-xl p-4 overflow-x-auto select-all">
+curl -X POST \
+  -H "Authorization: Bearer &lt;admin_token&gt;" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Pro", "price": 99, "currency": "USD", "stripe_id": "price_123"}' \
+  {{ url('/api/v1/admin/plans') }}</pre>
+                                </div>
+                            </div>
+                        </div>
+                        {{-- Subscription Settings --}}
+                        <div class="collapse collapse-arrow border border-base-300 rounded-xl" data-endpoint="admin settings subscription">
+                             <input type="checkbox" />
+                            <div class="collapse-title text-md font-medium">
+                                <span class="badge badge-info mr-2">POST</span> /admin/settings/subscription
+                            </div>
+                            <div class="collapse-content">
+                                <div class="relative group">
+                                    <button class="btn btn-xs btn-ghost absolute right-2 top-2 opacity-0 group-hover:opacity-100"
+                                            onclick="copyCode('admin-sub-settings', this)">Copy</button>
+                                    <pre id="admin-sub-settings" class="bg-base-200 text-base-content/90 font-mono text-sm rounded-xl p-4 overflow-x-auto select-all">
+curl -X POST \
+  -H "Authorization: Bearer &lt;admin_token&gt;" \
+  -H "Content-Type: application/json" \
+  -d '{"subscription_module_enabled": true}' \
+  {{ url('/api/v1/admin/settings/subscription') }}</pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
 
