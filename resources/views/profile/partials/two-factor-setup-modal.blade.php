@@ -1,170 +1,140 @@
-{{-- resources/views/profile/partials/two-factor-setup-modal.blade.php --}}
 @php
     /** @var \App\Models\User|null $user */
     $user = $user ?? auth()->user();
-
     $twofaEnabled = (bool) ($user?->two_factor_secret ?? false);
 
-    // Guard Fortify helpers in case they’re unavailable
     $qrSvg  = ($twofaEnabled && method_exists($user, 'twoFactorQrCodeSvg')) ? $user->twoFactorQrCodeSvg() : null;
     $codes  = ($twofaEnabled && method_exists($user, 'recoveryCodes')) ? (array) $user->recoveryCodes() : [];
 
-    // Prefer your custom routes; fall back to Fortify endpoints if not registered
     $regenAction = \Illuminate\Support\Facades\Route::has('2fa.codes.regenerate')
         ? route('2fa.codes.regenerate')
-        : url('/user/two-factor-recovery-codes'); // Fortify default POST to regenerate
+        : url('/user/two-factor-recovery-codes');
 
     $downloadHref = \Illuminate\Support\Facades\Route::has('2fa.codes.download')
         ? route('2fa.codes.download')
-        : null; // use client-side download when not available
+        : null;
 
-    // If parent includes with ['show' => true], auto-open (we don't reference Blade directive in JS)
     $shouldOpen = isset($show) ? (bool) $show : false;
 @endphp
 
-<dialog id="twofa-setup-modal" class="modal">
-    <div class="modal-box max-w-2xl bg-base-100">
-        <h3 class="font-semibold text-lg">Set up Two-Factor Authentication</h3>
-        <p class="mt-1 text-sm text-base-content/70">
-            Scan the QR code with Google Authenticator (or any TOTP app), then store your backup codes somewhere safe.
-        </p>
+<div x-data="{ show: @json($shouldOpen), ack: false }"
+     x-on:open-modal.window="show = true"
+     x-on:close-modal.window="show = false"
+     x-on:keydown.escape.window="show = false"
+     class="relative z-50">
 
-        {{-- QR Code --}}
-        <div class="mt-5">
-            <div class="card bg-base-200 border border-base-300 rounded-xl">
-                <div class="card-body items-center">
-                    @if($qrSvg)
-                        <div class="p-3 bg-base-100 rounded-xl border border-base-300">{!! $qrSvg !!}</div>
-                        <p class="text-xs text-base-content/70 mt-2">
-                            Scan this code in your authenticator app and enter the 6-digit code below to confirm.
+    {{-- Backdrop --}}
+    <div x-show="show" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity" 
+         x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" 
+         x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+         style="display: none;"></div>
+
+    <div x-show="show" class="fixed inset-0 z-10 w-screen overflow-y-auto" style="display: none;">
+        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            <div class="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-xl sm:p-6"
+                 x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" 
+                 x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                 @click.outside="show = false">
+                
+                <div>
+                    <h3 class="text-base font-semibold leading-6 text-slate-900">Set up Two-Factor Authentication</h3>
+                    <div class="mt-2">
+                         <p class="text-sm text-slate-500">
+                            Scan the QR code with Google Authenticator (or any TOTP app), then store your backup codes somewhere safe.
                         </p>
-                    @else
-                        <p class="text-sm text-base-content/60">QR code unavailable.</p>
-                    @endif
+                    </div>
                 </div>
-            </div>
-        </div>
 
-        {{-- Confirm code (Fortify confirm flow) --}}
-        <div class="mt-6">
-            <form method="POST" action="{{ url('/user/confirmed-two-factor-authentication') }}"
-                  class="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3 items-end">
-                @csrf
-                <div class="form-control">
-                    <label class="label">
-                        <span class="label-text">Authenticator 6-digit code</span>
-                    </label>
-                    <input name="code" inputmode="numeric" autocomplete="one-time-code"
-                           placeholder="123456"
-                           class="input input-bordered h-12 w-full"
-                           required />
-                    <label class="label">
-                        <span class="label-text-alt text-base-content/60">
-                            Enter the current code from your authenticator app to finish setup.
-                        </span>
-                    </label>
+                {{-- QR Code --}}
+                <div class="mt-6">
+                    <div class="rounded-lg bg-slate-50 border border-slate-200 p-4 flex flex-col items-center justify-center text-center">
+                         @if($qrSvg)
+                            <div class="p-2 bg-white rounded-lg shadow-sm border border-slate-100 mb-3">{!! $qrSvg !!}</div>
+                            <p class="text-xs text-slate-500">Scan this code in your authenticator app and enter the 6-digit code below to confirm.</p>
+                        @else
+                            <p class="text-sm text-slate-500">QR code unavailable.</p>
+                        @endif
+                    </div>
                 </div>
-                <button type="submit" class="btn btn-primary h-12">
-                    Confirm
-                </button>
-            </form>
-            @error('code') <p class="text-error text-sm mt-2">{{ $message }}</p> @enderror
-            @if (session('status') === 'two-factor-authentication-confirmed')
-                <div class="alert alert-success mt-3"><span>Two-factor authentication confirmed.</span></div>
-            @endif
-        </div>
 
-        {{-- Recovery Codes --}}
-        <div class="mt-6">
-            <div class="flex items-center justify-between">
-                <h4 class="font-medium text-base-content">Recovery Codes</h4>
-                <div class="flex gap-2">
-                    <button type="button" class="btn btn-ghost btn-sm" id="twofa-copy-codes">Copy</button>
-
-                    @if($downloadHref)
-                        {{-- Server download (optional route; can be password.confirm protected) --}}
-                        <a href="{{ $downloadHref }}" class="btn btn-ghost btn-sm">Download</a>
-                    @else
-                        {{-- Client-side download fallback --}}
-                        <button type="button" class="btn btn-ghost btn-sm" id="twofa-download-codes">Download</button>
-                    @endif
-
-                    {{-- Regenerate on server (Fortify or your custom route) --}}
-                    <form method="POST" action="{{ $regenAction }}">
+                 {{-- Confirm Code --}}
+                <div class="mt-6">
+                     <form method="POST" action="{{ url('/user/confirmed-two-factor-authentication') }}">
                         @csrf
-                        <button type="submit" class="btn btn-outline btn-sm">Regenerate</button>
-                    </form>
+                        <label class="block text-sm font-medium leading-6 text-slate-900">Authenticator 6-digit code</label>
+                        <div class="mt-2 flex gap-3">
+                            <input type="text" name="code" inputmode="numeric" autocomplete="one-time-code" placeholder="123456" required
+                                   class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6">
+                            <button type="submit" class="rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 transition-colors">Confirm</button>
+                        </div>
+                         @error('code') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
+                        @if (session('status') === 'two-factor-authentication-confirmed')
+                             <p class="mt-2 text-sm text-green-600">Two-factor authentication confirmed.</p>
+                        @endif
+                     </form>
+                </div>
+
+                {{-- Recovery Codes --}}
+                <div class="mt-8 border-t border-slate-100 pt-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h4 class="text-sm font-medium text-slate-900">Recovery Codes</h4>
+                        <div class="flex gap-2 text-sm">
+                             <button type="button" class="font-medium text-primary-600 hover:text-primary-500" id="twofa-copy-codes">Copy</button>
+                             <span class="text-slate-300">|</span>
+                             @if($downloadHref)
+                                <a href="{{ $downloadHref }}" class="font-medium text-primary-600 hover:text-primary-500">Download</a>
+                             @else
+                                <button type="button" class="font-medium text-primary-600 hover:text-primary-500" id="twofa-download-codes">Download</button>
+                             @endif
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 rounded-lg border border-slate-200 p-4">
+                         @if(!empty($codes))
+                             <ul class="grid grid-cols-2 gap-2 font-mono text-xs text-slate-600">
+                                @foreach($codes as $code)
+                                    <li class="bg-white px-2 py-1 rounded border border-slate-100">{{ $code }}</li>
+                                @endforeach
+                            </ul>
+                            <textarea id="twofa-codes-raw" class="sr-only" aria-hidden="true">{{ implode("\n", $codes) }}</textarea>
+                             <p class="mt-3 text-xs text-slate-500">Keep these codes safe. Each one can be used once.</p>
+                        @else
+                            <p class="text-sm text-slate-500">No recovery codes found.</p>
+                        @endif
+                    </div>
+                </div>
+
+                <div class="mt-6 flex items-center">
+                    <input id="twofa-ack" type="checkbox" x-model="ack" class="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-600">
+                    <label for="twofa-ack" class="ml-2 block text-sm text-slate-900">I have saved my recovery codes.</label>
+                </div>
+
+                <div class="mt-5 sm:mt-6">
+                    <button type="button" @click="show = false" :disabled="!ack" class="inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed">Done</button>
                 </div>
             </div>
-
-            <div class="mt-3 card bg-base-200 border border-base-300 rounded-xl">
-                <div class="card-body">
-                    @if(!empty($codes))
-                        <ul id="twofa-codes-list" class="grid grid-cols-1 sm:grid-cols-2 gap-2 font-mono text-sm">
-                            @foreach($codes as $code)
-                                <li class="px-2 py-1 rounded-md bg-base-100 border border-base-300">{{ $code }}</li>
-                            @endforeach
-                        </ul>
-                        <textarea id="twofa-codes-raw" class="sr-only" aria-hidden="true">{{ implode("\n", $codes) }}</textarea>
-                        <p class="text-xs text-base-content/70 mt-2">
-                            Keep these backup codes somewhere safe. Each code works once if you lose access to your authenticator app.
-                        </p>
-                    @else
-                        <p class="text-sm text-base-content/60">No recovery codes found.</p>
-                    @endif
-                </div>
-            </div>
-        </div>
-
-        {{-- Acknowledge saving --}}
-        <div class="form-control mt-6">
-            <label class="label cursor-pointer justify-start gap-3">
-                <input id="twofa-ack" type="checkbox" class="checkbox checkbox-primary">
-                <span class="label-text">I’ve saved my recovery codes.</span>
-            </label>
-        </div>
-
-        <div class="modal-action">
-            <form method="dialog">
-                <button id="twofa-close" class="btn btn-primary" disabled>Done</button>
-            </form>
         </div>
     </div>
-    <form method="dialog" class="modal-backdrop">
-        <button>close</button>
-    </form>
-</dialog>
+</div>
 
-{{-- Modal JS (DaisyUI-friendly, vanilla).
-     IMPORTANT: Do not write Blade directives in JS comments; Blade parses before the browser sees it. --}}
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        const modal = document.getElementById('twofa-setup-modal');
-
-        // Auto-open when parent included this partial with show=true
-        @if($shouldOpen)
-        modal?.showModal?.();
-        @endif
-
-        // Require acknowledgement before closing
-        const ack   = document.getElementById('twofa-ack');
-        const close = document.getElementById('twofa-close');
-        if (ack && close) {
-            ack.addEventListener('change', () => { close.disabled = !ack.checked; });
-        }
-
-        // Copy codes to clipboard
+        // Copy codes logic
         const copyBtn = document.getElementById('twofa-copy-codes');
         const raw     = document.getElementById('twofa-codes-raw');
+        
         copyBtn?.addEventListener('click', async () => {
             try {
                 await navigator.clipboard.writeText(raw?.value || '');
-                copyBtn.classList.add('btn-success');
-                setTimeout(() => copyBtn.classList.remove('btn-success'), 900);
-            } catch {}
+                const originalText = copyBtn.innerText;
+                copyBtn.innerText = 'Copied!';
+                setTimeout(() => copyBtn.innerText = originalText, 2000);
+            } catch (err) {
+                console.error('Failed to copy', err);
+            }
         });
 
-        // Client-side download (fallback when no server route)
+         // Client-side download logic
         const dlBtn = document.getElementById('twofa-download-codes');
         dlBtn?.addEventListener('click', () => {
             const blob = new Blob([raw?.value || ''], { type: 'text/plain' });

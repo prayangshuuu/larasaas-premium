@@ -1,46 +1,41 @@
-{{-- resources/views/auth/verify-email.blade.php --}}
 @extends('layouts.guest')
 
 @section('content')
-    {{-- Header: logo centered inside a circle (same as login/register) --}}
-    <div class="flex flex-col items-center text-center space-y-3 mb-6">
-        <div class="w-16 h-16 rounded-full bg-base-200 ring-2 ring-primary ring-offset-2 ring-offset-base-100 flex items-center justify-center">
-            <x-application-logo class="h-9 w-9 text-primary" />
-        </div>
-        <h1 class="text-lg font-semibold text-base-content">Verify your email</h1>
-        <p class="text-sm text-base-content/70">
-            We’ve sent a verification link to your email. Click the link to finish setting up your account.
-            If you didn’t receive it, you can request another one below.
+    <div class="mb-8">
+        <h2 class="text-2xl font-bold tracking-tight text-slate-900 mb-2">Verify your email</h2>
+        <p class="text-sm text-slate-600">
+            Thanks for signing up! Before getting started, could you verify your email address by clicking on the link we just emailed to you? If you didn't receive the email, we will gladly send you another.
         </p>
     </div>
 
-    {{-- Success notice when a new link was sent --}}
-    @if (session('status') === 'verification-link-sent')
-        <div class="alert alert-success mb-5">
-            <span>A new verification link has been sent to the email address you provided during registration.</span>
+    @if (session('status') == 'verification-link-sent')
+        <div class="rounded-md bg-green-50 p-4 mb-6 border border-green-200">
+             <div class="flex">
+                <div class="shrink-0">
+                    <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <p class="ml-3 text-sm text-green-700">
+                    A new verification link has been sent to the email address you provided during registration.
+                </p>
+            </div>
         </div>
     @endif
 
-    {{-- Resend verification link --}}
-    <form method="POST" action="{{ route('verification.send') }}" class="space-y-5">
-        @csrf
+    <div class="mt-4 flex items-center justify-between">
+        <form method="POST" action="{{ route('verification.send') }}">
+            @csrf
+            <button type="submit" class="rounded-lg bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 transition-colors">
+                Resend Verification Email
+            </button>
+        </form>
 
-        <button type="submit" class="btn btn-primary w-full h-11 rounded-xl font-semibold">
-            Resend Verification Email
-        </button>
-
-        {{-- Secondary actions: consistent fonts & spacing --}}
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <a href="{{ route('profile.edit') }}" class="btn btn-outline w-full h-11 rounded-xl font-semibold">
-                Edit Profile
-            </a>
-
-            <form method="POST" action="{{ route('logout') }}">
-                @csrf
-                <button type="submit" class="btn btn-ghost w-full h-11 rounded-xl font-semibold border border-base-300">
-                    Log Out
-                </button>
-            </form>
-        </div>
-    </form>
+        <form method="POST" action="{{ route('logout') }}">
+            @csrf
+            <button type="submit" class="text-sm font-medium text-slate-600 hover:text-slate-900 underline">
+                Log Out
+            </button>
+        </form>
+    </div>
 @endsection

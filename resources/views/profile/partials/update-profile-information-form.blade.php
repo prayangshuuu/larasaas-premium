@@ -1,327 +1,205 @@
-{{-- resources/views/profile/partials/update-profile-information-form.blade.php --}}
 <section>
     @php
         /** @var \App\Models\User $user */
+        $user = Auth::user();
         $emailVerified = !($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail) || $user->hasVerifiedEmail();
-        $twofaEnabled  = (bool) auth()->user()->two_factor_secret;
-
-        // Detect "confirmed" state (Fortify supports a confirmed timestamp)
-        $twofaConfirmed = false;
-        if (method_exists($user, 'hasConfirmedTwoFactor')) {
-            $twofaConfirmed = $user->hasConfirmedTwoFactor();
-        } else {
-            $twofaConfirmed = !empty($user->two_factor_confirmed_at);
-        }
+        $twofaEnabled  = (bool) $user->two_factor_secret;
+        $twofaConfirmed = method_exists($user, 'hasConfirmedTwoFactor') ? $user->hasConfirmedTwoFactor() : !empty($user->two_factor_confirmed_at);
 
         $progress = 0;
         if (!empty($user->name))           $progress += 33;
         if ($emailVerified)                 $progress += 33;
         if (!empty($user->profile_picture)) $progress += 34;
 
-        // Username edit policy via settings (feature flag)
         $settings        = \App\Models\Setting::instance();
         $canEditUsername = (bool) $settings->feature_usernames_editable;
-
-        // Fortify sets this when 2FA just got enabled; use it to auto-open the modal
         $showTwoFactorSetup = session('status') === 'two-factor-authentication-enabled';
     @endphp
 
-    {{-- Auto-open the 2FA setup modal after enabling --}}
     @includeIf('profile.partials.two-factor-setup-modal', ['show' => $showTwoFactorSetup])
 
-    {{-- Success/Info toasts for key 2FA events --}}
     @if (session('status') === 'two-factor-authentication-confirmed')
-        <div class="alert alert-success rounded-2xl mb-4">
-            <span>{{ __('Two-factor authentication confirmed.') }}</span>
+        <div class="rounded-md bg-green-50 p-4 mb-4 border border-green-200">
+            <p class="text-sm font-medium text-green-800">Two-factor authentication confirmed.</p>
         </div>
     @endif
+    
     @if (session('status') === 'recovery-codes-generated')
-        <div class="alert alert-success rounded-2xl mb-4">
-            <span>{{ __('New recovery codes generated.') }}</span>
+         <div class="rounded-md bg-green-50 p-4 mb-4 border border-green-200">
+            <p class="text-sm font-medium text-green-800">New recovery codes generated.</p>
         </div>
     @endif
 
-    <div class="card bg-base-100 border border-base-300 shadow-md rounded-2xl">
-        <div class="card-body p-6 sm:p-8">
-            {{-- HEADER: left (title+desc+status), right (radial + All set) --}}
-            <header class="grid grid-cols-1 sm:grid-cols-[1fr_auto] items-center gap-4">
+    <div class="bg-white shadow-sm sm:rounded-xl border border-slate-200">
+        <div class="px-4 py-5 sm:p-6">
+            <header class="flex items-start justify-between">
                 <div>
-                    <h2 class="card-title text-base-content text-lg">
-                        {{ __('Profile Information') }}
-                    </h2>
-                    <p class="mt-1 text-sm text-base-content/70">
-                        {{ __("Update your account's profile information, picture, email address, and 2FA settings.") }}
-                    </p>
-                    <p class="mt-1 text-sm text-base-content/80">
-                        {{ $emailVerified ? __('Email verified') : __('Email unverified') }},
-                        @if ($twofaEnabled)
-                            {{ $twofaConfirmed ? __('2FA confirmed') : __('2FA pending confirmation') }}
-                        @else
-                            {{ __('2FA disabled') }}
-                        @endif
-                    </p>
+                   <h2 class="text-base font-semibold leading-7 text-slate-900">Profile Information</h2>
+                   <p class="mt-1 text-sm leading-6 text-slate-600">Update your account's profile information and email address.</p>
                 </div>
-
-                {{-- Right side: centered column, larger circle, All set below --}}
-                <div class="hidden sm:flex flex-col items-center justify-center gap-2 self-stretch">
-                    <div class="tooltip tooltip-left" data-tip="{{ __('Profile completeness') }}">
-                        <div class="radial-progress text-primary"
-                             style="--value: {{ $progress }}; --size: 8rem; --thickness: 8px"
-                             role="progressbar">
-                            <span class="text-sm font-semibold">{{ $progress }}%</span>
+                
+                 {{-- Completion Circle --}}
+                 <div class="flex flex-col items-center">
+                    <div class="relative w-16 h-16">
+                         @php
+                            $p = min($progress, 100);
+                            $c = 2 * pi() * 28; // r=28
+                            $offset = $c - ($p / 100) * $c;
+                        @endphp
+                        <svg class="w-full h-full transform -rotate-90" viewBox="0 0 64 64">
+                            <circle cx="32" cy="32" r="28" fill="none" stroke-width="6" class="text-slate-100" stroke="currentColor"></circle>
+                            <circle cx="32" cy="32" r="28" fill="none" stroke-width="6" class="text-primary-600 transition-all duration-500" stroke="currentColor"
+                                    stroke-dasharray="{{ $c }}" stroke-dashoffset="{{ $offset }}" stroke-linecap="round"></circle>
+                        </svg>
+                        <div class="absolute inset-0 flex items-center justify-center text-xs font-bold text-slate-700">
+                            {{ $p }}%
                         </div>
                     </div>
-                    @if($progress === 100)
-                        <span class="badge badge-success badge-lg gap-2 px-4">
-                            <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none"
-                                 viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                            {{ __('All set') }}
-                        </span>
-                    @endif
                 </div>
             </header>
 
-            <div class="divider my-4"></div>
+            <div class="mt-6 border-t border-slate-100"></div>
 
-            {{-- Profile Picture (right aligned, click to change → auto-submit) --}}
-            <form method="post" action="{{ route('profile.update') }}" enctype="multipart/form-data"
-                  class="grid grid-cols-1 sm:grid-cols-3 items-center gap-4">
-                @csrf
-                @method('patch')
+            <div class="mt-6 grid grid-cols-1 gap-x-8 gap-y-8 md:grid-cols-3">
+                 <div class="md:col-span-1">
+                     <form method="post" action="{{ route('profile.update') }}" enctype="multipart/form-data" class="flex flex-col items-center sm:items-start">
+                        @csrf
+                        @method('patch')
+                        <label class="block text-sm font-medium leading-6 text-slate-900 mb-2">Profile Picture</label>
+                        <div class="relative group cursor-pointer inline-block overflow-hidden rounded-full ring-2 ring-slate-100 ring-offset-2 hover:ring-primary-500 transition-all">
+                             <img class="h-24 w-24 object-cover" 
+                                  src="{{ $user->profile_picture ? Storage::url($user->profile_picture) : 'https://ui-avatars.com/api/?name='.urlencode($user->name) }}" 
+                                  alt="{{ $user->name }}">
+                             <div class="absolute inset-0 bg-slate-900/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <span class="text-white text-xs font-medium">Change</span>
+                             </div>
+                             <input type="file" name="profile_picture" class="absolute inset-0 opacity-0 cursor-pointer" onchange="this.form.submit()">
+                        </div>
+                         @error('profile_picture') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
+                     </form>
+                 </div>
 
-                <label class="text-sm font-medium text-base-content">{{ __('Profile Picture') }}</label>
+                 <div class="md:col-span-2">
+                     <form method="post" action="{{ route('profile.update') }}" class="space-y-6">
+                        @csrf
+                        @method('patch')
 
-                <div class="hidden sm:block"></div>
-
-                <div class="flex justify-end">
-                    <div class="relative group">
-                        <input id="profile_picture" name="profile_picture" type="file"
-                               class="sr-only" accept="image/png,image/jpeg,image/webp"
-                               onchange="this.form.submit()">
-
-                        <div class="avatar">
-                            <div class="w-24 h-24 mask mask-circle ring ring-primary ring-offset-base-100 ring-offset-2">
-                                <img class="object-cover"
-                                     src="{{ $user->profile_picture
-                                            ? \Illuminate\Support\Facades\Storage::url($user->profile_picture)
-                                            : asset('images/default-avatar.png') }}"
-                                     alt="{{ $user->name }}">
+                        {{-- Name --}}
+                        <div>
+                            <label for="name" class="block text-sm font-medium leading-6 text-slate-900">Name</label>
+                            <div class="mt-2">
+                                <input type="text" name="name" id="name" autocomplete="name"
+                                       value="{{ old('name', $user->name) }}" required
+                                       class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6">
                             </div>
+                            @error('name') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
 
-                        <label for="profile_picture"
-                               class="absolute inset-0 grid place-items-center rounded-full
-                                      bg-base-100/70 opacity-0 group-hover:opacity-100
-                                      transition cursor-pointer text-sm font-medium">
-                            {{ __('Change') }}
-                        </label>
-                        @error('profile_picture') <p class="text-error text-sm mt-2">{{ $message }}</p> @enderror
-                    </div>
-                </div>
-            </form>
+                        {{-- Email --}}
+                        <div>
+                            <label for="email" class="block text-sm font-medium leading-6 text-slate-900">Email address</label>
+                            <div class="mt-2">
+                                <input type="email" name="email" id="email" autocomplete="email"
+                                       value="{{ old('email', $user->email) }}" required
+                                       class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6">
+                            </div>
+                             @error('email') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
 
-            <div class="divider my-6"></div>
+                             @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
+                                <div class="mt-2 p-3 bg-yellow-50 rounded-md border border-yellow-100 flex items-center justify-between">
+                                    <p class="text-xs text-yellow-800">Your email is unverified.</p>
+                                    <button form="send-verification" class="text-xs font-semibold text-primary-600 hover:text-primary-500">Resend Verification</button>
+                                </div>
+                                @if (session('status') === 'verification-link-sent')
+                                    <p class="mt-2 text-xs font-medium text-green-600">A new verification link has been sent.</p>
+                                @endif
+                            @endif
+                        </div>
 
-            {{-- Icon – Label – Field (single-line rows, uniform sizes) --}}
-            <form method="post" action="{{ route('profile.update') }}" class="space-y-4">
-                @csrf
-                @method('patch')
-
-                {{-- Name --}}
-                <div class="flex items-center gap-3">
-                    <span class="btn btn-ghost btn-square pointer-events-none" aria-hidden="true">
-                        {{-- user icon --}}
-                        <svg class="w-5 h-5 opacity-80" xmlns="http://www.w3.org/2000/svg" fill="none"
-                             viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M15.75 7.5a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 19.5a7.5 7.5 0 0115 0v.75H4.5v-.75z"/>
-                        </svg>
-                    </span>
-                    <label for="name" class="w-36 shrink-0 text-sm font-medium text-base-content">
-                        {{ __('Name') }}
-                    </label>
-                    <input id="name" name="name" type="text"
-                           class="input input-bordered h-12 w-full"
-                           value="{{ old('name', $user->name) }}" required autocomplete="name" />
-                </div>
-                @error('name') <p class="text-error text-sm">{{ $message }}</p> @enderror
-
-                {{-- Email --}}
-                <div class="flex items-center gap-3">
-                    <span class="btn btn-ghost btn-square pointer-events-none" aria-hidden="true">
-                        {{-- envelope icon --}}
-                        <svg class="w-5 h-5 opacity-80" xmlns="http://www.w3.org/2000/svg" fill="none"
-                             viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25H4.5a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5H4.5A2.25 2.25 0 002.25 6.75m19.5 0L12 12.75 2.25 6.75" />
-                        </svg>
-                    </span>
-                    <label for="email" class="w-36 shrink-0 text-sm font-medium text-base-content">
-                        {{ __('Email') }}
-                    </label>
-                    <input id="email" name="email" type="email"
-                           class="input input-bordered h-12 w-full"
-                           value="{{ old('email', $user->email) }}" required autocomplete="email" />
-                </div>
-                @error('email') <p class="text-error text-sm">{{ $message }}</p> @enderror
-
-                {{-- Username (editable only when feature flag is ON) --}}
-                <div class="flex items-center gap-3">
-                    <span class="btn btn-ghost btn-square pointer-events-none" aria-hidden="true">
-                        {{-- at-symbol icon --}}
-                        <svg class="w-5 h-5 opacity-80" xmlns="http://www.w3.org/2000/svg" fill="none"
-                             viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M16.5 12a4.5 4.5 0 11-2.64-4.11m2.64 4.11v1.5a1.5 1.5 0 003 0V12a7.5 7.5 0 10-2.2 5.3" />
-                        </svg>
-                    </span>
-                    <label for="username" class="w-36 shrink-0 text-sm font-medium text-base-content">
-                        {{ __('Username') }}
-                    </label>
-
-                    @if($canEditUsername)
-                        <input id="username" name="username" type="text"
-                               class="input input-bordered h-12 w-full"
-                               value="{{ old('username', $user->username) }}" autocomplete="username" />
-                        @error('username') <p class="text-error text-sm">{{ $message }}</p> @enderror
-                    @else
-                        {{-- keep layout consistent; disabled and no name attribute --}}
-                        <input id="username" type="text"
-                               class="input input-bordered h-12 w-full"
-                               value="{{ $user->username }}" disabled />
-                    @endif
-                </div>
-
-                <div class="card-actions justify-end pt-2">
-                    <button type="submit" class="btn btn-primary h-12 min-w-40">
-                        {{ __('Save changes') }}
-                    </button>
-                    @if (session('status') === 'profile-updated')
-                        <span class="badge badge-success badge-outline">{{ __('Saved') }}</span>
-                    @endif
-                </div>
-            </form>
-
-            {{-- Email verification notices --}}
-            @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
-                <div class="alert alert-warning mt-6">
-                    <div class="flex items-center gap-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 shrink-0" fill="none"
-                             viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M12 9v2m0 4h.01M4.93 19.07A10 10 0 1119.07 4.93 10 10 0 014.93 19.07z"/>
-                        </svg>
-                        <span>{{ __('Your email address is unverified.') }}</span>
-                    </div>
-                    <form id="send-verification" method="post" action="{{ route('verification.send') }}" class="inline-block ml-2">
-                        @csrf
-                        <button class="btn btn-sm btn-outline btn-primary">
-                            {{ __('Resend verification email') }}
-                        </button>
-                    </form>
-                </div>
-                @if (session('status') === 'verification-link-sent')
-                    <div class="alert alert-success mt-3">
-                        <span>{{ __('A new verification link has been sent to your email address.') }}</span>
-                    </div>
-                @endif
-            @endif
-
-            <div class="divider my-6"></div>
-
-            {{-- Two-Factor Authentication --}}
-            <div class="grid grid-cols-1 sm:grid-cols-3 items-start gap-4">
-                <div class="sm:col-span-2">
-                    <h3 class="font-medium text-base-content flex items-center gap-2">
-                        {{-- shield icon --}}
-                        <svg class="w-5 h-5 opacity-80" xmlns="http://www.w3.org/2000/svg" fill="none"
-                             viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M12 6.253l7.5 4.327v5.62A2.75 2.75 0 0116.75 19H7.25A2.75 2.75 0 014.5 16.2v-5.62L12 6.253z"/>
-                        </svg>
-                        {{ __('Two-Factor Authentication (2FA)') }}
-                        <span class="badge {{ $twofaEnabled ? ($twofaConfirmed ? 'badge-primary' : 'badge-warning') : 'badge-ghost' }} ml-2">
-                            {{ $twofaEnabled ? ($twofaConfirmed ? __('Confirmed') : __('Pending')) : __('Disabled') }}
-                        </span>
-                    </h3>
-                    <p class="mt-1 text-xs text-base-content/70">
-                        {{ __('Use an authenticator app (TOTP) for stronger security.') }}
-                    </p>
-                </div>
-
-                <div class="sm:text-right space-x-2 space-y-2 sm:space-y-0">
-                    @if ($twofaEnabled)
-                        <form method="POST" action="{{ url('/user/two-factor-authentication') }}" class="inline-flex">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="btn btn-outline btn-error rounded-xl">
-                                {{ __('Disable 2FA') }}
-                            </button>
-                        </form>
-                    @else
-                        <form method="POST" action="{{ url('/user/two-factor-authentication') }}" class="inline-flex">
-                            @csrf
-                            <button type="submit" class="btn btn-outline btn-primary rounded-xl">
-                                {{ __('Enable 2FA') }}
-                            </button>
-                        </form>
-                    @endif
-                </div>
+                         {{-- Username --}}
+                         <div>
+                            <label for="username" class="block text-sm font-medium leading-6 text-slate-900">Username</label>
+                            <div class="mt-2">
+                                <input type="text" name="username" id="username" 
+                                       value="{{ old('username', $user->username) }}"
+                                       @if(!$canEditUsername) disabled @endif
+                                       class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500 disabled:ring-slate-200">
+                            </div>
+                         </div>
+                        
+                        <div class="flex items-center gap-4">
+                            <button type="submit" class="rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 transition-colors">Save</button>
+                             @if (session('status') === 'profile-updated')
+                                <p x-data="{ show: true }" x-show="show" x-transition x-init="setTimeout(() => show = false, 2000)" class="text-sm text-green-600 dark:text-gray-400">Saved.</p>
+                            @endif
+                        </div>
+                     </form>
+                     
+                     <form id="send-verification" method="post" action="{{ route('verification.send') }}">@csrf</form>
+                 </div>
             </div>
 
-            {{-- If enabled but not confirmed, show inline confirm form as a backup --}}
-            @if ($twofaEnabled && ! $twofaConfirmed)
-                <div class="alert alert-info mt-4">
-                    <span>{{ __('Enter the 6-digit code from your authenticator app to finish setup.') }}</span>
-                </div>
-                <form method="POST" action="{{ url('/user/confirmed-two-factor-authentication') }}" class="mt-3">
-                    @csrf
-                    <div class="flex items-center gap-3">
-                        <label for="code" class="w-36 shrink-0 text-sm font-medium text-base-content">
-                            {{ __('Confirmation code') }}
-                        </label>
-                        <input id="code" name="code" inputmode="numeric" pattern="[0-9]*" maxlength="6"
-                               class="input input-bordered h-12 w-full sm:max-w-xs"
-                               placeholder="123456" required />
-                        <button type="submit" class="btn btn-primary h-12">
-                            {{ __('Confirm') }}
-                        </button>
-                    </div>
-                    @error('code') <p class="text-error text-sm mt-2">{{ $message }}</p> @enderror
-                </form>
-            @endif
-
-            {{-- Recovery code actions (available after enabling) --}}
-            @if ($twofaEnabled)
-                <div class="divider my-6"></div>
-                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                    <div>
-                        <div class="font-medium text-base-content">{{ __('Recovery Codes') }}</div>
-                        <div class="text-sm text-base-content/70">
-                            {{ __('Keep these safe. You can view them (after password confirmation) or regenerate new ones.') }}
+            <div class="mt-10 border-t border-slate-100 pt-8">
+                 <div class="md:grid md:grid-cols-3 md:gap-6">
+                    <div class="md:col-span-1">
+                        <div class="px-0">
+                            <h3 class="text-base font-semibold leading-7 text-slate-900">Two-Factor Authentication</h3>
+                            <p class="mt-1 text-sm leading-6 text-slate-600">Add additional security to your account using two-factor authentication.</p>
                         </div>
                     </div>
+                    <div class="mt-5 md:col-span-2 md:mt-0">
+                         <div class="flex items-center justify-between py-4">
+                            <div>
+                                <span class="font-medium text-slate-900">Status</span>
+                                <span class="ml-2 inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset {{ $twofaEnabled ? ($twofaConfirmed ? 'bg-green-50 text-green-700 ring-green-600/20' : 'bg-yellow-50 text-yellow-800 ring-yellow-600/20') : 'bg-slate-50 text-slate-600 ring-slate-500/10' }}">
+                                     {{ $twofaEnabled ? ($twofaConfirmed ? 'Active' : 'Pending Confirmation') : 'Disabled' }}
+                                </span>
+                            </div>
+                            
+                             @if ($twofaEnabled)
+                                <form method="POST" action="{{ url('/user/two-factor-authentication') }}">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="rounded-md bg-red-50 px-3 py-2 text-sm font-semibold text-red-600 shadow-sm hover:bg-red-100 border border-transparent hover:border-red-200 transition-colors">Disable</button>
+                                </form>
+                            @else
+                                <form method="POST" action="{{ url('/user/two-factor-authentication') }}">
+                                    @csrf
+                                    <button type="submit" class="rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 transition-colors">Enable</button>
+                                </form>
+                            @endif
+                         </div>
 
-                    <div class="space-x-2">
-                        <a href="{{ route('two-factor.codes.show') }}" class="btn btn-ghost rounded-xl border border-base-300">
-                            {{ __('Show Codes') }}
-                        </a>
+                         @if ($twofaEnabled && ! $twofaConfirmed)
+                             <div class="mt-4 p-4 rounded-md bg-sky-50 border border-sky-100">
+                                <p class="text-sm font-medium text-sky-900 mb-3">Finish enabling two-factor authentication.</p>
+                                <p class="text-sm text-sky-700 mb-4">Scan the QR code in your authenticator app and enter the code below.</p>
+                                
+                                <form method="POST" action="{{ url('/user/confirmed-two-factor-authentication') }}" class="flex gap-2">
+                                    @csrf
+                                    <input type="text" name="code" class="block w-40 rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6" placeholder="123456" required>
+                                    <button type="submit" class="rounded-md bg-sky-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-500">Confirm</button>
+                                </form>
+                             </div>
+                         @endif
 
-                        <form method="POST" action="{{ url('/user/two-factor-recovery-codes') }}"
-                              class="inline-flex"
-                              onsubmit="return confirm('{{ __('Regenerate recovery codes? Old codes will stop working.') }}');">
-                            @csrf
-                            <button type="submit" class="btn btn-outline btn-primary rounded-xl">
-                                {{ __('Regenerate') }}
-                            </button>
-                        </form>
+                         @if ($twofaEnabled)
+                             <div class="mt-6">
+                                <h4 class="text-sm font-medium text-slate-900 mb-2">Recovery Codes</h4>
+                                <div class="flex items-center gap-3">
+                                    <a href="{{ route('two-factor.codes.show') }}" class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50">Show Codes</a>
+                                    
+                                     <form method="POST" action="{{ url('/user/two-factor-recovery-codes') }}"
+                                          onsubmit="return confirm('Regenerate recovery codes? Old codes will stop working.');">
+                                        @csrf
+                                        <button type="submit" class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50">Regenerate</button>
+                                    </form>
+                                </div>
+                             </div>
+                         @endif
                     </div>
-                </div>
-            @endif
-
+                 </div>
+            </div>
         </div>
     </div>
 </section>

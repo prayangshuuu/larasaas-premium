@@ -1,68 +1,47 @@
-{{-- resources/views/auth/forgot-password.blade.php --}}
 @extends('layouts.guest')
 
 @section('content')
-    {{-- Header: centered logo inside a circle (same as login/register) --}}
-    <div class="flex flex-col items-center text-center space-y-3 mb-6">
-        <div class="w-16 h-16 rounded-full bg-base-200 ring-2 ring-primary ring-offset-2 ring-offset-base-100 flex items-center justify-center">
-            {{-- Logo perfectly centered --}}
-            <x-application-logo class="h-9 w-9 text-primary" />
-        </div>
-        <h1 class="text-lg font-semibold text-base-content">Forgot your password?</h1>
-        <p class="text-sm text-base-content/70">Enter your email and we’ll send you a reset link.</p>
+    <div class="mb-8">
+        <h2 class="text-2xl font-bold tracking-tight text-slate-900 mb-2">Forgot password?</h2>
+        <p class="text-sm text-slate-600">
+            No problem. Just let us know your email address and we will email you a password reset link that will allow you to choose a new one.
+        </p>
     </div>
 
-    {{-- Success status --}}
     @if (session('status'))
-        <div class="alert alert-success mb-5">
-            <span class="text-sm">{{ session('status') }}</span>
+        <div class="rounded-md bg-green-50 p-4 mb-6 border border-green-200">
+            <div class="flex">
+                <div class="shrink-0">
+                    <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <p class="ml-3 text-sm text-green-700">{{ session('status') }}</p>
+            </div>
         </div>
     @endif
 
-    {{-- Validation errors --}}
-    @if ($errors->any())
-        <div class="alert alert-error mb-5">
-            <span class="font-semibold">Please fix the following:</span>
-            <ul class="list-disc list-inside text-sm">
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
-
-    <form method="POST" action="{{ route('password.email') }}" class="space-y-5">
+    <form method="POST" action="{{ route('password.email') }}">
         @csrf
 
-        {{-- Email --}}
-        <div class="space-y-2">
-            <label for="email" class="block text-sm font-medium text-base-content">Email</label>
-            <input id="email" name="email" type="email" value="{{ old('email') }}" required autofocus
-                   class="input input-bordered w-full" autocomplete="username" />
+        {{-- Email Address --}}
+        <div>
+            <label for="email" class="block text-sm font-medium leading-6 text-slate-900">Email Address</label>
+            <div class="mt-2 text-sm text-slate-600">
+                 <input type="email" name="email" id="email" required autofocus
+                       value="{{ old('email') }}"
+                       class="block w-full rounded-lg border-0 py-1.5 text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6" 
+                       placeholder="you@example.com">
+            </div>
+             @error('email')
+                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+            @enderror
         </div>
 
-        {{-- Primary action: full-width button (same size as Login/Register) --}}
-        <div>
-            <button type="submit" class="btn btn-primary w-full h-11 rounded-xl font-semibold">
+        <div class="mt-6 flex items-center justify-end">
+             <button type="submit" class="flex w-full justify-center rounded-lg bg-primary-600 px-3 py-2 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 transition-colors">
                 Email Password Reset Link
             </button>
-        </div>
-
-        {{-- Secondary links (single-line, consistent font/spacing) --}}
-        <div class="flex items-center justify-between pt-1">
-            @if (Route::has('login'))
-                <a href="{{ route('login') }}"
-                   class="text-sm font-medium text-base-content/80 hover:text-primary focus:underline">
-                    Back to login
-                </a>
-            @endif
-
-            @if (Route::has('register'))
-                <a href="{{ route('register') }}"
-                   class="text-sm font-medium text-base-content/80 hover:text-primary focus:underline">
-                    Create an account
-                </a>
-            @endif
         </div>
     </form>
 @endsection
