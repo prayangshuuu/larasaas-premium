@@ -175,6 +175,9 @@ Route::middleware(['auth', 'verified', 'admin', 'not-banned', 'impersonation'])
 
         // Plans Resource
         Route::resource('plans', PlanController::class);
+        
+        // Coupons Resource
+        Route::resource('coupons', \App\Http\Controllers\Admin\CouponController::class)->except(['show', 'edit', 'update']);
 
         /*
         |------------------------------------------------------------------

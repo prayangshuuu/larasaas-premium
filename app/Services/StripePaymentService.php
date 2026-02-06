@@ -100,6 +100,7 @@ class StripePaymentService
                     'plan_id' => $plan->id,
                 ],
             ],
+            'allow_promotion_codes' => true,
         ]);
     }
 
@@ -184,5 +185,83 @@ class StripePaymentService
             'customer' => $user->stripe_id,
             'return_url' => route('billing.index'),
         ]);
+    }
+
+    /**
+     * Create a Coupon and Promotion Code in Stripe.
+     *
+     * @param array $data
+     * @return array ['coupon_id' => string, 'promo_code_id' => string]
+     */
+    public function createStripeCoupon(array $data)
+    {
+        if ($this->isMock) {
+            return [
+                'coupon_id' => 'coupon_mock_' . uniqid(),
+                'promo_code_id' => 'promo_mock_' . uniqid(),
+            ];
+        }
+
+        // 1. Create Coupon
+        $couponData = [
+            'name' => $data['code'], // Use code as name for easy ID
+            'duration' => $data['duration'] ?? 'once', // once, repeating, forever
+        ];
+
+        if ($data['type'] === 'percent') {
+            $couponData['percent_off'] = $data['value'];
+        } else {
+            $couponData['amount_off'] = $data['value'] * 100; // Cents
+            $couponData['currency'] = 'usd'; // Defaulting to USD for now, strictly speaking should match plan currency
+        }
+
+        if (isset($data['duration_in_months']) && $data['duration'] === 'repeating') {
+            $couponData['duration_in_months'] = $data['duration_in_months'];
+        }
+
+        $coupon = $this->stripe->coupons->create($couponData);
+
+        // 2. Create Promotion Code (The actual code user types)
+        $promoData = [
+            'coupon' => $coupon->id,
+            'code' => $data['code'],
+            'active' => true,
+        ];
+
+        if (!empty($data['expires_at'])) {
+            $promoData['expires_at'] = \Carbon\Carbon::parse($data['expires_at'])->timestamp;
+        }
+
+        if (!empty($data['max_uses'])) {
+            $promoData['max_redemptions'] = $data['max_uses'];
+        }
+
+        $promoCode = $this->stripe->promotionCodes->create($promoData);
+
+        return [
+            'coupon_id' => $coupon->id,
+            'promo_code_id' => $promoCode->id,
+        ];
+    }
+
+    /**
+     * Delete (Archive) a Stripe Coupon/Promo Code.
+     */
+    public function deleteStripeCoupon(string $items) 
+    {
+        // We really just need to archive the coupon or the promo code. 
+        // Archiving the promo code stops it from being used.
+        // $items can be the promo code ID.
+        
+        if ($this->isMock) {
+            return true;
+        }
+
+        try {
+            // Update Promotion Code to inactive
+            $this->stripe->promotionCodes->update($items, ['active' => false]);
+        } catch (\Exception $e) {
+            Log::error("Failed to archive Stripe promo code: " . $e->getMessage());
+        }
     }
 }

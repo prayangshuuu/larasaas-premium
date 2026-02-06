@@ -68,7 +68,10 @@
         @endforeach
     </div>
 
-    <div class="mt-12 text-center">
+    <div class="mt-12 text-center space-y-2">
+        <p class="text-sm text-zinc-400">
+            Have a coupon code? You can apply it during checkout!
+        </p>
         <p class="text-sm text-zinc-500">
             Secure payments powered by Stripe. You can cancel at any time.
         </p>
