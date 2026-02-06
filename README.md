@@ -35,11 +35,16 @@ A comprehensive Laravel 12 web application for IELTS preparation with advanced u
 - **API Documentation** built-in
 - **Personal Access Tokens** for API access
 
-### UI/UX
-- **Modern Design** with TailwindCSS v4 and DaisyUI
-- **Responsive Layout**
-- **Dark/Light Theme Support**
-- **Alpine.js** for interactive components
+### UI/UX (Headless & SaaS Ready)
+- **Premium SaaS Design** with TailwindCSS v4 and DaisyUI 5
+- **Headless UI Patterns**: Accessible, keyboard-navigable components (Dropdowns, Modals) powered by Alpine.js
+- **Robust Theming**: Flicker-free Dark/Light mode persisting across sessions
+- **Responsive Layout**: Mobile-first design with smooth transitions
+
+### Architecture & ORM
+- **Eloquent-First Approach**: Business logic encapsulated in Model Accessors (`User::profileCompleteness`, `User::ieltsStats`)
+- **Fat Models, Skinny Controllers**: Clean controller logic delegating to the ORM
+- **Strict Typing**: PHP 8.2+ features utilized throughout
 
 ---
 
