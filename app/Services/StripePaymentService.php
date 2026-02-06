@@ -4,8 +4,11 @@ namespace App\Services;
 
 use App\Models\User;
 use App\Models\Plan;
+use App\Models\Subscription;
+use App\Models\Invoice;
 use Illuminate\Support\Facades\Log;
 use Stripe\StripeClient;
+use Carbon\Carbon;
 
 class StripePaymentService
 {
@@ -73,6 +76,24 @@ class StripePaymentService
         $this->createCustomer($user);
 
         if ($this->isMock) {
+            // Immediately create subscription and invoice in DB for testing
+            $subscription = Subscription::create([
+                'user_id' => $user->id,
+                'plan_id' => $plan->id,
+                'stripe_subscription_id' => 'sub_mock_' . uniqid(),
+                'status' => 'active',
+                'current_period_end' => Carbon::now()->addMonth(),
+            ]);
+
+            Invoice::create([
+                'user_id' => $user->id,
+                'stripe_invoice_id' => 'in_mock_' . uniqid(),
+                'amount' => $plan->price,
+                'status' => 'paid',
+                'invoice_pdf_url' => '#', 
+                'paid_at' => Carbon::now(),
+            ]);
+
             // Return mock session
             return (object) [
                 'id' => 'cs_mock_' . uniqid(),

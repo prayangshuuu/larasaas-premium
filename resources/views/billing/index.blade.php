@@ -142,6 +142,10 @@
                                     <td class="px-6 py-4 whitespace-nowrap text-sm">
                                         @if($invoice->status === 'paid')
                                             <span class="inline-flex items-center rounded-full bg-emerald-400/10 px-2 py-1 text-xs font-medium text-emerald-400 ring-1 ring-inset ring-emerald-400/20">Paid</span>
+                                        @elseif($invoice->status === 'pending')
+                                            <span class="inline-flex items-center rounded-full bg-yellow-400/10 px-2 py-1 text-xs font-medium text-yellow-500 ring-1 ring-inset ring-yellow-400/20">Pending</span>
+                                        @elseif(in_array($invoice->status, ['failed', 'canceled']))
+                                            <span class="inline-flex items-center rounded-full bg-red-400/10 px-2 py-1 text-xs font-medium text-red-500 ring-1 ring-inset ring-red-400/20">{{ ucfirst($invoice->status) }}</span>
                                         @else
                                             <span class="inline-flex items-center rounded-full bg-zinc-400/10 px-2 py-1 text-xs font-medium text-zinc-400 ring-1 ring-inset ring-zinc-400/20">{{ ucfirst($invoice->status) }}</span>
                                         @endif
