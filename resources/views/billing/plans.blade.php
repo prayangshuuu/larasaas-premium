@@ -1,55 +1,77 @@
-<x-app-layout>
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="text-center mb-12">
-                <h2 class="text-3xl font-extrabold text-white">
-                    Choose Your Plan
-                </h2>
-                <p class="mt-4 text-xl text-zinc-400">
-                    Unlock the full potential of your IELTS preparation with premium features.
-                </p>
-            </div>
+@extends('layouts.app')
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                @foreach($plans as $plan)
-                    <div class="bg-zinc-900 rounded-2xl border border-zinc-800 p-8 flex flex-col hover:border-indigo-500 transition-colors duration-300">
-                        <div class="mb-4">
-                            <h3 class="text-xl font-bold text-white">{{ $plan->name }}</h3>
-                            <div class="mt-4 flex items-baseline text-white">
-                                <span class="text-4xl font-extrabold tracking-tight">${{ number_format($plan->price, 2) }}</span>
-                                <span class="ml-1 text-xl font-medium text-zinc-400">/{{ $plan->interval }}</span>
-                            </div>
-                        </div>
-                        
-                        <p class="mt-2 text-zinc-400 text-sm mb-6">
-                            Perfect for {{ $plan->name }} preparation.
-                        </p>
-
-                        <ul role="list" class="space-y-4 mb-8 flex-1">
-                            @if(is_array($plan->features))
-                                @foreach($plan->features as $key => $limit)
-                                    <li class="flex items-start">
-                                        <div class="flex-shrink-0">
-                                            <!-- Check icon -->
-                                            <svg class="h-6 w-6 text-green-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                            </svg>
-                                        </div>
-                                        <p class="ml-3 text-base text-zinc-300">
-                                            {{ ucwords(str_replace('_', ' ', $key)) }}: <span class="font-semibold text-white">{{ $limit === -1 ? 'Unlimited' : $limit }}</span>
-                                        </p>
-                                    </li>
-                                @endforeach
-                            @endif
-                        </ul>
-
-                        <a href="{{ route('billing.checkout', $plan) }}"
-                           class="w-full block bg-indigo-600 border border-transparent rounded-md py-3 text-center text-base font-medium text-white hover:bg-indigo-700 transition duration-150 ease-in-out">
-                            Subscribe to {{ $plan->name }}
-                        </a>
-                    </div>
-                @endforeach
-            </div>
-        </div>
+@section('content')
+<div class="max-w-7xl mx-auto space-y-12 py-8">
+    
+    {{-- Header --}}
+    <div class="text-center max-w-2xl mx-auto">
+        <h1 class="text-4xl font-extrabold tracking-tight text-white sm:text-5xl">Simple, transparent pricing</h1>
+        <p class="mt-4 text-lg text-zinc-400">Choose the plan that best fits your needs. Upgrade or cancel anytime.</p>
     </div>
-</x-app-layout>
+
+    {{-- Plans Grid --}}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-start">
+        @foreach($plans as $plan)
+            {{-- Plan Card --}}
+            <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 shadow-2xl flex flex-col relative overflow-hidden group hover:border-zinc-700 transition-all duration-300">
+                
+                {{-- Active/Current Badge --}}
+                @if(isset($currentPlanId) && $currentPlanId == $plan->id)
+                    <div class="absolute top-0 right-0 bg-indigo-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg shadow-sm">
+                        CURRENT PLAN
+                    </div>
+                @endif
+                
+                {{-- Glow --}}
+                <div class="absolute inset-0 bg-gradient-to-b from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+
+                <div class="mb-6 relative z-10">
+                    <h3 class="text-xl font-bold text-white">{{ $plan->name }}</h3>
+                    <p class="text-sm text-zinc-400 mt-2 min-h-[40px]">
+                        {{-- Description placeholder if plan has one, currently plan model doesn't have description field in migration, so generic text --}}
+                        Unlock premium features to boost your IELTS score.
+                    </p>
+                </div>
+
+                <div class="mb-8 relative z-10">
+                    <span class="text-4xl font-bold text-white">{{ $plan->currency }} {{ $plan->price }}</span>
+                    <span class="text-zinc-500 font-medium">/ {{ $plan->interval }}</span>
+                </div>
+
+                <ul class="space-y-4 mb-8 flex-1 relative z-10">
+                    @if($plan->features)
+                        @foreach(is_string($plan->features) ? json_decode($plan->features, true) ?? [] : $plan->features as $feature)
+                            <li class="flex items-start">
+                                <svg class="h-5 w-5 text-emerald-500 mr-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                                <span class="text-sm text-zinc-300">{{ $feature }}</span>
+                            </li>
+                        @endforeach
+                    @else
+                        <li class="text-sm text-zinc-500 italic">Standard features included.</li>
+                    @endif
+                </ul>
+
+                <div class="relative z-10">
+                    @if(isset($currentPlanId) && $currentPlanId == $plan->id)
+                        <button disabled class="w-full inline-flex justify-center items-center rounded-lg bg-zinc-800 px-4 py-3 text-sm font-semibold text-zinc-400 cursor-not-allowed border border-zinc-700">
+                           Current Plan
+                        </button>
+                    @else
+                        <a href="{{ route('billing.checkout', $plan) }}" class="w-full inline-flex justify-center items-center rounded-lg bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 hover:scale-105 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-zinc-900 focus:ring-indigo-500">
+                           Subscribe
+                        </a>
+                    @endif
+                </div>
+            </div>
+        @endforeach
+    </div>
+
+    <div class="mt-12 text-center">
+        <p class="text-sm text-zinc-500">
+            Secure payments powered by Stripe. You can cancel at any time.
+        </p>
+    </div>
+</div>
+@endsection

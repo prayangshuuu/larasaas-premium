@@ -102,6 +102,28 @@
                                         </form>
                                     </div>
                                 </div>
+                                
+                                <!-- Change Plan Form -->
+                                <div class="mt-4 p-4 bg-zinc-50 dark:bg-zinc-950/50 rounded-xl border border-zinc-200 dark:border-zinc-800">
+                                    <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">Change Plan</h4>
+                                    <form method="POST" action="{{ route('admin.users.subscriptions.update', [$user, $subscription]) }}" class="flex items-end gap-3">
+                                        @csrf
+                                        @method('PUT')
+                                        <div class="flex-1">
+                                            <x-ui.label for="update_plan_id" value="Select New Plan" class="text-zinc-600 dark:text-zinc-400 mb-1" />
+                                            <select id="update_plan_id" name="plan_id" class="block w-full rounded-md border-0 bg-white dark:bg-zinc-900 py-2.5 px-3 text-gray-900 dark:text-white shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-zinc-700 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                                @foreach(\App\Models\Plan::where('is_active', true)->get() as $p)
+                                                    <option value="{{ $p->id }}" {{ $subscription->plan_id == $p->id ? 'selected' : '' }}>
+                                                        {{ $p->name }} — {{ $p->price }} {{ $p->currency }} / {{ $p->interval }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <button type="submit" class="inline-flex items-center justify-center rounded-md bg-white dark:bg-zinc-800 px-4 py-2.5 text-sm font-semibold text-gray-900 dark:text-white shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors">
+                                            Update
+                                        </button>
+                                    </form>
+                                 </div>
                             @else
                                 <div class="bg-yellow-50 dark:bg-yellow-900/10 p-4 rounded-xl border border-yellow-200 dark:border-yellow-500/20">
                                     <div class="flex">

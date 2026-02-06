@@ -117,9 +117,12 @@ class PlanController extends Controller
      */
     public function destroy(Plan $plan)
     {
-        if ($plan->subscriptions()->where('status', 'active')->exists()) {
-            return back()->with('error', 'Cannot delete plan with active subscriptions.');
-        }
+        // Note: Subscriptions are set to cascade on delete in migration, 
+        // so deleting the plan will delete associated subscriptions.
+        // We allow this "Force Delete" behavior as requested.
+        
+        // Optional: Cancel them in Stripe if needed here (advanced), 
+        // but for now we just delete local record.
 
         $plan->delete();
         return redirect()->route('admin.plans.index')->with('success', 'Plan deleted successfully.');

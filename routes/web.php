@@ -86,8 +86,12 @@ Route::middleware(['auth', 'verified', 'not-banned', 'subscription.enabled'])
     ->prefix('billing')
     ->as('billing.')
     ->group(function () {
-        // Billing Hub (Plans / Manage)
+        // Billing Hub (Dashboard)
         Route::get('/', [\App\Http\Controllers\BillingController::class, 'index'])->name('index');
+        
+        // Plans (standalone or under billing) - User requested /plans separate but linked
+        Route::get('/plans', [\App\Http\Controllers\BillingController::class, 'plans'])->name('plans');
+        
         Route::get('/portal', [\App\Http\Controllers\BillingController::class, 'portal'])->name('portal');
 
         // Subscription Management
@@ -193,6 +197,7 @@ Route::middleware(['auth', 'verified', 'admin', 'not-banned', 'impersonation'])
             
             // Manual Subscription Management (Admin)
             Route::post('/{user}/subscriptions', [\App\Http\Controllers\Admin\UserSubscriptionController::class, 'store'])->name('subscriptions.store');
+            Route::put('/{user}/subscriptions/{subscription}', [\App\Http\Controllers\Admin\UserSubscriptionController::class, 'update'])->name('subscriptions.update');
             Route::delete('/{user}/subscriptions/{subscription}', [\App\Http\Controllers\Admin\UserSubscriptionController::class, 'destroy'])->name('subscriptions.destroy');
 
             // Bulk actions (ids[]; action=ban|unban|delete|promote|demote)

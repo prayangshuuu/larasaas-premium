@@ -27,31 +27,40 @@ class BillingController extends Controller
      * If subscribed, show management view.
      * If not, show plans.
      */
+    /**
+     * Show the billing hub (Dashboard).
+     */
     public function index(Request $request)
     {
         $user = $request->user();
 
-        // Check for active subscription
-        // We consider 'active' or 'canceled' (grace period) as having a subscription to manage.
-        // Assuming single subscription logic for now.
         $subscription = $user->subscriptions()
             ->whereIn('status', ['active', 'past_due', 'canceled'])
             ->latest()
             ->first();
 
-        if ($subscription && $subscription->current_period_end > now()) {
-            // User is subscribed or on grace period
-            return view('billing.manage', [
-                'subscription' => $subscription,
-                'plan' => $subscription->plan,
-            ]);
-        }
+        // Fetch invoices
+        $invoices = $user->invoices()->latest()->get();
 
-        // Not subscribed or expired
+        return view('billing.index', [
+            'subscription' => $subscription,
+            'plan' => $subscription?->plan,
+            'invoices' => $invoices,
+        ]);
+    }
+
+    /**
+     * Show available plans.
+     */
+    public function plans(Request $request)
+    {
         $plans = Plan::where('is_active', true)->get();
 
         return view('billing.plans', [
             'plans' => $plans,
+            'currentPlanId' => $request->user()->subscriptions()->where('status', 'active')->value('plan_id')
         ]);
     }
+
+
 }

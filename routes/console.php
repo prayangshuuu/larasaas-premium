@@ -16,4 +16,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 // Schedule daily subscription expiry check
-\Illuminate\Support\Facades\Schedule::command('subscriptions:check-expiry')->daily();
+\Illuminate\Support\Facades\Schedule::command('subscriptions:check-expiry')->hourly();

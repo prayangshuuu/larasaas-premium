@@ -21,8 +21,10 @@ class UserSubscriptionController extends Controller
 
         $plan = Plan::findOrFail($request->plan_id);
 
-        // Deactivate existing active subscriptions to avoid duplicates logic if desired
-        // For now, we just create a new one.
+        // Deactivate existing active subscriptions to avoid duplicates
+        $user->subscriptions()
+            ->whereIn('status', ['active', 'past_due'])
+            ->update(['status' => 'canceled']); // or deleted, but canceled is better for history
         
         Subscription::create([
             'user_id' => $user->id,
@@ -33,6 +35,35 @@ class UserSubscriptionController extends Controller
         ]);
 
         return back()->with('success', 'Subscription assigned successfully.');
+    }
+
+    /**
+     * Update an existing subscription (Change Plan).
+     */
+    public function update(Request $request, User $user, Subscription $subscription)
+    {
+        $request->validate([
+            'plan_id' => 'required|exists:plans,id',
+        ]);
+
+        // Verify subscription belongs to user
+        if ($subscription->user_id !== $user->id) {
+            abort(403);
+        }
+
+        $plan = Plan::findOrFail($request->plan_id);
+
+        // Update local record
+        $subscription->update([
+            'plan_id' => $plan->id,
+            // We keep current_period_end as is, acting as an immediate swap (or could adjust logic if needed)
+            // For now, simple plan ID swap.
+        ]);
+
+        // TODO: Handle Stripe update if it's a real Stripe subscription
+        // For this task, we focus on the database/admin side per request "Manage + Assign"
+        
+        return back()->with('success', 'Subscription updated successfully.');
     }
 
     /**
