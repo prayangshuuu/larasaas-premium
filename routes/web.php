@@ -86,8 +86,12 @@ Route::middleware(['auth', 'verified', 'not-banned', 'subscription.enabled'])
     ->prefix('billing')
     ->as('billing.')
     ->group(function () {
+        // Billing Hub (Plans / Manage)
+        Route::get('/', [\App\Http\Controllers\BillingController::class, 'index'])->name('index');
+
         // Subscription Management
         Route::get('/checkout/{plan}', [SubscriptionController::class, 'checkout'])->name('checkout');
+
         Route::post('/cancel', [SubscriptionController::class, 'cancel'])->name('cancel');
         Route::post('/resume', [SubscriptionController::class, 'resume'])->name('resume');
         

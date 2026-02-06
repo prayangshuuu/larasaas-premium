@@ -56,7 +56,14 @@
                         <a href="{{ route('profile.edit') }}" class="block px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors">
                             Profile Settings
                         </a>
+
+                        @if(Route::has('billing.index'))
+                        <a href="{{ route('billing.index') }}" class="block px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors">
+                            Billing & Plans
+                        </a>
+                        @endif
                         
+
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
                             <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors">
