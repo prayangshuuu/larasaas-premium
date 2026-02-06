@@ -10,52 +10,35 @@ use Illuminate\Support\Facades\Cache;
 class SystemSettingController extends Controller
 {
     /**
-     * Update a system setting (toggle).
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
+     * Update system settings.
      */
     public function update(Request $request)
     {
         $validated = $request->validate([
-            'key' => 'required|string|exists:system_settings,key',
-            'value' => 'required', // Value can be boolean or string, logic handles it
+            'subscription_module_enabled' => 'nullable|boolean',
+            'stripe_payment_enabled' => 'nullable|boolean',
         ]);
 
-        $key = $validated['key'];
-        $value = $validated['value'];
+        // Helper to update or create
+        $updateSetting = function ($key, $value) {
+            SystemSetting::updateOrCreate(
+                ['key' => $key],
+                ['value' => $value] 
+            );
+        };
 
-        // Update DB
-        $setting = SystemSetting::where('key', $key)->firstOrFail();
-        $setting->update(['value' => $value]);
+        // Handle checkbox inputs (if unchecked, they might be missing, so use ->has or default false)
+        // But if these are just API/JSON endpoints, boolean is fine. Assuming form submission with checkbox:
+        $subEnabled = $request->has('subscription_module_enabled'); // simplified for checkboxes
+        $stripeEnabled = $request->has('stripe_payment_enabled');
 
-        // Update Cache
-        Cache::forget("system_setting.{$key}");
-        Cache::rememberForever("system_setting.{$key}", function () use ($value) {
-            return $value;
-        });
+        $updateSetting('subscription_module_enabled', $subEnabled); // Stored as boolean (JSON cast in model)
+        $updateSetting('stripe_payment_enabled', $stripeEnabled);
 
-        return response()->json([
-            'message' => 'Setting updated successfully.',
-            'data' => $setting->fresh(),
-        ]);
-    }
+        // Clear cache
+        Cache::forget('system_setting.subscription_module_enabled');
+        Cache::forget('system_setting.stripe_payment_enabled'); // Good practice to clear both
 
-    /**
-     * Get a system setting value (cached).
-     *
-     * @param string $key
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function show(string $key)
-    {
-        $value = Cache::rememberForever("system_setting.{$key}", function () use ($key) {
-            return SystemSetting::where('key', $key)->value('value');
-        });
-
-        return response()->json([
-            'key' => $key,
-            'value' => $value,
-        ]);
+        return redirect()->back()->with('success', 'Settings updated successfully.');
     }
 }

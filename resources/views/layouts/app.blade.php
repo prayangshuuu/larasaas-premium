@@ -22,9 +22,10 @@
 
         {{-- Page Content --}}
         <main class="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-8 relative z-10">
-            {{ $slot }}
+            {{ $slot ?? '' }}
+            @yield('content')
         </main>
-        
+
         {{-- Ambient Background (optional, subtle grid) --}}
         <div class="fixed inset-0 z-0 pointer-events-none">
              <x-ui.background-grid class="opacity-40" />

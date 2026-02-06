@@ -31,6 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             'api/v1/stripe/webhook', // API prefix is v1 as seen in routes/api.php
             'api/stripe/webhook', // Just in case
+            'stripe/webhook', // Web route webhook
         ]);
 
         // (Keep other sensitive middleware route-scoped; don't globally add admin.mfa, etc.)

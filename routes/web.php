@@ -11,6 +11,10 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\AuditController;
 use App\Http\Controllers\Admin\ImpersonationController;
 use App\Http\Controllers\Admin\SystemSettingsController;
+use App\Http\Controllers\Admin\PlanController;
+use App\Http\Controllers\Admin\SystemSettingController as SubscriptionSettingsController;
+use App\Http\Controllers\SubscriptionController;
+use App\Http\Controllers\InvoiceController;
 
 use App\Http\Controllers\ImpersonationCodeController;
 use App\Http\Controllers\TwoFactorRecoveryCodesController;
@@ -75,6 +79,35 @@ Route::middleware(['auth', 'verified', 'not-banned'])->group(function () {
 
 /*
 |--------------------------------------------------------------------------
+| Billing Routes (Protected by Subscription Module Toggle)
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth', 'verified', 'not-banned', 'subscription.enabled'])
+    ->prefix('billing')
+    ->as('billing.')
+    ->group(function () {
+        // Subscription Management
+        Route::get('/checkout/{plan}', [SubscriptionController::class, 'checkout'])->name('checkout');
+        Route::post('/cancel', [SubscriptionController::class, 'cancel'])->name('cancel');
+        Route::post('/resume', [SubscriptionController::class, 'resume'])->name('resume');
+        
+        // Invoices
+        Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index');
+        Route::get('/invoices/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show');
+
+        // Success/Cancel Redirects from Stripe
+        Route::get('/success', fn() => view('billing.success'))->name('success');
+        Route::get('/cancel', fn() => view('billing.cancel'))->name('cancel-return');
+    });
+
+// Stripe Webook (CSRF excluded in bootstrap/app.php)
+Route::post('stripe/webhook', function () {
+    // Webhook logic here or controller invocation
+    return response('Webhook Handled', 200);
+})->name('stripe.webhook');
+
+/*
+|--------------------------------------------------------------------------
 | Admin area
 | Requires: auth + verified + admin + not-banned + impersonation guard
 | Prefix: /admin   Names: admin.*
@@ -124,7 +157,13 @@ Route::middleware(['auth', 'verified', 'admin', 'not-banned', 'impersonation'])
                 ->middleware('password.confirm')                                        // optional but recommended
                 ->name('api.reveal');
                 Route::delete('/api-tokens/{token}', 'revokeApiToken')->name('api.revoke'); // DELETE /admin/settings/api-tokens/{token}
+            
+                // Subscription Settings
+                Route::post('/subscription', [SubscriptionSettingsController::class, 'update'])->name('subscription.update');
             });
+
+        // Plans Resource
+        Route::resource('plans', PlanController::class);
 
         /*
         |------------------------------------------------------------------
