@@ -85,9 +85,44 @@ class User extends Authenticatable
     /**
      * Ban state.
      */
+    /**
+     * Ban state.
+     */
     public function isBanned(): bool
     {
         return ! is_null($this->banned_at);
+    }
+
+    /**
+     * Get the profile completeness percentage.
+     */
+    protected function profileCompleteness(): \Illuminate\Database\Eloquent\Casts\Attribute
+    {
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+            get: function (mixed $value, array $attributes) {
+                $progress = 0;
+                if (!empty($attributes['name'])) $progress += 33;
+                if (!empty($attributes['email_verified_at'])) $progress += 33;
+                if (!empty($attributes['profile_picture'])) $progress += 34;
+                return $progress;
+            }
+        );
+    }
+
+    /**
+     * Get the IELTS stats (Reading, Writing, Listening, Speaking).
+     * Currently returns a structured array (DTO-like) to be replaced by a Relationship later.
+     */
+    protected function ieltsStats(): \Illuminate\Database\Eloquent\Casts\Attribute
+    {
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+            get: fn () => [
+                'reading'   => ['score' => 7.5, 'progress' => 75, 'desc' => '12 tests completed'],
+                'writing'   => ['score' => 6.5, 'progress' => 65, 'desc' => '8 essays submitted'],
+                'listening' => ['score' => 8.0, 'progress' => 80, 'desc' => '15 tests completed'],
+                'speaking'  => ['score' => 7.0, 'progress' => 70, 'desc' => '6 mock interviews'],
+            ]
+        );
     }
 
     /* -----------------------------------------------------------------

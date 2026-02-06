@@ -9,12 +9,10 @@
         // Dynamic states
         $emailVerified = !($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail) || $user->hasVerifiedEmail();
         $twofaEnabled  = (bool) $user->two_factor_secret;
-
-        // Simple completeness calc (name + verified email + profile picture)
-        $progress = 0;
-        if (!empty($user->name)) $progress += 33;
-        if ($emailVerified)       $progress += 33;
-        if (!empty($user->profile_picture)) $progress += 34;
+        
+        // ORM Accessors
+        $stats = $user->ielts_stats;
+        $progress = $user->profile_completeness;
     @endphp
 
     <div class="max-w-7xl mx-auto space-y-8 animate-fade-in-up">
