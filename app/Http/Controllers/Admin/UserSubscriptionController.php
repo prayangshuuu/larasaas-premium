@@ -45,6 +45,19 @@ class UserSubscriptionController extends Controller
             abort(403);
         }
 
+        // Check if there is a stripe_subscription_id to cancel
+        if ($subscription->stripe_subscription_id && !str_starts_with($subscription->stripe_subscription_id, 'manually_assigned_')) {
+            try {
+                $stripe = new \Stripe\StripeClient(config('services.stripe.secret'));
+                $stripe->subscriptions->cancel($subscription->stripe_subscription_id);
+            } catch (\Exception $e) {
+                // Log error but proceed with local deletion or return error?
+                // For admin force delete, we often want to proceed even if Stripe fails (e.g. already deleted there)
+                // But let's flash a warning if it fails.
+                session()->flash('warning', 'Could not cancel in Stripe (might already be canceled): ' . $e->getMessage());
+            }
+        }
+
         $subscription->delete();
 
         return back()->with('success', 'Subscription removed successfully.');

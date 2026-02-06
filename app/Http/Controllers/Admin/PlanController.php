@@ -117,6 +117,10 @@ class PlanController extends Controller
      */
     public function destroy(Plan $plan)
     {
+        if ($plan->subscriptions()->where('status', 'active')->exists()) {
+            return back()->with('error', 'Cannot delete plan with active subscriptions.');
+        }
+
         $plan->delete();
         return redirect()->route('admin.plans.index')->with('success', 'Plan deleted successfully.');
     }
