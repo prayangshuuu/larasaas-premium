@@ -1,55 +1,97 @@
 <x-app-layout>
     <div class="py-12">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="max-w-3xl mx-auto">
-                 <div class="bg-white shadow-sm sm:rounded-xl border border-slate-200">
-                    <div class="px-4 py-5 sm:p-6">
-                        <header>
-                            <h2 class="text-base font-semibold leading-7 text-slate-900">Recovery Codes</h2>
-                            <p class="mt-1 text-sm leading-6 text-slate-600">Store these one-time codes in a safe place. Each code can be used once if you lose access to your authenticator.</p>
-                        </header>
-                        
-                        <div class="mt-6 border-t border-slate-100 pt-6">
-                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                @forelse($codes as $code)
-                                    <div class="inline-flex items-center justify-center rounded-md border border-slate-200 bg-slate-50 px-3 py-2 font-mono text-sm font-medium text-slate-700 select-all">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="bg-zinc-900 border border-zinc-800 rounded-2xl shadow-xl overflow-hidden relative group">
+                 {{-- Glow effect --}}
+                 <div class="absolute inset-0 bg-indigo-500/5 opacity-0 group-hover:opacity-100 transition duration-700 pointer-events-none"></div>
+
+                <div class="px-6 py-8 sm:p-10 relative z-10">
+                    <header class="mb-8">
+                        <h2 class="text-2xl font-bold tracking-tight text-white mb-2">Recovery Codes</h2>
+                        <p class="text-zinc-400">
+                            Store these one-time codes in a safe place. Each code can be used once if you lose access to your authenticator.
+                        </p>
+                    </header>
+                    
+                    {{-- Codes Grid --}}
+                    <div class="bg-black/50 border border-zinc-800 rounded-xl p-6 relative">
+                         @if(!empty($codes))
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                @foreach($codes as $code)
+                                    <div class="flex items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3 font-mono text-sm font-medium text-indigo-300 select-all hover:bg-zinc-800 transition-colors cursor-copy group/code">
                                         {{ $code }}
                                     </div>
-                                @empty
-                                    <div class="text-sm text-slate-500">No codes available. Regenerate to create new ones.</div>
-                                @endforelse
-                             </div>
-                        </div>
-
-                         <div class="mt-6 rounded-md bg-yellow-50 p-4 border border-yellow-200">
-                            <div class="flex">
-                                <div class="shrink-0">
-                                    <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
-                                    </svg>
-                                </div>
-                                <div class="ml-3">
-                                    <p class="text-sm font-medium text-yellow-800">Regenerating will invalidate the old codes immediately.</p>
-                                </div>
+                                @endforeach
                             </div>
-                        </div>
+                            {{-- Raw codes for download --}}
+                            <textarea id="recovery-codes-raw" class="sr-only" aria-hidden="true">{{ implode("\n", $codes) }}</textarea>
+                        @else
+                            <div class="text-center py-6">
+                                <p class="text-zinc-500">No codes available. Please regenerate to create new ones.</p>
+                            </div>
+                        @endif
+                    </div>
 
-                        <div class="mt-6 flex items-center justify-between border-t border-slate-100 pt-6">
-                            <a href="{{ route('profile.edit') }}" class="text-sm font-semibold leading-6 text-slate-900 hover:text-primary-600">
-                                <span aria-hidden="true">&larr;</span> Back to Profile
-                            </a>
+                    {{-- Warning Box --}}
+                     <div class="mt-8 rounded-xl bg-orange-500/10 p-4 border border-orange-500/20 flex items-start gap-3">
+                        <svg class="h-5 w-5 text-orange-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        <div>
+                            <p class="text-sm font-medium text-orange-400">Security Warning</p>
+                            <p class="text-sm text-orange-300/70 mt-1">Regenerating codes will immediately invalidate any previously generated codes.</p>
+                        </div>
+                    </div>
+
+                    {{-- Action Footer --}}
+                    <div class="mt-8 pt-6 border-t border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <a href="{{ route('profile.edit') }}" class="text-sm font-semibold text-zinc-400 hover:text-white transition-colors flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                            Back to Profile
+                        </a>
+
+                        <div class="flex items-center gap-3 w-full sm:w-auto">
+                            @if(!empty($codes))
+                                <button type="button" id="download-codes-btn" class="flex-1 sm:flex-none inline-flex items-center justify-center rounded-lg bg-zinc-800 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-zinc-700 border border-zinc-700 transition-all">
+                                    <svg class="w-4 h-4 mr-2 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                                    Download Codes
+                                </button>
+                            @endif
 
                              <form method="POST" action="{{ url('/user/two-factor-recovery-codes') }}"
-                                  onsubmit="return confirm('Regenerate recovery codes? Old codes will stop working.');">
+                                  onsubmit="return confirm('Regenerate recovery codes? Old codes will stop working.');" class="flex-1 sm:flex-none">
                                 @csrf
-                                <button type="submit" class="rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 transition-colors">
+                                <button type="submit" class="w-full sm:w-auto inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 hover:shadow-[0_0_20px_rgba(79,70,229,0.3)] transition-all">
+                                    <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                                     Regenerate Codes
                                 </button>
                             </form>
                         </div>
                     </div>
-                 </div>
+                </div>
             </div>
         </div>
     </div>
+
+    {{-- Client-side Download Logic --}}
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+             const dlBtn = document.getElementById('download-codes-btn');
+             const raw   = document.getElementById('recovery-codes-raw');
+
+             if (dlBtn && raw) {
+                 dlBtn.addEventListener('click', () => {
+                    const blob = new Blob([raw.value], { type: 'text/plain' });
+                    const url  = URL.createObjectURL(blob);
+                    const a    = document.createElement('a');
+                    a.href = url;
+                    a.download = 'ielts-recovery-codes.txt';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                });
+             }
+        });
+    </script>
 </x-app-layout>
