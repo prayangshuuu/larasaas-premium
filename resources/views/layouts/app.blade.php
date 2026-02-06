@@ -17,26 +17,35 @@
 </head>
 <body class="font-sans antialiased bg-black text-slate-300 selection:bg-indigo-500/30" style="background-color: #000; color: #cbd5e1;">
     <div class="min-h-screen relative w-full flex flex-col">
-        {{-- Impersonation Banner --}}
-        @if(session()->has('impersonator_id'))
-            <div class="bg-red-600 text-white px-4 py-2 text-center text-sm font-bold shadow-lg z-50 sticky top-0 flex items-center justify-center gap-4">
-                <span>
-                    ⚠️ You are currently impersonating <strong>{{ Auth::user()->name }}</strong>.
-                </span>
-                <form action="{{ route('admin.impersonate.stop') }}" method="POST" class="inline">
-                    @csrf
-                    <button type="submit" class="underline hover:text-red-100 focus:outline-none bg-white/20 px-3 py-1 rounded ml-2 text-xs uppercase tracking-wide transition">
-                        Stop Impersonating
-                    </button>
-                </form>
-            </div>
-        @endif
-
         {{-- Navigation can be injected or included here --}}
         @include('layouts.navigation')
 
+        {{-- Impersonation Banner --}}
+        @if(session()->has('impersonator_id'))
+            <div 
+                class="fixed top-16 left-0 w-full z-40 bg-orange-600/95 backdrop-blur-md border-b border-white/10 shadow-lg transform transition-all duration-300 ease-out"
+                x-data x-init="$el.classList.remove('-translate-y-full')"
+            >
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-12 flex items-center justify-between">
+                    <div class="flex items-center gap-3 text-white">
+                        <svg class="w-5 h-5 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <span class="text-sm font-medium tracking-wide">
+                            You are currently impersonating <span class="font-bold text-white border-b border-white/30 pb-0.5">{{ Auth::user()->name }}</span>
+                        </span>
+                    </div>
+
+                    <form action="{{ route('admin.impersonate.stop') }}" method="POST" class="inline-flex">
+                        @csrf
+                        <button type="submit" class="inline-flex items-center justify-center px-4 py-1.5 bg-white text-orange-600 text-xs font-bold uppercase tracking-wider rounded-full hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-orange-600 focus:ring-white transition-all shadow-sm">
+                            Stop Impersonating
+                        </button>
+                    </form>
+                </div>
+            </div>
+        @endif
+
         {{-- Page Content --}}
-        <main class="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-8 relative z-10">
+        <main class="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 {{ session()->has('impersonator_id') ? 'pt-32' : 'pt-24' }} pb-8 relative z-10">
             {{ $slot ?? '' }}
             @yield('content')
         </main>
