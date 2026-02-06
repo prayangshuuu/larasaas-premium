@@ -60,10 +60,6 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
                 ->middleware(['admin.mfa', 'feature:features.impersonation'])
                 ->name('impersonate.start');
 
-            // STOP is always available to exit impersonation
-            Route::post('impersonate/stop', [ApiAdminImpersonationController::class, 'stop'])
-                ->name('impersonate.stop');
-
 
             // Subscription Plans (Admin)
             Route::apiResource('plans', \App\Http\Controllers\Api\V1\Admin\PlanController::class);
@@ -74,5 +70,18 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
             Route::put('system-settings', [\App\Http\Controllers\Admin\SystemSettingController::class, 'update'])->name('system-settings.update');
             Route::get('system-settings/{key}', [\App\Http\Controllers\Admin\SystemSettingController::class, 'show'])->name('system-settings.show');
         });
+
+        /*
+        |--------------------------------------------------------------------------
+        | Impersonation Stop (API)
+        |--------------------------------------------------------------------------
+        | Must be accessible to non-admins (the impersonated user).
+        */
+        Route::middleware(['not-banned'])
+            ->prefix('admin/impersonate')
+            ->name('admin.impersonate.')
+            ->group(function() {
+                 Route::post('/stop', [ApiAdminImpersonationController::class, 'stop'])->name('stop');
+            });
     });
 });

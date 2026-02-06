@@ -236,9 +236,6 @@ Route::middleware(['auth', 'verified', 'admin', 'not-banned', 'impersonation'])
                 Route::post('/start/{user}', 'start')
                     ->middleware(['admin.mfa', 'feature:features.impersonation'])
                     ->name('start');
-
-                Route::post('/stop', 'stop')
-                    ->name('stop'); // no 'feature' / 'admin.mfa' on purpose
             });
 
         /*
@@ -247,6 +244,23 @@ Route::middleware(['auth', 'verified', 'admin', 'not-banned', 'impersonation'])
         |------------------------------------------------------------------
         */
         Route::view('/api/docs', 'admin.api.docs')->name('docs.api');
+    });
+
+/*
+|--------------------------------------------------------------------------
+| Impersonation Stop (Accessible by IMPERSONATED user)
+|--------------------------------------------------------------------------
+| MUST be outside 'admin' middleware because the impersonated user might
+| not be an admin. We only check auth + verified + not-banned.
+|
+| The Controller inside handles security (checking session).
+*/
+Route::middleware(['auth', 'verified', 'not-banned'])
+    ->prefix('admin/impersonate') // Match URL
+    ->as('admin.impersonate.')    // Match Route Name
+    ->controller(ImpersonationController::class)
+    ->group(function () {
+        Route::post('/stop', 'stop')->name('stop');
     });
 
 /*
