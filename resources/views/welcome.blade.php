@@ -15,7 +15,7 @@
 <body class="antialiased bg-black text-white font-sans selection:bg-indigo-500/30">
 
     {{-- Hero Section with Spotlight and Grid --}}
-    <x-ui.background-grid class="min-h-screen relative overflow-hidden flex flex-col items-center justify-center p-4">
+    <x-ui.background-grid class="min-h-screen relative overflow-hidden flex flex-col items-center pt-32 pb-20 px-4">
         <x-ui.spotlight className="-top-40 left-0 md:left-60 md:-top-20" fill="white" />
         
         {{-- Navigation Placeholder (Absolute) --}}
@@ -41,7 +41,7 @@
             @endif
         </header>
 
-        <div class="relative z-10 max-w-4xl mx-auto text-center mt-20 md:mt-0">
+        <div class="relative z-10 max-w-4xl mx-auto text-center mt-12">
             <h1 class="text-5xl md:text-7xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-neutral-50 to-neutral-400 bg-opacity-50 tracking-tight mb-8">
                 Master IELTS with <br /> AI Precision.
             </h1>
