@@ -19,6 +19,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        \Illuminate\Support\Facades\Blade::if('subscribed', function () {
+            return auth()->check() && auth()->user()->subscriptions()->where('status', 'active')->exists();
+        });
     }
 }

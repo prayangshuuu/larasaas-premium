@@ -178,4 +178,17 @@ class User extends Authenticatable
     {
         return $this->hasMany(Invoice::class);
     }
+
+    /**
+     * Get usage count for a specific feature key.
+     * 
+     * @param string $key
+     * @return int
+     */
+    public function getUsage(string $key): int
+    {
+        // TODO: Implement actual usage tracking logic (e.g., query a usages table)
+        // For now, return 0 to allow testing without limits blocking immediately.
+        return 0;
+    }
 }
