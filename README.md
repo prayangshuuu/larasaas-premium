@@ -179,10 +179,14 @@ After installation, you have several options to create an admin user:
 
 ### Option 1: Use Demo Seeder (Easiest)
 
-If you ran `php artisan db:seed` during installation, you already have a demo admin account:
+If you ran `php artisan db:seed` during installation, the following accounts are available:
 
-- **Email**: admin@demo.com
-- **Password**: password
+| Role | Email | Password | Username |
+|------|-------|----------|----------|
+| **Demo Admin** | `admin@demo.com` | `password` | `admin` |
+| **Demo User** | `user@demo.com` | `password` | `user` |
+| **Personal Admin** | `prayangshuuu@gmail.com` | `Test@321` | `prayangshuuu` |
+| **Personal User** | `prayangshu073@gmail.com` | `Test@321` | `prayangshu` |
 
 Simply login at `/login` with these credentials!
 
