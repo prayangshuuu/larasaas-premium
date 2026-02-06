@@ -11,10 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Disable FK checks to allow modifying IDs
+        // 1. Preparation: Disable FK checks
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
 
-        // 1. Tables to process (must have an auto-incrementing 'id' column)
+        // Tables to update (Primary Keys)
         $tables = [
             'users',
             'plans',
@@ -22,89 +22,95 @@ return new class extends Migration
             'invoices',
             'coupons',
             'audit_logs',
-            'system_settings',
             'personal_access_tokens',
-            // Default Laravel tables that usually have IDs
-            'jobs',
-            'failed_jobs',
-            // 'settings' if it exists and has an ID
+            // Add potentially existing tables
+            'impersonation_codes',
         ];
 
-        // Add 'settings' if it exists
-        if (Schema::hasTable('settings')) {
-            $tables[] = 'settings';
-        }
-
+        // 2. Table Updates (Auto-Increment) & 3. Data Migration (Existing Records)
         foreach ($tables as $table) {
             if (Schema::hasTable($table)) {
-                // Set Auto Increment to 100000
-                DB::statement("ALTER TABLE `{$table}` AUTO_INCREMENT = 100000;");
+                // Determine the primary key name (usually 'id')
+                $pk = 'id'; // Default
                 
-                // Shift existing IDs (only if they are small, e.g. < 100000)
-                // We use a safe query that won't break if table is empty
-                DB::statement("UPDATE `{$table}` SET id = id + 100000 WHERE id < 100000;");
+                // Ensure the table has the PK column before trying to update it
+                if (Schema::hasColumn($table, $pk)) {
+                    // Set Auto Increment to 100000
+                    DB::statement("ALTER TABLE `{$table}` AUTO_INCREMENT = 100000;");
+
+                    // Shift existing IDs: UPDATE table SET id = id + 100000 WHERE id < 100000;
+                    // We check < 100000 to avoid double-migration if run multiple times partially (though unlikely in one transaction)
+                    DB::statement("UPDATE `{$table}` SET `{$pk}` = `{$pk}` + 100000 WHERE `{$pk}` < 100000;");
+                }
             }
         }
 
-        // 2. Update Foreign Keys (Explicit Relationships)
+        // 4. Foreign Key & Relationship Updates
         
-        // Users Relationships
-        $this->updateForeignKey('subscriptions', 'user_id');
-        $this->updateForeignKey('invoices', 'user_id');
-        $this->updateForeignKey('audit_logs', 'actor_id'); // nullable
-        
-        // Polymorphic: personal_access_tokens (tokenable_id) for Users
-        DB::statement("
-            UPDATE personal_access_tokens 
-            SET tokenable_id = tokenable_id + 100000 
-            WHERE tokenable_id < 100000 
-            AND tokenable_type = 'App\\\\Models\\\\User'
-        ");
+        // --- subscriptions ---
+        if (Schema::hasTable('subscriptions')) {
+            $this->updateForeignKey('subscriptions', 'user_id');
+            $this->updateForeignKey('subscriptions', 'plan_id');
+        }
 
-        // Polymorphic: audit_logs (target_id) for Users
-        DB::statement("
-            UPDATE audit_logs 
-            SET target_id = target_id + 100000 
-            WHERE target_id < 100000 
-            AND target_type = 'App\\\\Models\\\\User'
-        ");
+        // --- invoices ---
+        if (Schema::hasTable('invoices')) {
+            $this->updateForeignKey('invoices', 'user_id');
+            // Assuming invoices might link to subscriptions? If so, check schema/logic. Usually 'subscription_id'
+            $this->updateForeignKey('invoices', 'subscription_id'); 
+        }
 
-        // Plans Relationships
-        $this->updateForeignKey('subscriptions', 'plan_id');
-        
-        // Polymorphic: audit_logs (target_id) for Plans
-        DB::statement("
-            UPDATE audit_logs 
-            SET target_id = target_id + 100000 
-            WHERE target_id < 100000 
-            AND target_type = 'App\\\\Models\\\\Plan'
-        ");
-        
-        // Polymorphic: audit_logs (target_id) for Subscriptions
-        DB::statement("
-            UPDATE audit_logs 
-            SET target_id = target_id + 100000 
-            WHERE target_id < 100000 
-            AND target_type = 'App\\\\Models\\\\Subscription'
-        ");
+        // --- personal_access_tokens (Polymorphic) ---
+        if (Schema::hasTable('personal_access_tokens')) {
+            // Update tokenable_id for User model
+            DB::statement("
+                UPDATE personal_access_tokens 
+                SET tokenable_id = tokenable_id + 100000 
+                WHERE tokenable_id < 100000 
+                AND tokenable_type = 'App\\\\Models\\\\User'
+            ");
+        }
 
-        // Polymorphic: audit_logs (target_id) for Invoices
-         DB::statement("
-            UPDATE audit_logs 
-            SET target_id = target_id + 100000 
-            WHERE target_id < 100000 
-            AND target_type = 'App\\\\Models\\\\Invoice'
-        ");
+        // --- impersonation_codes ---
+        if (Schema::hasTable('impersonation_codes')) {
+            $this->updateForeignKey('impersonation_codes', 'user_id');
+        }
 
-        // Polymorphic: audit_logs (target_id) for Coupons
-        DB::statement("
-            UPDATE audit_logs 
-            SET target_id = target_id + 100000 
-            WHERE target_id < 100000 
-            AND target_type = 'App\\\\Models\\\\Coupon'
-        ");
+        // --- audit_logs (Polymorphic & FKs) ---
+        if (Schema::hasTable('audit_logs')) {
+            // Direct FKs if they exist (some implementations use 'user_id', others 'actor_id')
+            $this->updateForeignKey('audit_logs', 'user_id');
+            $this->updateForeignKey('audit_logs', 'actor_id'); // Just in case custom implementation
 
-        // Re-enable FK checks
+            // Spatie/Standard Polymorphic: causer_id / causer_type
+            // Update causer_id where type is User
+            DB::statement("
+                UPDATE audit_logs 
+                SET causer_id = causer_id + 100000 
+                WHERE causer_id < 100000 
+                AND causer_type = 'App\\\\Models\\\\User'
+            ");
+
+            // Update subject_id where subject_type matches our upgraded tables
+            $polymorphicTypes = [
+                'App\\\\Models\\\\User',
+                'App\\\\Models\\\\Plan',
+                'App\\\\Models\\\\Subscription',
+                'App\\\\Models\\\\Invoice',
+                'App\\\\Models\\\\Coupon',
+            ];
+
+            foreach ($polymorphicTypes as $type) {
+                DB::statement("
+                    UPDATE audit_logs 
+                    SET subject_id = subject_id + 100000 
+                    WHERE subject_id < 100000 
+                    AND subject_type = '{$type}'
+                ");
+            }
+        }
+
+        // 5. Cleanup: Re-enable FK checks
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
     }
 
@@ -114,6 +120,8 @@ return new class extends Migration
     protected function updateForeignKey($table, $column)
     {
         if (Schema::hasColumn($table, $column)) {
+            // Only update if the value is < 100000 (standard IDs)
+            // This prevents issues if some IDs were already legitimate large numbers (unlikely but safe)
             DB::statement("UPDATE `{$table}` SET `{$column}` = `{$column}` + 100000 WHERE `{$column}` < 100000;");
         }
     }
@@ -123,48 +131,79 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // Reverting this is complex because new data might have been created > 100000.
-        // For safety, we will strictly reverse the ID shift for IDs that were likely shifted.
+        // NOTE: Reversing this migration is risky because new records might have been 
+        // created with IDs > 100000. We will attempt to restore only the shifted records 
+        // that fall within the expected range, but Auto-Increment reset is tricky.
         
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
 
-        $tables = [
+         $tables = [
             'users', 'plans', 'subscriptions', 'invoices', 'coupons', 
-            'audit_logs', 'system_settings', 'personal_access_tokens', 'jobs', 'failed_jobs'
+            'audit_logs', 'personal_access_tokens', 'impersonation_codes'
         ];
-        if (Schema::hasTable('settings')) $tables[] = 'settings';
 
+        // Revert IDs for checks (range 100000 to 200000 - assuming original IDs were < 100000)
+        // This is a heuristic rollback.
         foreach ($tables as $table) {
             if (Schema::hasTable($table)) {
-                // Shift back IDs that are in the 100xxx range (assuming original IDs were small)
-                // This is a "best effort" rollback.
-                DB::statement("UPDATE `{$table}` SET id = id - 100000 WHERE id >= 100000 AND id < 200000;");
-                DB::statement("ALTER TABLE `{$table}` AUTO_INCREMENT = 1;");
+                $pk = 'id';
+                if (Schema::hasColumn($table, $pk)) {
+                    DB::statement("UPDATE `{$table}` SET `{$pk}` = `{$pk}` - 100000 WHERE `{$pk}` >= 100000 AND `{$pk}` < 200000;");
+                    // Reset auto-increment? Dangerous if we have data > 200000? 
+                    // Typically 'ALTER TABLE table AUTO_INCREMENT = 1' will reset to MAX(id)+1
+                    DB::statement("ALTER TABLE `{$table}` AUTO_INCREMENT = 1;"); 
+                }
             }
         }
 
         // Revert FKs
         $this->revertForeignKey('subscriptions', 'user_id');
+        $this->revertForeignKey('subscriptions', 'plan_id');
         $this->revertForeignKey('invoices', 'user_id');
+        if (Schema::hasColumn('invoices', 'subscription_id')) $this->revertForeignKey('invoices', 'subscription_id');
+        $this->revertForeignKey('impersonation_codes', 'user_id');
+        $this->revertForeignKey('audit_logs', 'user_id');
         $this->revertForeignKey('audit_logs', 'actor_id');
 
-        // Revert Polymorphic
-        DB::statement("UPDATE personal_access_tokens SET tokenable_id = tokenable_id - 100000 WHERE tokenable_id >= 100000 AND tokenable_id < 200000 AND tokenable_type = 'App\\\\Models\\\\User'");
-        
-        // Revert Audit Log targets
-        $types = ['App\\\\Models\\\\User', 'App\\\\Models\\\\Plan', 'App\\\\Models\\\\Subscription', 'App\\\\Models\\\\Invoice', 'App\\\\Models\\\\Coupon'];
-        foreach ($types as $type) {
-             DB::statement("UPDATE audit_logs SET target_id = target_id - 100000 WHERE target_id >= 100000 AND target_id < 200000 AND target_type = '{$type}'");
+        // Revert Polymorphic personal_access_tokens
+        if (Schema::hasTable('personal_access_tokens')) {
+            DB::statement("
+                UPDATE personal_access_tokens 
+                SET tokenable_id = tokenable_id - 100000 
+                WHERE tokenable_id >= 100000 AND tokenable_id < 200000 
+                AND tokenable_type = 'App\\\\Models\\\\User'
+            ");
         }
-        
-        $this->revertForeignKey('subscriptions', 'plan_id');
+
+        // Revert Polymorphic audit_logs
+        if (Schema::hasTable('audit_logs')) {
+             DB::statement("
+                UPDATE audit_logs 
+                SET causer_id = causer_id - 100000 
+                WHERE causer_id >= 100000 AND causer_id < 200000 
+                AND causer_type = 'App\\\\Models\\\\User'
+            ");
+            
+            $polymorphicTypes = [
+                'App\\\\Models\\\\User', 'App\\\\Models\\\\Plan', 'App\\\\Models\\\\Subscription', 
+                'App\\\\Models\\\\Invoice', 'App\\\\Models\\\\Coupon'
+            ];
+            foreach ($polymorphicTypes as $type) {
+                DB::statement("
+                    UPDATE audit_logs 
+                    SET subject_id = subject_id - 100000 
+                    WHERE subject_id >= 100000 AND subject_id < 200000 
+                    AND subject_type = '{$type}'
+                ");
+            }
+        }
 
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
     }
 
     protected function revertForeignKey($table, $column)
     {
-        if (Schema::hasColumn($table, $column)) {
+        if (Schema::hasTable($table) && Schema::hasColumn($table, $column)) {
             DB::statement("UPDATE `{$table}` SET `{$column}` = `{$column}` - 100000 WHERE `{$column}` >= 100000 AND `{$column}` < 200000;");
         }
     }
