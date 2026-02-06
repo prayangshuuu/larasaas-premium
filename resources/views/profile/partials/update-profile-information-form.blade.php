@@ -162,6 +162,13 @@
                                 <p class="text-sm font-medium text-sky-400 mb-3">Finish enabling two-factor authentication.</p>
                                 <p class="text-sm text-sky-300/80 mb-4">Scan the QR code in your authenticator app.</p>
                                 
+                                <div class="mb-4 p-2 bg-white rounded-lg inline-block">
+                                    {!! $user->twoFactorQrCodeSvg() !!}
+                                </div>
+                                <p class="text-xs text-sky-300/60 mb-4">
+                                    Secret Key: <span class="font-mono bg-sky-950 px-1 py-0.5 rounded">{{ decrypt($user->two_factor_secret) }}</span>
+                                </p>
+                                
                                 <form method="POST" action="{{ url('/user/confirmed-two-factor-authentication') }}" class="flex gap-2">
                                     @csrf
                                     <x-ui.input name="code" placeholder="123456" required class="w-40" />
