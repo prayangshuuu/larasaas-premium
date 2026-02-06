@@ -135,11 +135,11 @@
                         </div>
                     </div>
                     <div class="mt-5 md:col-span-2 md:mt-0">
-                         <div class="flex items-center justify-between py-4">
+                         <div class="flex items-center justify-between py-4 bg-black/20 rounded-xl px-4 border border-zinc-800/50">
                             <div>
                                 <span class="font-medium text-zinc-300">Status</span>
-                                <span class="ml-2 inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset {{ $twofaEnabled ? ($twofaConfirmed ? 'bg-green-500/10 text-green-400 ring-green-500/20' : 'bg-yellow-500/10 text-yellow-400 ring-yellow-500/20') : 'bg-zinc-800 text-zinc-400 ring-zinc-700' }}">
-                                     {{ $twofaEnabled ? ($twofaConfirmed ? 'Active' : 'Pending Confirmation') : 'Disabled' }}
+                                <span class="ml-3 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium border {{ $twofaEnabled ? ($twofaConfirmed ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20') : 'bg-zinc-800 text-zinc-400 border-zinc-700' }}">
+                                     {{ $twofaEnabled ? ($twofaConfirmed ? 'Enabled' : 'Pending Confirmation') : 'Disabled' }}
                                 </span>
                             </div>
                             
@@ -147,46 +147,52 @@
                                 <form method="POST" action="{{ url('/user/two-factor-authentication') }}">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="rounded-md bg-red-500/10 px-3 py-2 text-sm font-semibold text-red-400 shadow-sm hover:bg-red-500/20 border border-transparent transition-colors">Disable</button>
+                                    <button type="submit" class="rounded-lg bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-400 shadow-sm hover:bg-red-500/20 border border-red-500/10 transition-all hover:scale-105 active:scale-95">Disable</button>
                                 </form>
                             @else
                                 <form method="POST" action="{{ url('/user/two-factor-authentication') }}">
                                     @csrf
-                                    <button type="submit" class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 transition-colors">Enable</button>
+                                    <button type="submit" class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 transition-all hover:shadow-[0_0_20px_rgba(79,70,229,0.5)] hover:scale-105 active:scale-95">Enable 2FA</button>
                                 </form>
                             @endif
                          </div>
 
                          @if ($twofaEnabled && ! $twofaConfirmed)
-                             <div class="mt-4 p-4 rounded-lg bg-sky-500/10 border border-sky-500/20">
-                                <p class="text-sm font-medium text-sky-400 mb-3">Finish enabling two-factor authentication.</p>
-                                <p class="text-sm text-sky-300/80 mb-4">Scan the QR code in your authenticator app.</p>
+                             <div class="mt-4 p-5 rounded-xl bg-sky-500/5 border border-sky-500/20 shadow-[0_0_30px_rgba(14,165,233,0.05)]">
+                                <h4 class="text-sm font-bold text-sky-400 mb-2 flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 17h.01M9 20h.01M3 20h.01M12 20h.01M17 20h.01M20 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-1v2H5V9H4a1 1 0 01-1-1V5a1 1 0 011-1h1m0-3h18M3 4H2" /></svg>
+                                    Finish Setup
+                                </h4>
+                                <p class="text-sm text-sky-300/70 mb-4">Scan the QR code below with your authenticator app to confirm setup.</p>
                                 
-                                <div class="mb-4 p-2 bg-white rounded-lg inline-block">
+                                <div class="mb-4 p-2 bg-white rounded-lg inline-block shadow-lg border-4 border-sky-900/10">
                                     {!! $user->twoFactorQrCodeSvg() !!}
                                 </div>
-                                <p class="text-xs text-sky-300/60 mb-4">
-                                    Secret Key: <span class="font-mono bg-sky-950 px-1 py-0.5 rounded">{{ decrypt($user->two_factor_secret) }}</span>
+                                <p class="text-xs text-sky-300/60 mb-4 font-mono">
+                                    KEY: <span class="bg-sky-950 px-1.5 py-0.5 rounded text-sky-200 select-all">{{ decrypt($user->two_factor_secret) }}</span>
                                 </p>
                                 
-                                <form method="POST" action="{{ url('/user/confirmed-two-factor-authentication') }}" class="flex gap-2">
+                                <form method="POST" action="{{ url('/user/confirmed-two-factor-authentication') }}" class="flex gap-3 max-w-sm">
                                     @csrf
-                                    <x-ui.input name="code" placeholder="123456" required class="w-40" />
-                                    <button type="submit" class="rounded-md bg-sky-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-500">Confirm</button>
+                                    <x-ui.input name="code" placeholder="123 456" required class="flex-1 text-center font-mono tracking-widest" inputmode="numeric" />
+                                    <button type="submit" class="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-500 hover:shadow-sky-500/20 transition-all">Confirm</button>
                                 </form>
                              </div>
                          @endif
 
                          @if ($twofaEnabled)
-                             <div class="mt-6">
-                                <h4 class="text-sm font-medium text-zinc-300 mb-2">Recovery Codes</h4>
+                             <div class="mt-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-zinc-800 bg-zinc-900/50">
+                                <div>
+                                    <h4 class="text-sm font-medium text-white">Recovery Codes</h4>
+                                    <p class="text-xs text-zinc-500 mt-1">Generate new codes if you've lost access.</p>
+                                </div>
                                 <div class="flex items-center gap-3">
-                                    <a href="{{ route('two-factor.codes.show') }}" class="rounded-md bg-zinc-800 px-3 py-2 text-sm font-semibold text-white hover:bg-zinc-700 transition-colors">Show Codes</a>
+                                    <a href="{{ route('two-factor.codes.show') }}" class="rounded-lg bg-zinc-800 px-3 py-2 text-xs font-semibold text-white hover:bg-zinc-700 hover:text-indigo-300 border border-zinc-700 transition-colors">View Codes</a>
                                     
                                      <form method="POST" action="{{ url('/user/two-factor-recovery-codes') }}"
                                           onsubmit="return confirm('Regenerate recovery codes? Old codes will stop working.');">
                                         @csrf
-                                        <button type="submit" class="rounded-md bg-zinc-800 px-3 py-2 text-sm font-semibold text-white hover:bg-zinc-700 transition-colors">Regenerate</button>
+                                        <button type="submit" class="rounded-lg bg-zinc-800 px-3 py-2 text-xs font-semibold text-white hover:bg-zinc-700 hover:text-indigo-300 border border-zinc-700 transition-colors">Regenerate</button>
                                     </form>
                                 </div>
                              </div>
