@@ -1,631 +1,513 @@
-{{-- resources/views/admin/api/docs.blade.php --}}
 @extends('layouts.app')
 
 @section('content')
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        
-        {{-- Header Section --}}
-        <div class="relative bg-zinc-900 border border-zinc-800 rounded-2xl p-8 mb-8 overflow-hidden group">
-             <div class="absolute inset-0 bg-indigo-500/5 opacity-50 blur-3xl rounded-full pointer-events-none -z-10 group-hover:opacity-75 transition duration-700"></div>
-             
-             <div class="flex flex-col lg:flex-row gap-8 items-center">
-                {{-- API tile (centered) --}}
-                <div class="shrink-0">
-                    <div class="w-20 h-20 rounded-xl bg-primary text-primary-content grid place-items-center">
-                        <span class="text-3xl font-bold tracking-tight">API</span>
-                    </div>
+<div class="min-h-screen bg-zinc-950 text-zinc-300 font-sans selection:bg-indigo-500/30">
+
+    {{-- Header --}}
+    <header class="border-b border-zinc-900 bg-zinc-950/80 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <div class="h-8 w-8 bg-indigo-600 rounded-lg grid place-items-center text-white font-bold">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                    </svg>
                 </div>
-
-                <div class="flex-1">
-                    <div class="flex items-center gap-3">
-                        <h1 class="text-2xl font-semibold">API v1 Documentation</h1>
-                        <div class="badge badge-primary">Sanctum</div>
-                        <div class="badge badge-ghost">JSON</div>
-                        <div class="badge badge-success">Stable</div>
-                    </div>
-                    <p class="mt-2 text-base-content/70">
-                        Secure, JSON-based endpoints for your app &amp; admin workflows.
-                    </p>
-
-                    {{-- Base URL + quick copy --}}
-                    <div class="mt-4 join w-full lg:max-w-xl">
-                        <span class="join-item btn btn-ghost btn-sm">BASE_URL</span>
-                        <input id="baseUrl" class="join-item input input-bordered input-sm w-full"
-                               value="{{ url('/api/v1') }}" readonly>
-                        <button class="join-item btn btn-sm" onclick="copyText('baseUrl', this)">Copy</button>
-                    </div>
-
-                    {{-- Auth header (high contrast + copy) --}}
-                    <div class="mt-3 space-y-2">
-                        <div class="join w-full lg:max-w-xl">
-                            <span class="join-item btn btn-ghost btn-xs">Header</span>
-                            <input id="authHeader" class="join-item input input-bordered input-xs w-full font-mono"
-                                   value="Authorization: Bearer <token>" readonly>
-                            <button class="join-item btn btn-xs" onclick="copyText('authHeader', this)">Copy</button>
-                        </div>
-                        <div class="text-xs text-base-content/70">
-                            Also set <kbd class="kbd kbd-xs">Accept</kbd>: <kbd class="kbd kbd-xs">application/json</kbd>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Quick tools --}}
-                <div class="w-full lg:w-auto grid grid-cols-2 lg:grid-cols-1 gap-2">
-                    <a href="{{ url('/admin/settings') }}" class="btn btn-secondary btn-sm">System Settings</a>
-                    <a href="{{ url('/admin') }}" class="btn btn-outline btn-sm">Admin Dashboard</a>
-                </div>
+                <h1 class="text-lg font-medium text-white tracking-tight">Developer Portal <span class="text-zinc-500 font-normal ml-2">v1.0</span></h1>
+            </div>
+            <div class="flex items-center gap-6">
+                 <a href="{{ url('/admin') }}" class="text-sm font-medium text-zinc-400 hover:text-white transition">
+                    Dashboard
+                </a>
+                <a href="{{ url('/') }}" class="text-sm font-medium text-zinc-400 hover:text-white transition">
+                    Home
+                </a>
             </div>
         </div>
+    </header>
 
-        {{-- Toolbar: search + legend --}}
-        <div class="mt-6 flex flex-col lg:flex-row items-start lg:items-center gap-3">
-            <label class="input input-bordered flex items-center gap-2 w-full lg:max-w-md">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 opacity-70" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M21 21l-4.35-4.35m1.1-5.4a7.5 7.5 0 11-15 0 7.5 7.5 0 0115 0z"/>
-                </svg>
-                <input id="endpointSearch" type="text" class="grow" placeholder="Filter endpoints (e.g. users, settings, audit, impersonate, me, ping)" oninput="filterEndpoints()"/>
-            </label>
-
-            <div class="flex items-center gap-2 text-xs text-base-content/60">
-                <span class="badge badge-outline">GET</span>
-                <span class="badge badge-info">POST</span>
-                <span class="badge badge-warning">PUT</span>
-                <span class="badge badge-error">DELETE</span>
-                <span class="badge badge-ghost">Admin</span>
-            </div>
-        </div>
-
-        {{-- Tabs --}}
-        <div class="mt-6">
-            <div role="tablist" class="tabs tabs-lifted">
-                <input type="radio" name="apiTabs" role="tab" class="tab" aria-label="Overview" checked />
-                <div role="tabpanel" class="tab-content bg-base-100 border-base-300 rounded-2xl p-6">
-
-                    {{-- Overview & Auth --}}
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <div class="card bg-base-100 border border-base-300 rounded-2xl">
-                            <div class="card-body">
-                                <h2 class="card-title text-lg">Quick Start</h2>
-                                <p class="text-sm text-base-content/70">
-                                    Simple health check and profile endpoints to validate your token.
-                                </p>
-
-                                {{-- /ping --}}
-                                <div class="collapse collapse-arrow border border-base-300 rounded-xl my-2" data-endpoint="ping get">
-                                    <input type="checkbox" />
-                                    <div class="collapse-title text-md font-medium">
-                                        <span class="badge badge-outline mr-2">GET</span> /ping
-                                    </div>
-                                    <div class="collapse-content">
-                                        <div class="relative group">
-                                            <button class="btn btn-xs btn-ghost absolute right-2 top-2 opacity-0 group-hover:opacity-100"
-                                                    onclick="copyCode('curl-ping', this)">Copy</button>
-                                            <pre id="curl-ping"
-                                                 class="bg-base-200 text-base-content/90 font-mono text-sm rounded-xl p-4 overflow-x-auto select-all"
-                                                 aria-label="curl ping">
-curl {{ url('/api/v1/ping') }}</pre>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {{-- /me --}}
-                                <div class="collapse collapse-arrow border border-base-300 rounded-xl my-2" data-endpoint="me get put profile">
-                                    <input type="checkbox" />
-                                    <div class="collapse-title text-md font-medium">
-                                        <span class="badge badge-outline mr-2">GET</span>
-                                        <span class="badge badge-warning mr-2">PUT</span>
-                                        /me
-                                    </div>
-                                    <div class="collapse-content space-y-3">
-                                        <div class="relative group">
-                                            <button class="btn btn-xs btn-ghost absolute right-2 top-2 opacity-0 group-hover:opacity-100"
-                                                    onclick="copyCode('curl-me-get', this)">Copy</button>
-                                            <pre id="curl-me-get"
-                                                 class="bg-base-200 text-base-content/90 font-mono text-sm rounded-xl p-4 overflow-x-auto select-all">
-curl -H "Authorization: Bearer &lt;token&gt;" {{ url('/api/v1/me') }}</pre>
-                                        </div>
-
-                                        <div class="relative group">
-                                            <button class="btn btn-xs btn-ghost absolute right-2 top-2 opacity-0 group-hover:opacity-100"
-                                                    onclick="copyCode('curl-me-put', this)">Copy</button>
-                                            <pre id="curl-me-put"
-                                                 class="bg-base-200 text-base-content/90 font-mono text-sm rounded-xl p-4 overflow-x-auto select-all">
-curl -X PUT \
-  -H "Authorization: Bearer &lt;token&gt;" \
-  -H "Content-Type: application/json" \
-  -d '{"name":"New Name"}' {{ url('/api/v1/me') }}</pre>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- Auth notes --}}
-                        <div class="card bg-base-100 border border-base-300 rounded-2xl">
-                            <div class="card-body">
-                                <h2 class="card-title text-lg">Auth</h2>
-                                <div class="space-y-3 text-sm">
-                                    <p>
-                                        API authentication uses <span class="badge badge-primary">Sanctum Personal Access Tokens</span>.
-                                        Create tokens from <a class="link" href="{{ url('/admin/settings') }}">System Settings → API Keys</a>
-                                        or via CLI commands you installed.
-                                    </p>
-                                    <div class="alert rounded-xl">
-                                        <span>Send the header above with every request.</span>
-                                    </div>
-                                    <div class="collapse collapse-arrow border border-base-300 rounded-xl">
-                                        <input type="checkbox" />
-                                        <div class="collapse-title text-md font-medium">CLI helpers (optional)</div>
-                                        <div class="collapse-content space-y-2">
-                                            <div class="relative group">
-                                                <button class="btn btn-xs btn-ghost absolute right-2 top-2 opacity-0 group-hover:opacity-100"
-                                                        onclick="copyCode('cli-create', this)">Copy</button>
-                                                <pre id="cli-create" class="bg-base-200 text-base-content/90 font-mono text-sm rounded-xl p-4 overflow-x-auto select-all">
-php artisan sanctum:token:create "admin@example.com" --name="dev" --abilities="*"</pre>
-                                            </div>
-                                            <div class="relative group">
-                                                <button class="btn btn-xs btn-ghost absolute right-2 top-2 opacity-0 group-hover:opacity-100"
-                                                        onclick="copyCode('cli-list', this)">Copy</button>
-                                                <pre id="cli-list" class="bg-base-200 text-base-content/90 font-mono text-sm rounded-xl p-4 overflow-x-auto select-all">
-php artisan sanctum:token:list --active</pre>
-                                            </div>
-                                            <div class="relative group">
-                                                <button class="btn btn-xs btn-ghost absolute right-2 top-2 opacity-0 group-hover:opacity-100"
-                                                        onclick="copyCode('cli-revoke', this)">Copy</button>
-                                                <pre id="cli-revoke" class="bg-base-200 text-base-content/90 font-mono text-sm rounded-xl p-4 overflow-x-auto select-all">
-php artisan sanctum:token:revoke user:admin@example.com --all --force</pre>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-
-                {{-- USERS --}}
-                <input type="radio" name="apiTabs" role="tab" class="tab" aria-label="Users" />
-                <div role="tabpanel" class="tab-content bg-base-100 border-base-300 rounded-2xl p-6">
-                    <div class="alert rounded-xl mb-4">
-                        <div><span class="badge badge-ghost mr-2">Admin</span> Users CRUD requires an admin token.</div>
+    <div class="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
+            
+            {{-- Sidebar --}}
+            <aside class="hidden lg:block lg:col-span-3 xl:col-span-2">
+                <nav class="sticky top-24 space-y-10">
+                    <div class="space-y-4">
+                        <h3 class="text-xs font-semibold uppercase tracking-wider text-indigo-400">Getting Started</h3>
+                        <ul class="space-y-2 border-l border-zinc-800 ml-1">
+                            <li><a href="#intro" class="block pl-4 -ml-px border-l border-transparent hover:border-indigo-500 text-sm text-zinc-400 hover:text-white transition">Introduction</a></li>
+                            <li><a href="#auth" class="block pl-4 -ml-px border-l border-transparent hover:border-indigo-500 text-sm text-zinc-400 hover:text-white transition">Authentication</a></li>
+                        </ul>
                     </div>
 
-                    <div class="space-y-3">
-                        <div class="collapse collapse-arrow border border-base-300 rounded-xl" data-endpoint="users get list index">
-                            <input type="checkbox" />
-                            <div class="collapse-title text-md font-medium">
-                                <span class="badge badge-outline mr-2">GET</span> /admin/users
-                            </div>
-                            <div class="collapse-content">
-                                <div class="relative group">
-                                    <button class="btn btn-xs btn-ghost absolute right-2 top-2 opacity-0 group-hover:opacity-100"
-                                            onclick="copyCode('users-index', this)">Copy</button>
-                                    <pre id="users-index" class="bg-base-200 text-base-content/90 font-mono text-sm rounded-xl p-4 overflow-x-auto select-all">
-curl -H "Authorization: Bearer &lt;admin_token&gt;" {{ url('/api/v1/admin/users') }}</pre>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="collapse collapse-arrow border border-base-300 rounded-xl" data-endpoint="users post create store">
-                            <input type="checkbox" />
-                            <div class="collapse-title text-md font-medium">
-                                <span class="badge badge-info mr-2">POST</span> /admin/users
-                            </div>
-                            <div class="collapse-content">
-                                <div class="relative group">
-                                    <button class="btn btn-xs btn-ghost absolute right-2 top-2 opacity-0 group-hover:opacity-100"
-                                            onclick="copyCode('users-store', this)">Copy</button>
-                                    <pre id="users-store" class="bg-base-200 text-base-content/90 font-mono text-sm rounded-xl p-4 overflow-x-auto select-all">
-curl -X POST \
-  -H "Authorization: Bearer &lt;admin_token&gt;" \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Jane","email":"jane@example.com","password":"secret","is_admin":false}' \
-  {{ url('/api/v1/admin/users') }}</pre>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="collapse collapse-arrow border border-base-300 rounded-xl" data-endpoint="users get show">
-                            <input type="checkbox" />
-                            <div class="collapse-title text-md font-medium">
-                                <span class="badge badge-outline mr-2">GET</span> /admin/users/{id}
-                            </div>
-                            <div class="collapse-content">
-                                <div class="relative group">
-                                    <button class="btn btn-xs btn-ghost absolute right-2 top-2 opacity-0 group-hover:opacity-100"
-                                            onclick="copyCode('users-show', this)">Copy</button>
-                                    <pre id="users-show" class="bg-base-200 text-base-content/90 font-mono text-sm rounded-xl p-4 overflow-x-auto select-all">
-curl -H "Authorization: Bearer &lt;admin_token&gt;" {{ url('/api/v1/admin/users/1') }}</pre>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="collapse collapse-arrow border border-base-300 rounded-xl" data-endpoint="users put update">
-                            <input type="checkbox" />
-                            <div class="collapse-title text-md font-medium">
-                                <span class="badge badge-warning mr-2">PUT</span> /admin/users/{id}
-                            </div>
-                            <div class="collapse-content">
-                                <div class="relative group">
-                                    <button class="btn btn-xs btn-ghost absolute right-2 top-2 opacity-0 group-hover:opacity-100"
-                                            onclick="copyCode('users-update', this)">Copy</button>
-                                    <pre id="users-update" class="bg-base-200 text-base-content/90 font-mono text-sm rounded-xl p-4 overflow-x-auto select-all">
-curl -X PUT \
-  -H "Authorization: Bearer &lt;admin_token&gt;" \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Updated Name"}' \
-  {{ url('/api/v1/admin/users/1') }}</pre>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="collapse collapse-arrow border border-base-300 rounded-xl" data-endpoint="users delete destroy">
-                            <input type="checkbox" />
-                            <div class="collapse-title text-md font-medium">
-                                <span class="badge badge-error mr-2">DELETE</span> /admin/users/{id}
-                            </div>
-                            <div class="collapse-content">
-                                <div class="relative group">
-                                    <button class="btn btn-xs btn-ghost absolute right-2 top-2 opacity-0 group-hover:opacity-100"
-                                            onclick="copyCode('users-destroy', this)">Copy</button>
-                                    <pre id="users-destroy" class="bg-base-200 text-base-content/90 font-mono text-sm rounded-xl p-4 overflow-x-auto select-all">
-curl -X DELETE -H "Authorization: Bearer &lt;admin_token&gt;" {{ url('/api/v1/admin/users/1') }}</pre>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- SETTINGS --}}
-                <input type="radio" name="apiTabs" role="tab" class="tab" aria-label="Settings" />
-                <div role="tabpanel" class="tab-content bg-base-100 border-base-300 rounded-2xl p-6">
-                    <div class="alert rounded-xl mb-4">
-                        <div><span class="badge badge-ghost mr-2">Admin</span> Read/Write app settings. Logo uploads require multipart form-data.</div>
+                    <div class="space-y-4">
+                        <h3 class="text-xs font-semibold uppercase tracking-wider text-indigo-400">Public</h3>
+                        <ul class="space-y-2 border-l border-zinc-800 ml-1">
+                            <li><a href="#ping" class="block pl-4 -ml-px border-l border-transparent hover:border-indigo-500 text-sm text-zinc-400 hover:text-white transition">Health Check</a></li>
+                            <li><a href="#public-plans" class="block pl-4 -ml-px border-l border-transparent hover:border-indigo-500 text-sm text-zinc-400 hover:text-white transition">Plans</a></li>
+                            <li><a href="#me" class="block pl-4 -ml-px border-l border-transparent hover:border-indigo-500 text-sm text-zinc-400 hover:text-white transition">Profile</a></li>
+                        </ul>
                     </div>
 
-                    <div class="space-y-3">
-                        <div class="collapse collapse-arrow border border-base-300 rounded-xl" data-endpoint="settings get list">
-                            <input type="checkbox" />
-                            <div class="collapse-title text-md font-medium">
-                                <span class="badge badge-outline mr-2">GET</span> /admin/settings
-                            </div>
-                            <div class="collapse-content">
-                                <div class="relative group">
-                                    <button class="btn btn-xs btn-ghost absolute right-2 top-2 opacity-0 group-hover:opacity-100"
-                                            onclick="copyCode('settings-index', this)">Copy</button>
-                                    <pre id="settings-index" class="bg-base-200 text-base-content/90 font-mono text-sm rounded-xl p-4 overflow-x-auto select-all">
-curl -H "Authorization: Bearer &lt;admin_token&gt;" {{ url('/api/v1/admin/settings') }}</pre>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="collapse collapse-arrow border border-base-300 rounded-xl" data-endpoint="settings get key">
-                            <input type="checkbox" />
-                            <div class="collapse-title text-md font-medium">
-                                <span class="badge badge-outline mr-2">GET</span> /admin/settings/{key}
-                            </div>
-                            <div class="collapse-content">
-                                <div class="relative group">
-                                    <button class="btn btn-xs btn-ghost absolute right-2 top-2 opacity-0 group-hover:opacity-100"
-                                            onclick="copyCode('settings-key', this)">Copy</button>
-                                    <pre id="settings-key" class="bg-base-200 text-base-content/90 font-mono text-sm rounded-xl p-4 overflow-x-auto select-all">
-curl -H "Authorization: Bearer &lt;admin_token&gt;" {{ url('/api/v1/admin/settings/app.name') }}</pre>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="collapse collapse-arrow border border-base-300 rounded-xl" data-endpoint="settings put key update">
-                            <input type="checkbox" />
-                            <div class="collapse-title text-md font-medium">
-                                <span class="badge badge-warning mr-2">PUT</span> /admin/settings/{key}
-                            </div>
-                            <div class="collapse-content">
-                                <div class="relative group">
-                                    <button class="btn btn-xs btn-ghost absolute right-2 top-2 opacity-0 group-hover:opacity-100"
-                                            onclick="copyCode('settings-put', this)">Copy</button>
-                                    <pre id="settings-put" class="bg-base-200 text-base-content/90 font-mono text-sm rounded-xl p-4 overflow-x-auto select-all">
-curl -X PUT \
-  -H "Authorization: Bearer &lt;admin_token&gt;" \
-  -H "Content-Type: application/json" \
-  -d '{"value":"New App Name"}' \
-  {{ url('/api/v1/admin/settings/app.name') }}</pre>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="collapse collapse-arrow border border-base-300 rounded-xl" data-endpoint="settings post logo upload multipart">
-                            <input type="checkbox" />
-                            <div class="collapse-title text-md font-medium">
-                                <span class="badge badge-info mr-2">POST</span> /admin/settings/logo
-                            </div>
-                            <div class="collapse-content">
-                                <div class="relative group">
-                                    <button class="btn btn-xs btn-ghost absolute right-2 top-2 opacity-0 group-hover:opacity-100"
-                                            onclick="copyCode('settings-logo', this)">Copy</button>
-                                    <pre id="settings-logo" class="bg-base-200 text-base-content/90 font-mono text-sm rounded-xl p-4 overflow-x-auto select-all">
-curl -X POST \
-  -H "Authorization: Bearer &lt;admin_token&gt;" \
-  -F "app_logo_light=@/path/light.png" \
-  -F "app_logo_dark=@/path/dark.png" \
-  {{ url('/api/v1/admin/settings/logo') }}</pre>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- AUDIT --}}
-                <input type="radio" name="apiTabs" role="tab" class="tab" aria-label="Audit" />
-                <div role="tabpanel" class="tab-content bg-base-100 border-base-300 rounded-2xl p-6">
-                    <div class="alert rounded-xl mb-4">
-                        <div><span class="badge badge-ghost mr-2">Admin</span> Read audit entries with pagination &amp; filtering.</div>
+                    <div class="space-y-4">
+                        <h3 class="text-xs font-semibold uppercase tracking-wider text-indigo-400">Billing</h3>
+                        <ul class="space-y-2 border-l border-zinc-800 ml-1">
+                            <li><a href="#checkout" class="block pl-4 -ml-px border-l border-transparent hover:border-indigo-500 text-sm text-zinc-400 hover:text-white transition">Checkout</a></li>
+                            <li><a href="#manage-sub" class="block pl-4 -ml-px border-l border-transparent hover:border-indigo-500 text-sm text-zinc-400 hover:text-white transition">Manage Subscription</a></li>
+                            <li><a href="#invoices" class="block pl-4 -ml-px border-l border-transparent hover:border-indigo-500 text-sm text-zinc-400 hover:text-white transition">Invoices</a></li>
+                        </ul>
                     </div>
 
-                    <div class="space-y-3">
-                        <div class="collapse collapse-arrow border border-base-300 rounded-xl" data-endpoint="audit get list">
-                            <input type="checkbox" />
-                            <div class="collapse-title text-md font-medium">
-                                <span class="badge badge-outline mr-2">GET</span> /admin/audit
-                            </div>
-                            <div class="collapse-content">
-                                <div class="relative group">
-                                    <button class="btn btn-xs btn-ghost absolute right-2 top-2 opacity-0 group-hover:opacity-100"
-                                            onclick="copyCode('audit-index', this)">Copy</button>
-                                    <pre id="audit-index" class="bg-base-200 text-base-content/90 font-mono text-sm rounded-xl p-4 overflow-x-auto select-all">
-curl -H "Authorization: Bearer &lt;admin_token&gt;" "{{ url('/api/v1/admin/audit') }}?page=1&amp;per_page=20"</pre>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="collapse collapse-arrow border border-base-300 rounded-xl" data-endpoint="audit get show">
-                            <input type="checkbox" />
-                            <div class="collapse-title text-md font-medium">
-                                <span class="badge badge-outline mr-2">GET</span> /admin/audit/{id}
-                            </div>
-                            <div class="collapse-content">
-                                <div class="relative group">
-                                    <button class="btn btn-xs btn-ghost absolute right-2 top-2 opacity-0 group-hover:opacity-100"
-                                            onclick="copyCode('audit-show', this)">Copy</button>
-                                    <pre id="audit-show" class="bg-base-200 text-base-content/90 font-mono text-sm rounded-xl p-4 overflow-x-auto select-all">
-curl -H "Authorization: Bearer &lt;admin_token&gt;" {{ url('/api/v1/admin/audit/1') }}</pre>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="space-y-4">
+                        <h3 class="text-xs font-semibold uppercase tracking-wider text-indigo-400">Admin</h3>
+                        <ul class="space-y-2 border-l border-zinc-800 ml-1">
+                            <li><a href="#admin-users" class="block pl-4 -ml-px border-l border-transparent hover:border-indigo-500 text-sm text-zinc-400 hover:text-white transition">User Management</a></li>
+                            <li><a href="#admin-settings" class="block pl-4 -ml-px border-l border-transparent hover:border-indigo-500 text-sm text-zinc-400 hover:text-white transition">System Settings</a></li>
+                            <li><a href="#admin-plans" class="block pl-4 -ml-px border-l border-transparent hover:border-indigo-500 text-sm text-zinc-400 hover:text-white transition">Plan Management</a></li>
+                            <li><a href="#impersonation" class="block pl-4 -ml-px border-l border-transparent hover:border-indigo-500 text-sm text-zinc-400 hover:text-white transition">Impersonation</a></li>
+                        </ul>
                     </div>
-                </div>
+                </nav>
+            </aside>
 
-                {{-- IMPERSONATION --}}
-                <input type="radio" name="apiTabs" role="tab" class="tab" aria-label="Impersonation" />
-                <div role="tabpanel" class="tab-content bg-base-100 border-base-300 rounded-2xl p-6">
-                    <div class="alert rounded-xl mb-4">
-                        <div><span class="badge badge-ghost mr-2">Admin</span> Feature-flagged. Requires Admin MFA to start. Stop is always available to exit.</div>
-                    </div>
+            {{-- Main Content --}}
+            <main class="lg:col-span-9 xl:col-span-10 space-y-24 pb-24">
 
-                    <div class="space-y-3">
-                        <div class="collapse collapse-arrow border border-base-300 rounded-xl" data-endpoint="impersonate post start">
-                            <input type="checkbox" />
-                            <div class="collapse-title text-md font-medium">
-                                <span class="badge badge-info mr-2">POST</span> /admin/impersonate/start/{user}
-                            </div>
-                            <div class="collapse-content">
-                                <div class="relative group">
-                                    <button class="btn btn-xs btn-ghost absolute right-2 top-2 opacity-0 group-hover:opacity-100"
-                                            onclick="copyCode('imp-start', this)">Copy</button>
-                                    <pre id="imp-start" class="bg-base-200 text-base-content/90 font-mono text-sm rounded-xl p-4 overflow-x-auto select-all">
-curl -X POST \
-  -H "Authorization: Bearer &lt;admin_token&gt;" \
-  -H "Content-Type: application/json" \
-  -d '{"code":"123456","mode":"readonly"}' \
-  {{ url('/api/v1/admin/impersonate/start/42') }}</pre>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="collapse collapse-arrow border border-base-300 rounded-xl" data-endpoint="impersonate post stop">
-                            <input type="checkbox" />
-                            <div class="collapse-title text-md font-medium">
-                                <span class="badge badge-info mr-2">POST</span> /admin/impersonate/stop
-                            </div>
-                            <div class="collapse-content">
-                                <div class="relative group">
-                                    <button class="btn btn-xs btn-ghost absolute right-2 top-2 opacity-0 group-hover:opacity-100"
-                                            onclick="copyCode('imp-stop', this)">Copy</button>
-                                    <pre id="imp-stop" class="bg-base-200 text-base-content/90 font-mono text-sm rounded-xl p-4 overflow-x-auto select-all">
-curl -X POST -H "Authorization: Bearer &lt;admin_token&gt;" {{ url('/api/v1/admin/impersonate/stop') }}</pre>
-                                </div>
-                            </div>
-                        </div>
-
-                        <p class="text-xs text-base-content/60">
-                            While impersonating, all <span class="badge badge-ghost mx-1">admin.*</span> endpoints are blocked.
-                            Non-admin writes are blocked unless <kbd class="kbd kbd-xs">mode=full</kbd>.
+                {{-- INTRODUCTION --}}
+                <section id="intro" class="scroll-mt-32">
+                    <div class="max-w-2xl">
+                        <h2 class="text-4xl font-bold text-white mb-6">API Reference</h2>
+                        <p class="text-lg text-zinc-400 leading-relaxed mb-8">
+                            This documentation provides detailed information about the available endpoints, parameters, and responses for our REST API.
+                            Requests are authenticated using Bearer tokens, and responses are returned in JSON format.
                         </p>
-                    </div>
-                </div>
-
-                {{-- SUBSCRIPTIONS & BILLING --}}
-                <input type="radio" name="apiTabs" role="tab" class="tab" aria-label="Billing" />
-                <div role="tabpanel" class="tab-content bg-base-100 border-base-300 rounded-2xl p-6">
-                     <div class="alert rounded-xl mb-4">
-                        <div><span class="badge badge-ghost mr-2">Public/Auth</span> Manage plans, subscriptions, and invoices.</div>
-                    </div>
-
-                    <div class="space-y-3">
-                         {{-- Plans (Public) --}}
-                        <div class="collapse collapse-arrow border border-base-300 rounded-xl" data-endpoint="plans get list public">
-                            <input type="checkbox" />
-                            <div class="collapse-title text-md font-medium">
-                                <span class="badge badge-outline mr-2">GET</span> /plans (Public)
+                        <div class="p-4 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center gap-4">
+                            <div class="h-10 w-10 bg-indigo-500/10 rounded-lg flex items-center justify-center text-indigo-400">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                                </svg>
                             </div>
-                            <div class="collapse-content">
-                                <p class="text-sm text-base-content/70 mb-2">List all active subscription plans.</p>
-                                <div class="relative group">
-                                    <button class="btn btn-xs btn-ghost absolute right-2 top-2 opacity-0 group-hover:opacity-100"
-                                            onclick="copyCode('plans-index', this)">Copy</button>
-                                    <pre id="plans-index" class="bg-base-200 text-base-content/90 font-mono text-sm rounded-xl p-4 overflow-x-auto select-all">
-curl {{ url('/api/v1/plans') }}</pre>
+                            <div>
+                                <h4 class="text-white font-medium text-sm">Base URL</h4>
+                                <p class="text-zinc-500 font-mono text-sm mt-0.5 selection:bg-indigo-500/30">{{ url('/api/v1') }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {{-- AUTHENTICATION --}}
+                <section id="auth" class="scroll-mt-32 pt-12 border-t border-zinc-900">
+                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-16">
+                        <div>
+                            <h3 class="text-2xl font-bold text-white mb-4">Authentication</h3>
+                            <div class="prose prose-invert prose-zinc max-w-none text-zinc-400">
+                                <p>Authenticate your requests by including your secret API key in the <code class="text-indigo-300">Authorization</code> header.</p>
+                                <p class="mt-4">
+                                    You can manage your API keys in the <a href="{{ url('/admin/settings') }}" class="text-indigo-400 hover:text-indigo-300 underline">System Settings</a> dashboard.
+                                    Never share your keys in client-side code (e.g., browsers, mobile apps).
+                                </p>
+                            </div>
+                        </div>
+                        <div class="w-full">
+                            {{-- Code Widget --}}
+                            <div x-data="{ activeTab: 'curl', copied: false }" class="rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800 shadow-xl">
+                                <div class="flex items-center justify-between px-4 py-3 border-b border-zinc-800 bg-zinc-900/50">
+                                    <div class="flex items-center gap-1">
+                                        <button @click="activeTab = 'curl'" :class="{ 'bg-zinc-800 text-white': activeTab === 'curl', 'text-zinc-400 hover:text-zinc-200': activeTab !== 'curl' }" class="px-3 py-1 rounded-md text-xs font-medium transition-colors">cURL</button>
+                                        <button @click="activeTab = 'python'" :class="{ 'bg-zinc-800 text-white': activeTab === 'python', 'text-zinc-400 hover:text-zinc-200': activeTab !== 'python' }" class="px-3 py-1 rounded-md text-xs font-medium transition-colors">Python</button>
+                                        <button @click="activeTab = 'js'" :class="{ 'bg-zinc-800 text-white': activeTab === 'js', 'text-zinc-400 hover:text-zinc-200': activeTab !== 'js' }" class="px-3 py-1 rounded-md text-xs font-medium transition-colors">Node.js</button>
+                                        <button @click="activeTab = 'php'" :class="{ 'bg-zinc-800 text-white': activeTab === 'php', 'text-zinc-400 hover:text-zinc-200': activeTab !== 'php' }" class="px-3 py-1 rounded-md text-xs font-medium transition-colors">PHP</button>
+                                    </div>
+                                    <button @click="
+                                        navigator.clipboard.writeText($refs[activeTab].innerText);
+                                        copied = true;
+                                        setTimeout(() => copied = false, 2000);
+                                    " class="text-xs text-zinc-500 hover:text-white transition-colors flex items-center gap-1.5">
+                                        <span x-show="!copied">Copy</span>
+                                        <span x-show="copied" class="text-emerald-400" style="display: none;">Copied!</span>
+                                        <svg x-show="!copied" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                                        <svg x-show="copied" class="w-3.5 h-3.5 text-emerald-400" style="display: none;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                                    </button>
+                                </div>
+                                <div class="p-4 overflow-x-auto bg-[#0d1117]">
+                                    <pre x-show="activeTab === 'curl'" x-ref="curl" class="text-sm font-mono text-zinc-300 leading-relaxed">curl "{{ url('/api/v1/user') }}" \
+  -H "Authorization: Bearer <span class="text-indigo-400">&lt;token&gt;</span>" \
+  -H "Accept: application/json"</pre>
+                                    <pre x-show="activeTab === 'python'" x-ref="python" style="display: none;" class="text-sm font-mono text-zinc-300 leading-relaxed">import requests
+
+response = requests.get(
+    "{{ url('/api/v1/user') }}",
+    headers={
+        "Authorization": "Bearer <span class="text-indigo-400">&lt;token&gt;</span>",
+        "Accept": "application/json"
+    }
+)</pre>
+                                    <pre x-show="activeTab === 'js'" x-ref="js" style="display: none;" class="text-sm font-mono text-zinc-300 leading-relaxed">const response = await fetch("{{ url('/api/v1/user') }}", {
+  method: "GET",
+  headers: {
+    "Authorization": "Bearer <span class="text-indigo-400">&lt;token&gt;</span>",
+    "Accept": "application/json"
+  }
+});</pre>
+                                    <pre x-show="activeTab === 'php'" x-ref="php" style="display: none;" class="text-sm font-mono text-zinc-300 leading-relaxed">$response = $client->request('GET', '{{ url('/api/v1/user') }}', [
+    'headers' => [
+        'Authorization' => 'Bearer <span class="text-indigo-400">&lt;token&gt;</span>',
+        'Accept'        => 'application/json',
+    ],
+]);</pre>
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </section>
 
-                        {{-- Checkout --}}
-                        <div class="collapse collapse-arrow border border-base-300 rounded-xl" data-endpoint="subscriptions checkout post">
-                            <input type="checkbox" />
-                             <div class="collapse-title text-md font-medium">
-                                <span class="badge badge-info mr-2">POST</span> /subscriptions/checkout
+                {{-- PUBLIC ENDPOINTS --}}
+                <div id="ping" class="scroll-mt-32 pt-12 border-t border-zinc-900">
+                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-16">
+                        <div>
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="px-2.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">GET</span>
+                                <span class="font-mono text-sm text-zinc-400">/ping</span>
                             </div>
-                            <div class="collapse-content">
-                                 <p class="text-sm text-base-content/70 mb-2">Initiate checkout. Returns a Stripe Checkout URL.</p>
-                                <div class="relative group">
-                                    <button class="btn btn-xs btn-ghost absolute right-2 top-2 opacity-0 group-hover:opacity-100"
-                                            onclick="copyCode('sub-checkout', this)">Copy</button>
-                                    <pre id="sub-checkout" class="bg-base-200 text-base-content/90 font-mono text-sm rounded-xl p-4 overflow-x-auto select-all">
-curl -X POST \
-  -H "Authorization: Bearer &lt;token&gt;" \
+                            <h3 class="text-xl font-semibold text-white mb-2">Health Check</h3>
+                            <p class="text-zinc-400 text-sm leading-relaxed">Check if the API is operational.</p>
+                        </div>
+                        <div x-data="{ activeTab: 'curl', copied: false }" class="rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800">
+                             <div class="flex items-center justify-between px-3 py-2 border-b border-zinc-800 bg-zinc-900/50">
+                                <span class="text-xs font-mono text-zinc-500">Request</span>
+                                <button @click="navigator.clipboard.writeText($refs.code.innerText); copied=true; setTimeout(()=>copied=false, 2000)" class="text-xs text-zinc-500 hover:text-white">Copy</button>
+                            </div>
+                            <div class="p-4 bg-[#0d1117] overflow-x-auto">
+                                <pre x-ref="code" class="text-xs font-mono text-zinc-300">curl "{{ url('/api/v1/ping') }}"</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="public-plans" class="scroll-mt-32 pt-12 border-t border-zinc-900">
+                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-16">
+                        <div>
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="px-2.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">GET</span>
+                                <span class="font-mono text-sm text-zinc-400">/plans</span>
+                            </div>
+                            <h3 class="text-xl font-semibold text-white mb-2">List Plans</h3>
+                            <p class="text-zinc-400 text-sm leading-relaxed">Retrieve active subscription plans.</p>
+                        </div>
+                        <div x-data="{ copied: false }" class="rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800">
+                             <div class="flex items-center justify-between px-3 py-2 border-b border-zinc-800 bg-zinc-900/50">
+                                <span class="text-xs font-mono text-zinc-500">Request</span>
+                                <button @click="navigator.clipboard.writeText($refs.code.innerText); copied=true; setTimeout(()=>copied=false, 2000)" class="text-xs text-zinc-500 hover:text-white">Copy</button>
+                            </div>
+                            <div class="p-4 bg-[#0d1117] overflow-x-auto">
+                                <pre x-ref="code" class="text-xs font-mono text-zinc-300">curl "{{ url('/api/v1/plans') }}"</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="me" class="scroll-mt-32 pt-12 border-t border-zinc-900">
+                    {{-- GET ME --}}
+                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-16 mb-20">
+                        <div>
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="px-2.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">GET</span>
+                                <span class="font-mono text-sm text-zinc-400">/me</span>
+                            </div>
+                            <h3 class="text-xl font-semibold text-white mb-2">Get Profile</h3>
+                            <p class="text-zinc-400 text-sm leading-relaxed">Retrieve the authenticated user's profile.</p>
+                        </div>
+                        <div x-data="{ copied: false }" class="rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800">
+                            <div class="flex items-center justify-between px-3 py-2 border-b border-zinc-800 bg-zinc-900/50">
+                                <span class="text-xs font-mono text-zinc-500">Request</span>
+                                <button @click="navigator.clipboard.writeText($refs.code.innerText); copied=true; setTimeout(()=>copied=false, 2000)" class="text-xs text-zinc-500 hover:text-white">Copy</button>
+                            </div>
+                            <div class="p-4 bg-[#0d1117] overflow-x-auto">
+                                <pre x-ref="code" class="text-xs font-mono text-zinc-300">curl -H "Authorization: Bearer <token>" "{{ url('/api/v1/me') }}"</pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- PUT ME --}}
+                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-16">
+                        <div>
+                             <div class="flex items-center gap-3 mb-3">
+                                <span class="px-2.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">PUT</span>
+                                <span class="font-mono text-sm text-zinc-400">/me</span>
+                            </div>
+                            <h3 class="text-xl font-semibold text-white mb-2">Update Profile</h3>
+                            <p class="text-zinc-400 text-sm leading-relaxed mb-6">Update user details.</p>
+                            
+                            <h4 class="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-3">Attributes</h4>
+                            <div class="border-t border-zinc-800 divide-y divide-zinc-800">
+                                <div class="py-3 flex gap-4">
+                                    <code class="text-xs text-indigo-400 font-mono w-24 shrink-0">name</code>
+                                    <div class="text-sm text-zinc-400">Full name <span class="text-zinc-600 text-xs ml-1">(String, Required)</span></div>
+                                </div>
+                                <div class="py-3 flex gap-4">
+                                    <code class="text-xs text-indigo-400 font-mono w-24 shrink-0">email</code>
+                                    <div class="text-sm text-zinc-400">Email address <span class="text-zinc-600 text-xs ml-1">(String, Required)</span></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div x-data="{ copied: false }" class="rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800">
+                            <div class="flex items-center justify-between px-3 py-2 border-b border-zinc-800 bg-zinc-900/50">
+                                <span class="text-xs font-mono text-zinc-500">Request</span>
+                                <button @click="navigator.clipboard.writeText($refs.code.innerText); copied=true; setTimeout(()=>copied=false, 2000)" class="text-xs text-zinc-500 hover:text-white">Copy</button>
+                            </div>
+                            <div class="p-4 bg-[#0d1117] overflow-x-auto">
+<pre x-ref="code" class="text-xs font-mono text-zinc-300">curl -X PUT "{{ url('/api/v1/me') }}" \
+  -H "Authorization: Bearer <span class="text-indigo-400">&lt;token&gt;</span>" \
   -H "Content-Type: application/json" \
-  -d '{"plan_id": 1}' \
-  {{ url('/api/v1/subscriptions/checkout') }}</pre>
-                                </div>
+  -d '{"name": "John Doe"}'</pre>
                             </div>
                         </div>
-
-                        {{-- Cancel --}}
-                         <div class="collapse collapse-arrow border border-base-300 rounded-xl" data-endpoint="subscriptions cancel post">
-                            <input type="checkbox" />
-                             <div class="collapse-title text-md font-medium">
-                                <span class="badge badge-info mr-2">POST</span> /subscriptions/cancel
-                            </div>
-                            <div class="collapse-content">
-                                <div class="relative group">
-                                    <button class="btn btn-xs btn-ghost absolute right-2 top-2 opacity-0 group-hover:opacity-100"
-                                            onclick="copyCode('sub-cancel', this)">Copy</button>
-                                    <pre id="sub-cancel" class="bg-base-200 text-base-content/90 font-mono text-sm rounded-xl p-4 overflow-x-auto select-all">
-curl -X POST -H "Authorization: Bearer &lt;token&gt;" {{ url('/api/v1/subscriptions/cancel') }}</pre>
-                                </div>
-                            </div>
-                        </div>
-
-                         {{-- Invoices --}}
-                         <div class="collapse collapse-arrow border border-base-300 rounded-xl" data-endpoint="invoices get list">
-                            <input type="checkbox" />
-                            <div class="collapse-title text-md font-medium">
-                                <span class="badge badge-outline mr-2">GET</span> /invoices
-                            </div>
-                            <div class="collapse-content">
-                                <div class="relative group">
-                                    <button class="btn btn-xs btn-ghost absolute right-2 top-2 opacity-0 group-hover:opacity-100"
-                                            onclick="copyCode('invoices-index', this)">Copy</button>
-                                    <pre id="invoices-index" class="bg-base-200 text-base-content/90 font-mono text-sm rounded-xl p-4 overflow-x-auto select-all">
-curl -H "Authorization: Bearer &lt;token&gt;" {{ url('/api/v1/invoices') }}</pre>
-                                </div>
-                            </div>
-                        </div>
-
                     </div>
                 </div>
 
-                {{-- ADMIN SUBSCRIPTION MANAGEMENT --}}
-                <input type="radio" name="apiTabs" role="tab" class="tab" aria-label="Admin Billing" />
-                <div role="tabpanel" class="tab-content bg-base-100 border-base-300 rounded-2xl p-6">
-                     <div class="alert rounded-xl mb-4">
-                        <div><span class="badge badge-ghost mr-2">Admin</span> Manage plans and subscription settings.</div>
-                    </div>
-                     <div class="space-y-3">
-                         {{-- Admin Plans --}}
-                        <div class="collapse collapse-arrow border border-base-300 rounded-xl" data-endpoint="admin plans crud">
-                             <input type="checkbox" />
-                            <div class="collapse-title text-md font-medium">
-                                <span class="badge badge-outline mr-2">CRUD</span> /admin/plans
+
+                {{-- BILLING --}}
+                <div id="checkout" class="scroll-mt-32 pt-12 border-t border-zinc-900">
+                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-16">
+                        <div>
+                             <div class="flex items-center gap-3 mb-3">
+                                <span class="px-2.5 py-0.5 rounded text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">POST</span>
+                                <span class="font-mono text-sm text-zinc-400">/subscriptions/checkout</span>
                             </div>
-                            <div class="collapse-content">
-                                <p class="text-sm text-base-content/70 mb-2">Standard Resource: GET, POST, PUT, DELETE.</p>
-                                <div class="relative group">
-                                    <button class="btn btn-xs btn-ghost absolute right-2 top-2 opacity-0 group-hover:opacity-100"
-                                            onclick="copyCode('admin-plans', this)">Copy</button>
-                                    <pre id="admin-plans" class="bg-base-200 text-base-content/90 font-mono text-sm rounded-xl p-4 overflow-x-auto select-all">
-curl -X POST \
-  -H "Authorization: Bearer &lt;admin_token&gt;" \
+                            <h3 class="text-xl font-semibold text-white mb-2">Create Checkout Session</h3>
+                            <p class="text-zinc-400 text-sm leading-relaxed mb-6">Start a subscription purchase.</p>
+
+                            <h4 class="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-3">Attributes</h4>
+                            <div class="border-t border-zinc-800 divide-y divide-zinc-800">
+                                <div class="py-3 flex gap-4">
+                                    <code class="text-xs text-indigo-400 font-mono w-24 shrink-0">plan_id</code>
+                                    <div class="text-sm text-zinc-400">Plan ID <span class="text-zinc-600 text-xs ml-1">(Integer, Required)</span></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div x-data="{ copied: false }" class="rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800">
+                             <div class="flex items-center justify-between px-3 py-2 border-b border-zinc-800 bg-zinc-900/50">
+                                <span class="text-xs font-mono text-zinc-500">Request</span>
+                                <button @click="navigator.clipboard.writeText($refs.code.innerText); copied=true; setTimeout(()=>copied=false, 2000)" class="text-xs text-zinc-500 hover:text-white">Copy</button>
+                            </div>
+                             <div class="p-4 bg-[#0d1117] overflow-x-auto">
+<pre x-ref="code" class="text-xs font-mono text-zinc-300">curl -X POST "{{ url('/api/v1/subscriptions/checkout') }}" \
+  -H "Authorization: Bearer <span class="text-indigo-400">&lt;token&gt;</span>" \
   -H "Content-Type: application/json" \
-  -d '{"name": "Pro", "price": 99, "currency": "USD", "stripe_id": "price_123"}' \
-  {{ url('/api/v1/admin/plans') }}</pre>
+  -d '{"plan_id": 1}'</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="manage-sub" class="scroll-mt-32 pt-12 border-t border-zinc-900">
+                    {{-- CANCEL --}}
+                     <div class="grid grid-cols-1 xl:grid-cols-2 gap-16 mb-20">
+                        <div>
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="px-2.5 py-0.5 rounded text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">POST</span>
+                                <span class="font-mono text-sm text-zinc-400">/subscriptions/cancel</span>
+                            </div>
+                            <h3 class="text-xl font-semibold text-white mb-2">Cancel Subscription</h3>
+                            <p class="text-zinc-400 text-sm leading-relaxed">Cancel active subscription.</p>
+                        </div>
+                        <div x-data="{ copied: false }" class="rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800">
+                             <div class="p-4 bg-[#0d1117] overflow-x-auto">
+                                <pre x-ref="code" class="text-xs font-mono text-zinc-300">curl -X POST -H "Authorization: Bearer <token>" "{{ url('/api/v1/subscriptions/cancel') }}"</pre>
+                            </div>
+                        </div>
+                    </div>
+                     {{-- RESUME --}}
+                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-16">
+                        <div>
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="px-2.5 py-0.5 rounded text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">POST</span>
+                                <span class="font-mono text-sm text-zinc-400">/subscriptions/resume</span>
+                            </div>
+                            <h3 class="text-xl font-semibold text-white mb-2">Resume Subscription</h3>
+                            <p class="text-zinc-400 text-sm leading-relaxed">Resume a subscription that is on grace period.</p>
+                        </div>
+                        <div class="rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800">
+                             <div class="p-4 bg-[#0d1117] overflow-x-auto">
+                                <pre class="text-xs font-mono text-zinc-300">curl -X POST -H "Authorization: Bearer <token>" "{{ url('/api/v1/subscriptions/resume') }}"</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="invoices" class="scroll-mt-32 pt-12 border-t border-zinc-900">
+                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-16">
+                        <div>
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="px-2.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">GET</span>
+                                <span class="font-mono text-sm text-zinc-400">/invoices</span>
+                            </div>
+                            <h3 class="text-xl font-semibold text-white mb-2">List Invoices</h3>
+                            <p class="text-zinc-400 text-sm leading-relaxed">Retrieve all user invoices.</p>
+                        </div>
+                         <div class="rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800">
+                             <div class="p-4 bg-[#0d1117] overflow-x-auto">
+                                <pre class="text-xs font-mono text-zinc-300">curl -H "Authorization: Bearer <token>" "{{ url('/api/v1/invoices') }}"</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                {{-- ADMIN --}}
+                <div id="admin-users" class="scroll-mt-32 pt-12 border-t border-zinc-900">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="px-2 py-1 rounded bg-indigo-500/20 text-indigo-400 text-[10px] font-bold uppercase tracking-wider">Admin</div>
+                    </div>
+                    
+                    {{-- List --}}
+                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-16 mb-20">
+                         <div>
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="px-2.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">GET</span>
+                                <span class="font-mono text-sm text-zinc-400">/admin/users</span>
+                            </div>
+                            <h3 class="text-xl font-semibold text-white mb-2">List Users</h3>
+                            <p class="text-zinc-400 text-sm leading-relaxed mb-6">Paginated user list.</p>
+                             <div class="border-t border-zinc-800 divide-y divide-zinc-800">
+                                <div class="py-3 flex gap-4">
+                                    <code class="text-xs text-indigo-400 font-mono w-24 shrink-0">page</code>
+                                    <div class="text-sm text-zinc-400">Page number</div>
+                                </div>
+                                <div class="py-3 flex gap-4">
+                                    <code class="text-xs text-indigo-400 font-mono w-24 shrink-0">per_page</code>
+                                    <div class="text-sm text-zinc-400">Items per page</div>
                                 </div>
                             </div>
                         </div>
-                        {{-- Subscription Settings --}}
-                        <div class="collapse collapse-arrow border border-base-300 rounded-xl" data-endpoint="admin settings subscription">
-                             <input type="checkbox" />
-                            <div class="collapse-title text-md font-medium">
-                                <span class="badge badge-info mr-2">POST</span> /admin/settings/subscription
+                         <div class="rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800">
+                             <div class="p-4 bg-[#0d1117] overflow-x-auto">
+                                <pre class="text-xs font-mono text-zinc-300">curl -H "Authorization: Bearer <admin_token>" "{{ url('/api/v1/admin/users') }}"</pre>
                             </div>
-                            <div class="collapse-content">
-                                <div class="relative group">
-                                    <button class="btn btn-xs btn-ghost absolute right-2 top-2 opacity-0 group-hover:opacity-100"
-                                            onclick="copyCode('admin-sub-settings', this)">Copy</button>
-                                    <pre id="admin-sub-settings" class="bg-base-200 text-base-content/90 font-mono text-sm rounded-xl p-4 overflow-x-auto select-all">
-curl -X POST \
-  -H "Authorization: Bearer &lt;admin_token&gt;" \
+                        </div>
+                    </div>
+
+                    {{-- Create --}}
+                     <div class="grid grid-cols-1 xl:grid-cols-2 gap-16">
+                         <div>
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="px-2.5 py-0.5 rounded text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">POST</span>
+                                <span class="font-mono text-sm text-zinc-400">/admin/users</span>
+                            </div>
+                            <h3 class="text-xl font-semibold text-white mb-2">Create User</h3>
+                            <p class="text-zinc-400 text-sm leading-relaxed mb-6">Manually create a user.</p>
+                             <div class="border-t border-zinc-800 divide-y divide-zinc-800">
+                                <div class="py-3 flex gap-4">
+                                    <code class="text-xs text-indigo-400 font-mono w-24 shrink-0">name</code>
+                                    <div class="text-sm text-zinc-400">Full Name</div>
+                                </div>
+                                 <div class="py-3 flex gap-4">
+                                    <code class="text-xs text-indigo-400 font-mono w-24 shrink-0">email</code>
+                                    <div class="text-sm text-zinc-400">Email Address</div>
+                                </div>
+                                 <div class="py-3 flex gap-4">
+                                    <code class="text-xs text-indigo-400 font-mono w-24 shrink-0">password</code>
+                                    <div class="text-sm text-zinc-400">Password</div>
+                                </div>
+                            </div>
+                        </div>
+                         <div class="rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800">
+                             <div class="p-4 bg-[#0d1117] overflow-x-auto">
+<pre class="text-xs font-mono text-zinc-300">curl -X POST "{{ url('/api/v1/admin/users') }}" \
+  -H "Authorization: Bearer <admin_token>" \
   -H "Content-Type: application/json" \
-  -d '{"subscription_module_enabled": true}' \
-  {{ url('/api/v1/admin/settings/subscription') }}</pre>
-                                </div>
+  -d '{"email":"test@example.com", ...}'</pre>
                             </div>
                         </div>
                     </div>
                 </div>
 
-            </div>
-        </div>
-
-        {{-- Footer card --}}
-        <div class="mt-8 card bg-base-100 border border-base-300 rounded-2xl">
-            <div class="card-body">
-                <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
-                    <div class="text-sm text-base-content/70">
-                        Need a Postman collection? Use the CLI helper or export from your app’s API docs endpoint if enabled.
+                <div id="admin-settings" class="scroll-mt-32 pt-12 border-t border-zinc-900">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="px-2 py-1 rounded bg-indigo-500/20 text-indigo-400 text-[10px] font-bold uppercase tracking-wider">Admin</div>
                     </div>
-                    <div class="join">
-                        <a href="{{ url('/admin/settings') }}" class="join-item btn btn-sm btn-ghost">API Keys</a>
-                        <a href="{{ url('/admin') }}" class="join-item btn btn-sm btn-outline">Back to Admin</a>
+                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-16 mb-20">
+                         <div>
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="px-2.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">GET</span>
+                                <span class="font-mono text-sm text-zinc-400">/admin/settings</span>
+                            </div>
+                            <h3 class="text-xl font-semibold text-white mb-2">List Settings</h3>
+                            <p class="text-zinc-400 text-sm leading-relaxed">Get all system settings.</p>
+                        </div>
+                        <div class="rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800">
+                             <div class="p-4 bg-[#0d1117] overflow-x-auto">
+                                <pre class="text-xs font-mono text-zinc-300">curl -H "Authorization: Bearer <admin_token>" "{{ url('/api/v1/admin/settings') }}"</pre>
+                            </div>
+                        </div>
+                    </div>
+
+                     <div class="grid grid-cols-1 xl:grid-cols-2 gap-16">
+                         <div>
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="px-2.5 py-0.5 rounded text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">POST</span>
+                                <span class="font-mono text-sm text-zinc-400">/admin/settings/logo</span>
+                            </div>
+                            <h3 class="text-xl font-semibold text-white mb-2">Upload Logo</h3>
+                            <p class="text-zinc-400 text-sm leading-relaxed">Multipart upload for site logo.</p>
+                        </div>
+                        <div class="rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800">
+                             <div class="p-4 bg-[#0d1117] overflow-x-auto">
+                                <pre class="text-xs font-mono text-zinc-300">curl -X POST -H "Authorization: Bearer <token>" -F "logo=@file" ...</pre>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
+
+                 <div id="admin-plans" class="scroll-mt-32 pt-12 border-t border-zinc-900">
+                     <div class="flex items-center gap-3 mb-6">
+                        <div class="px-2 py-1 rounded bg-indigo-500/20 text-indigo-400 text-[10px] font-bold uppercase tracking-wider">Admin</div>
+                    </div>
+                     <div class="grid grid-cols-1 xl:grid-cols-2 gap-16">
+                         <div>
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="px-2.5 py-0.5 rounded text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">POST</span>
+                                <span class="font-mono text-sm text-zinc-400">/admin/plans</span>
+                            </div>
+                            <h3 class="text-xl font-semibold text-white mb-2">Create Plan</h3>
+                             <p class="text-zinc-400 text-sm leading-relaxed mb-6">Define a new subscription plan.</p>
+                             <div class="border-t border-zinc-800 divide-y divide-zinc-800">
+                                <div class="py-3 flex gap-4">
+                                    <code class="text-xs text-indigo-400 font-mono w-24 shrink-0">price</code>
+                                    <div class="text-sm text-zinc-400">Amount in cents</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800">
+                             <div class="p-4 bg-[#0d1117] overflow-x-auto">
+                                <pre class="text-xs font-mono text-zinc-300">curl -X POST -H "Authorization: Bearer ..." -d '{"name":"Pro", "price":9900}' ...</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="impersonation" class="scroll-mt-32 pt-12 border-t border-zinc-900">
+                     <div class="flex items-center gap-3 mb-6">
+                        <div class="px-2 py-1 rounded bg-indigo-500/20 text-indigo-400 text-[10px] font-bold uppercase tracking-wider">Admin / Sensitive</div>
+                    </div>
+                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-16">
+                        <div>
+                             <div class="flex items-center gap-3 mb-3">
+                                <span class="px-2.5 py-0.5 rounded text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">POST</span>
+                                <span class="font-mono text-sm text-zinc-400">/admin/impersonate/start/{user}</span>
+                            </div>
+                            <h3 class="text-xl font-semibold text-white mb-2">Start Impersonation</h3>
+                            <p class="text-zinc-400 text-sm leading-relaxed">Log in as another user for troubleshooting.</p>
+                        </div>
+                        <div class="rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800">
+                             <div class="p-4 bg-[#0d1117] overflow-x-auto">
+                                <pre class="text-xs font-mono text-zinc-300">curl -X POST -H "Authorization: Bearer ..." "{{ url('/api/v1/admin/impersonate/start/1') }}"</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
         </div>
     </div>
-
-    {{-- Minimal helpers (no external libs) --}}
-    <script>
-        function copyText(inputId, btn) {
-            const el = document.getElementById(inputId);
-            if (!el) return;
-            navigator.clipboard.writeText(el.value || el.textContent || '').then(() => {
-                btn.classList.add('btn-success');
-                const old = btn.textContent;
-                btn.textContent = 'Copied';
-                setTimeout(() => { btn.classList.remove('btn-success'); btn.textContent = old; }, 900);
-            });
-        }
-        function copyCode(codeId, btn) {
-            const code = document.getElementById(codeId);
-            if (!code) return;
-            const text = code.innerText;
-            navigator.clipboard.writeText(text).then(() => {
-                btn.classList.add('btn-success');
-                const old = btn.textContent;
-                btn.textContent = 'Copied';
-                setTimeout(() => { btn.classList.remove('btn-success'); btn.textContent = old; }, 900);
-            });
-        }
-        function filterEndpoints() {
-            const q = (document.getElementById('endpointSearch').value || '').toLowerCase().trim();
-            const nodes = document.querySelectorAll('[data-endpoint]');
-            nodes.forEach(n => {
-                const tags = (n.getAttribute('data-endpoint') || '').toLowerCase();
-                const text = n.textContent.toLowerCase();
-                const hit = !q || tags.includes(q) || text.includes(q);
-                n.style.display = hit ? '' : 'none';
-            });
-        }
-    </script>
+</div>
 @endsection
