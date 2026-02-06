@@ -64,10 +64,20 @@ git clone <repository-url>
 cd IELTSBandBooster
 ```
 
-### Step 2: Install PHP Dependencies
+### Step 2: Start with Laravel Sail (Docker)
+
+This project is dockerized with Laravel Sail. You can start the environment immediately:
 
 ```bash
-composer install
+./vendor/bin/sail up -d
+```
+
+Sail will start MySQL, Redis, Mailpit, and the Application server.
+
+### Step 3: Install PHP Dependencies
+
+```bash
+./vendor/bin/sail composer install
 ```
 
 ### Step 3: Install Node Dependencies
@@ -249,7 +259,24 @@ The application will be available at: **http://127.0.0.1:8000**
 
 ## 🎯 Quick Start (All-in-One Script)
 
-For a fresh installation, you can run all commands at once:
+For a fresh installation using Sail (Docker):
+
+```bash
+# Start Docker containers
+./vendor/bin/sail up -d
+
+# Install dependencies
+./vendor/bin/sail composer install
+./vendor/bin/sail npm install
+
+# Setup environment
+./vendor/bin/sail artisan key:generate
+./vendor/bin/sail artisan migrate
+./vendor/bin/sail artisan db:seed
+
+# Build assets
+./vendor/bin/sail npm run build
+```
 
 ```bash
 # Install dependencies
