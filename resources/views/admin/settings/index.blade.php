@@ -357,6 +357,71 @@
             </form>
         </div>
 
+        {{-- Support System Settings --}}
+        <div class="bg-zinc-900 border border-zinc-800 shadow-xl rounded-xl p-6 sm:p-8"
+             x-data="{
+                supportEnabled: {{ old('support_enabled', (int)($support['enabled'] ?? 0)) ? 'true' : 'false' }},
+                autoReplyEnabled: {{ old('support_auto_reply_enabled', (int)($support['auto_reply_enabled'] ?? 0)) ? 'true' : 'false' }}
+             }">
+            <h2 class="text-xl font-semibold text-white">Support System</h2>
+            <p class="text-sm text-zinc-400 mt-1">Configure the help desk and auto-replies.</p>
+
+            <form method="POST" action="{{ route('admin.settings.support.update') }}" class="mt-8 space-y-0 divide-y divide-zinc-800/50">
+                @csrf
+
+                {{-- 1. Enable Support Module --}}
+                <div class="flex items-center justify-between py-4">
+                    <div>
+                        <div class="font-medium text-zinc-200">Enable Support Desk</div>
+                        <div class="text-sm text-zinc-500">Allow users to view and create support tickets.</div>
+                    </div>
+                    <input type="hidden" name="support_enabled" :value="supportEnabled ? 1 : 0">
+                    <button type="button" 
+                            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-zinc-900" 
+                            :class="{ 'bg-indigo-600': supportEnabled, 'bg-zinc-700': !supportEnabled }"
+                            @click="supportEnabled = !supportEnabled">
+                        <span class="sr-only">Use setting</span>
+                        <span aria-hidden="true" 
+                              class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                              :class="{ 'translate-x-5': supportEnabled, 'translate-x-0': !supportEnabled }"></span>
+                    </button>
+                </div>
+
+                {{-- 2. Auto-Reply --}}
+                <div class="py-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="font-medium text-zinc-200">Auto-Reply to New Tickets</div>
+                            <div class="text-sm text-zinc-500">Automatically post a system message when a user creates a ticket.</div>
+                        </div>
+                        <input type="hidden" name="support_auto_reply_enabled" :value="autoReplyEnabled ? 1 : 0">
+                        <button type="button" 
+                                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-zinc-900" 
+                                :class="{ 'bg-indigo-600': autoReplyEnabled, 'bg-zinc-700': !autoReplyEnabled }"
+                                @click="autoReplyEnabled = !autoReplyEnabled">
+                            <span class="sr-only">Use setting</span>
+                            <span aria-hidden="true" 
+                                  class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                                  :class="{ 'translate-x-5': autoReplyEnabled, 'translate-x-0': !autoReplyEnabled }"></span>
+                        </button>
+                    </div>
+                    
+                    {{-- Conditional Auto-Reply Text --}}
+                    <div x-show="autoReplyEnabled" x-transition.opacity.duration.300ms class="mt-6 pl-4 border-l-2 border-indigo-600/50 space-y-5">
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-300 mb-1">Auto-Reply Message</label>
+                            <textarea name="support_auto_reply_text" rows="3" class="block w-full rounded-md border-0 bg-zinc-950 py-1.5 text-zinc-300 shadow-sm ring-1 ring-inset ring-zinc-800 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">{{ old('support_auto_reply_text', $support['auto_reply_text'] ?? '') }}</textarea>
+                            @error('support_auto_reply_text') <p class="text-red-400 text-sm mt-1">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-end pt-4">
+                    <button type="submit" class="inline-flex items-center justify-center rounded-md bg-indigo-600 px-6 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 transition-colors">Save Support Settings</button>
+                </div>
+            </form>
+        </div>
+
         {{-- API Keys --}}
         <div class="bg-zinc-900 border border-zinc-800 shadow-xl rounded-xl p-6 sm:p-8">
             <h2 class="text-xl font-semibold text-white">API Keys</h2>

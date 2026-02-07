@@ -26,6 +26,8 @@
 
             {{-- Desktop Actions --}}
             <div class="hidden sm:flex sm:items-center sm:gap-4">
+                {{-- User Support Link --}}
+                <a href="{{ route('support.index') }}" class="text-sm font-medium {{ request()->routeIs('support.*') ? 'text-indigo-400' : 'text-zinc-400 hover:text-white' }} transition-colors">Support</a>
                 
                 {{-- Admin Navigation --}}
                 @if($user && $user->isAdmin())
@@ -33,6 +35,7 @@
                         <a href="{{ route('admin.dashboard') }}" class="text-sm font-medium {{ request()->routeIs('admin.dashboard') ? 'text-indigo-400' : 'text-zinc-400 hover:text-white' }} transition-colors">Admin</a>
                         <a href="{{ route('admin.coupons.index') }}" class="text-sm font-medium {{ request()->routeIs('admin.coupons.*') ? 'text-indigo-400' : 'text-zinc-400 hover:text-white' }} transition-colors">Coupons</a>
                         <a href="{{ route('admin.subscriptions.index') }}" class="text-sm font-medium {{ request()->routeIs('admin.subscriptions.*') ? 'text-indigo-400' : 'text-zinc-400 hover:text-white' }} transition-colors">Subscriptions</a>
+                        <a href="{{ route('admin.support.index') }}" class="text-sm font-medium {{ request()->routeIs('admin.support.*') ? 'text-indigo-400' : 'text-zinc-400 hover:text-white' }} transition-colors">Tickets</a>
                     </div>
                 @endif
 

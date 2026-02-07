@@ -84,6 +84,16 @@ Route::middleware(['auth', 'verified', 'not-banned'])->group(function () {
     // Notifications
     Route::post('/notifications/{id}/read', [App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.read');
     Route::post('/notifications/read-all', [App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
+
+    // Support Tickets (User)
+    Route::prefix('support')->as('support.')->controller(App\Http\Controllers\SupportTicketController::class)->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/create', 'create')->name('create');
+        Route::post('/', 'store')->name('store');
+        Route::get('/{ticket}', 'show')->name('show');
+        Route::post('/{ticket}/reply', 'reply')->name('reply');
+        Route::post('/{ticket}/close', 'close')->name('close');
+    });
 });
 
 /*
@@ -170,6 +180,9 @@ Route::middleware(['auth', 'verified', 'admin', 'not-banned', 'impersonation'])
                 Route::post('/app/logo',   'uploadLogo')->name('app.logo');               // POST /admin/settings/app/logo
                 Route::post('/smtp',       'updateSmtp')->name('smtp.update');            // POST /admin/settings/smtp
                 Route::post('/features',   'updateFeatures')->name('features.update');    // POST /admin/settings/features
+                
+                // Support Settings
+                Route::post('/support',    'updateSupport')->name('support.update');      // POST /admin/settings/support
 
                 // API Keys (Sanctum) — create, reveal, revoke (current admin only)
                 Route::post('/api-tokens', 'createApiToken')->name('api.create');           // POST   /admin/settings/api-tokens
@@ -188,6 +201,18 @@ Route::middleware(['auth', 'verified', 'admin', 'not-banned', 'impersonation'])
 
         // Global Subscriptions Resource
         Route::resource('subscriptions', \App\Http\Controllers\Admin\SubscriptionController::class);
+
+        /*
+        |------------------------------------------------------------------
+        | Support Tickets (Admin)
+        |------------------------------------------------------------------
+        */
+        Route::prefix('support')->as('support.')->controller(\App\Http\Controllers\Admin\SupportTicketController::class)->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('/{supportTicket}', 'show')->name('show');
+            Route::post('/{supportTicket}/reply', 'reply')->name('reply');
+            Route::patch('/{supportTicket}/status', 'updateStatus')->name('status.update');
+        });
 
         /*
         |------------------------------------------------------------------

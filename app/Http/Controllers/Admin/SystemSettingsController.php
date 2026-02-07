@@ -98,7 +98,15 @@ class SystemSettingsController extends Controller
                 'stripe_payment_enabled'              => Setting::bool('features.stripe_payment_enabled', false),
                 'stripe_key'                          => Setting::get('stripe.key'),
                 'stripe_secret'                       => Setting::get('stripe.secret'),
+                'stripe_secret'                       => Setting::get('stripe.secret'),
                 'stripe_webhook_secret'               => Setting::get('stripe.webhook.secret'),
+            ],
+
+            // Support Settings
+            'support' => [
+                'enabled'            => Setting::bool('features.support_enabled', false),
+                'auto_reply_enabled' => Setting::bool('features.support_auto_reply_enabled', false),
+                'auto_reply_text'    => Setting::get('features.support_auto_reply_text', "Thank you for contacting us. We have received your ticket and will get back to you shortly."),
             ],
 
             // API keys (Sanctum)
@@ -532,5 +540,25 @@ class SystemSettingsController extends Controller
         } catch (\Throwable $e) {
             // Never block UX on logging failure
         }
+    }
+    /**
+     * POST /admin/settings/support
+     * Persists support ticket system settings.
+     */
+    public function updateSupport(Request $request)
+    {
+        $v = $request->validate([
+            'support_enabled'             => 'nullable',
+            'support_auto_reply_enabled'  => 'nullable',
+            'support_auto_reply_text'     => 'nullable|string',
+        ]);
+
+        Setting::put('features.support_enabled', (bool) ($request->support_enabled ?? false));
+        Setting::put('features.support_auto_reply_enabled', (bool) ($request->support_auto_reply_enabled ?? false));
+        Setting::put('features.support_auto_reply_text', $request->support_auto_reply_text);
+
+        $this->logAudit('settings.update', 'Updated support settings', $v);
+
+        return redirect()->route('admin.settings.index')->with('status', 'settings-support-updated');
     }
 }
