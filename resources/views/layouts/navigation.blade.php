@@ -36,6 +36,95 @@
                     </div>
                 @endif
 
+                {{-- Notifications Dropdown --}}
+                <div class="relative ml-4 mr-4" x-data="{ open: false }">
+                    <button @click="open = !open" 
+                            @click.outside="open = false"
+                            class="relative p-2 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-black">
+                        <span class="sr-only">View notifications</span>
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                        </svg>
+                        
+                        @if($user->unreadNotifications->count() > 0)
+                            <span class="absolute top-1.5 right-1.5 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-black"></span>
+                        @endif
+                    </button>
+
+                    <div x-show="open"
+                         x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0 scale-95"
+                         x-transition:enter-end="opacity-100 scale-100"
+                         x-transition:leave="transition ease-in duration-75"
+                         x-transition:leave-start="opacity-100 scale-100"
+                         x-transition:leave-end="opacity-0 scale-95"
+                         class="absolute right-0 z-50 mt-2 w-80 origin-top-right rounded-xl bg-zinc-900 border border-zinc-800 shadow-2xl ring-1 ring-black ring-opacity-5 focus:outline-none overflow-hidden"
+                         style="display: none;">
+                        
+                        <div class="px-4 py-3 border-b border-zinc-800 flex justify-between items-center bg-zinc-900/50 backdrop-blur-xl">
+                            <span class="text-sm font-semibold text-white">Notifications</span>
+                            @if($user->unreadNotifications->count() > 0)
+                                <form method="POST" action="{{ route('notifications.read-all') }}">
+                                    @csrf
+                                    <button type="submit" class="text-xs font-medium text-indigo-400 hover:text-indigo-300 transition-colors">
+                                        Mark all read
+                                    </button>
+                                </form>
+                            @endif
+                        </div>
+
+                        <div class="max-h-96 overflow-y-auto">
+                            @forelse($user->notifications->take(5) as $notification)
+                                <div class="relative group border-b border-zinc-800/50 last:border-0 hover:bg-zinc-800/50 transition-colors p-4">
+                                    <div class="flex items-start gap-3">
+                                        <div class="shrink-0">
+                                            @if($notification->read_at)
+                                                <div class="mt-1 h-2 w-2 rounded-full bg-zinc-600"></div>
+                                            @else
+                                                <div class="mt-1 h-2 w-2 rounded-full bg-indigo-500 ring-2 ring-indigo-500/20"></div>
+                                            @endif
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <p class="text-sm font-medium text-zinc-200 {{ $notification->read_at ? 'text-zinc-500' : '' }}">
+                                                {{ $notification->data['title'] ?? 'Notification' }}
+                                            </p>
+                                            <p class="text-xs text-zinc-500 mt-0.5 line-clamp-2">
+                                                {{ $notification->data['message'] ?? 'No detail provided.' }}
+                                            </p>
+                                            <p class="text-[10px] text-zinc-600 mt-1.5">
+                                                {{ $notification->created_at->diffForHumans() }}
+                                            </p>
+                                        </div>
+                                        
+                                        @if(is_null($notification->read_at))
+                                            <form method="POST" action="{{ route('notifications.read', $notification->id) }}" class="opacity-0 group-hover:opacity-100 transition-opacity">
+                                                @csrf
+                                                <button type="submit" class="p-1 rounded-md text-zinc-500 hover:text-white hover:bg-zinc-700 transition-colors" title="Mark as read">
+                                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                                                </button>
+                                            </form>
+                                        @endif
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="px-4 py-12 text-center">
+                                    <div class="mx-auto h-12 w-12 rounded-full bg-zinc-800/50 flex items-center justify-center mb-3">
+                                        <svg class="h-6 w-6 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" /></svg>
+                                    </div>
+                                    <h3 class="text-sm font-medium text-white">All caught up!</h3>
+                                    <p class="text-xs text-zinc-500 mt-1">No recent notifications</p>
+                                </div>
+                            @endforelse
+                        </div>
+                        
+                        @if($user->notifications->count() > 5)
+                            <div class="px-4 py-2 bg-zinc-900/50 border-t border-zinc-800 text-center backdrop-blur-xl">
+                                <a href="#" class="text-xs font-medium text-zinc-400 hover:text-white transition-colors">View all notifications</a>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
                 {{-- Profile Dropdown --}}
                 <div class="relative ml-3" x-data="{ open: false }">
                     <button @click="open = !open" 

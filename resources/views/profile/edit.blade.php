@@ -43,6 +43,11 @@
             <div class="space-y-6">
                 @include('profile.partials.update-profile-information-form')
                 @include('profile.partials.update-password-form')
+                <div class="p-4 sm:p-8 bg-zinc-900 shadow sm:rounded-lg border border-zinc-800/50">
+                    <div class="max-w-xl">
+                        @include('profile.partials.api-token-manager')
+                    </div>
+                </div>
                 @include('profile.partials.delete-user-form')
             </div>
         </div>

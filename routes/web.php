@@ -59,6 +59,10 @@ Route::middleware(['auth', 'verified', 'not-banned'])->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    // API Tokens
+    Route::post('/api-tokens', [App\Http\Controllers\ApiTokenController::class, 'store'])->name('api-tokens.store');
+    Route::delete('/api-tokens/{token}', [App\Http\Controllers\ApiTokenController::class, 'destroy'])->name('api-tokens.destroy');
+
     // Theme (toggle light/dark etc.)
     Route::post('/theme', [ThemeController::class, 'update'])->name('theme.update');
 
@@ -76,6 +80,10 @@ Route::middleware(['auth', 'verified', 'not-banned'])->group(function () {
     // Admin requests user consent code for impersonation (per-user)
     Route::post('/impersonation-code',   [ImpersonationCodeController::class, 'store'])->name('impersonation.code.store');
     Route::delete('/impersonation-code', [ImpersonationCodeController::class, 'destroy'])->name('impersonation.code.destroy');
+
+    // Notifications
+    Route::post('/notifications/{id}/read', [App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('/notifications/read-all', [App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
 });
 
 /*

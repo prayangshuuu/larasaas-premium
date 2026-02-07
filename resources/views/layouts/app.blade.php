@@ -55,5 +55,10 @@
              <x-ui.background-grid class="opacity-40" />
         </div>
     </div>
+
+    {{-- Global Command Palette --}}
+    @auth
+        <x-command-palette />
+    @endauth
 </body>
 </html>
