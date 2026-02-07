@@ -145,7 +145,7 @@
                                             @endif
 
                                             {{-- Impersonate --}}
-                                            @if(config('features.impersonation', false))
+                                            @if(\App\Helpers\Feature::enabled('impersonation'))
                                                 <span class="text-zinc-700">|</span>
                                                 <form method="POST" action="{{ route('admin.impersonate.start', $u) }}" class="inline">
                                                     @csrf

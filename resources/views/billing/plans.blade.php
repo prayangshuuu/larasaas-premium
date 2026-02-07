@@ -54,7 +54,11 @@
                 </ul>
 
                 <div class="relative z-10">
-                    @if(isset($currentPlanId) && $currentPlanId == $plan->id)
+                    @if(!\App\Helpers\Feature::enabled('stripe_payment_enabled'))
+                        <button disabled class="w-full inline-flex justify-center items-center rounded-lg bg-red-900/20 px-4 py-3 text-sm font-semibold text-red-400 cursor-not-allowed border border-red-500/20">
+                           Payments Disabled
+                        </button>
+                    @elseif(isset($currentPlanId) && $currentPlanId == $plan->id)
                         <button disabled class="w-full inline-flex justify-center items-center rounded-lg bg-zinc-800 px-4 py-3 text-sm font-semibold text-zinc-400 cursor-not-allowed border border-zinc-700">
                            Current Plan
                         </button>

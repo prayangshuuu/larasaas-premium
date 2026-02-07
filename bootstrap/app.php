@@ -18,7 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'not-banned'    => \App\Http\Middleware\EnsureUserIsNotBanned::class,
             'admin.mfa'     => \App\Http\Middleware\EnsureAdminHasMfa::class,   // used only on impersonation routes
             'impersonation' => \App\Http\Middleware\ImpersonationGuard::class, // protects actions while impersonating
-            'feature'       => \App\Http\Middleware\FeatureEnabled::class,     // feature gate: feature:<setting.key>
+            'feature'       => \App\Http\Middleware\EnsureFeatureEnabled::class,     // feature gate: feature:<setting.key>
             'subscription.enabled' => \App\Http\Middleware\CheckSubscriptionModule::class,
             'plan.limit'           => \App\Http\Middleware\EnforcePlanLimits::class,
         ]);

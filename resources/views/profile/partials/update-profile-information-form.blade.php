@@ -12,7 +12,7 @@
         if (!empty($user->profile_picture)) $progress += 34;
 
         $settings        = \App\Models\Setting::instance();
-        $canEditUsername = (bool) $settings->feature_usernames_editable;
+        $canEditUsername = \App\Helpers\Feature::enabled('allow_username_change');
         $showTwoFactorSetup = session('status') === 'two-factor-authentication-enabled';
     @endphp
 

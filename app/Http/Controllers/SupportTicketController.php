@@ -9,16 +9,21 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
-class SupportTicketController extends Controller
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
+
+class SupportTicketController extends Controller implements HasMiddleware
 {
-    public function __construct()
+    public static function middleware(): array
     {
-        $this->middleware(function ($request, $next) {
-            if (!Setting::bool('features.support_enabled', false)) {
-                abort(404);
-            }
-            return $next($request);
-        });
+        return [
+            function ($request, $next) {
+                if (!\App\Helpers\Feature::enabled('support_enabled')) {
+                    abort(404);
+                }
+                return $next($request);
+            },
+        ];
     }
 
     public function index()
@@ -76,7 +81,7 @@ class SupportTicketController extends Controller
         ]);
 
         // Auto-reply logic
-        if (Setting::bool('features.support_auto_reply_enabled', false)) {
+        if (\App\Helpers\Feature::enabled('support_auto_reply_enabled')) {
             $autoReplyText = Setting::get('features.support_auto_reply_text', "Thank you for contacting us. We have received your ticket and will get back to you shortly.");
             
             SupportTicketMessage::create([

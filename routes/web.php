@@ -86,7 +86,7 @@ Route::middleware(['auth', 'verified', 'not-banned'])->group(function () {
     Route::post('/notifications/read-all', [App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
 
     // Support Tickets (User)
-    Route::prefix('support')->as('support.')->controller(App\Http\Controllers\SupportTicketController::class)->group(function () {
+    Route::prefix('support')->as('support.')->middleware('feature:support_enabled')->controller(App\Http\Controllers\SupportTicketController::class)->group(function () {
         Route::get('/', 'index')->name('index');
         Route::get('/create', 'create')->name('create');
         Route::post('/', 'store')->name('store');
@@ -101,7 +101,7 @@ Route::middleware(['auth', 'verified', 'not-banned'])->group(function () {
 | Billing Routes (Protected by Subscription Module Toggle)
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth', 'verified', 'not-banned', 'subscription.enabled'])
+Route::middleware(['auth', 'verified', 'not-banned', 'feature:subscription_module_enabled'])
     ->prefix('billing')
     ->as('billing.')
     ->group(function () {
@@ -207,7 +207,7 @@ Route::middleware(['auth', 'verified', 'admin', 'not-banned', 'impersonation'])
         | Support Tickets (Admin)
         |------------------------------------------------------------------
         */
-        Route::prefix('support')->as('support.')->controller(\App\Http\Controllers\Admin\SupportTicketController::class)->group(function () {
+        Route::prefix('support')->as('support.')->middleware('feature:support_enabled')->controller(\App\Http\Controllers\Admin\SupportTicketController::class)->group(function () {
             Route::get('/', 'index')->name('index');
             Route::get('/{supportTicket}', 'show')->name('show');
             Route::post('/{supportTicket}/reply', 'reply')->name('reply');
@@ -266,7 +266,7 @@ Route::middleware(['auth', 'verified', 'admin', 'not-banned', 'impersonation'])
             ->controller(ImpersonationController::class)
             ->group(function () {
                 Route::post('/start/{user}', 'start')
-                    ->middleware(['admin.mfa', 'feature:features.impersonation'])
+                    ->middleware(['admin.mfa', 'feature:impersonation'])
                     ->name('start');
             });
 
