@@ -17,6 +17,11 @@ class UpdateFeatureFlagsRequest extends FormRequest
             'impersonation'                         => ['nullable', 'boolean'],
             'allow_username_change'                 => ['nullable', 'boolean'],
             'require_admin_mfa_for_impersonation'   => ['nullable', 'boolean'],
+            'subscription_module_enabled'           => ['nullable', 'boolean'],
+            'stripe_payment_enabled'                => ['nullable', 'boolean'],
+            'stripe_key'                            => ['nullable', 'string', 'max:255'],
+            'stripe_secret'                         => ['nullable', 'string', 'max:255'],
+            'stripe_webhook_secret'                 => ['nullable', 'string', 'max:255'],
         ];
     }
 }

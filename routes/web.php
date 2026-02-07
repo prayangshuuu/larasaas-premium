@@ -12,7 +12,8 @@ use App\Http\Controllers\Admin\AuditController;
 use App\Http\Controllers\Admin\ImpersonationController;
 use App\Http\Controllers\Admin\SystemSettingsController;
 use App\Http\Controllers\Admin\PlanController;
-use App\Http\Controllers\Admin\SystemSettingController as SubscriptionSettingsController;
+
+
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\InvoiceController;
 
@@ -169,8 +170,6 @@ Route::middleware(['auth', 'verified', 'admin', 'not-banned', 'impersonation'])
                 ->name('api.reveal');
                 Route::delete('/api-tokens/{token}', 'revokeApiToken')->name('api.revoke'); // DELETE /admin/settings/api-tokens/{token}
             
-                // Subscription Settings
-                Route::post('/subscription', [SubscriptionSettingsController::class, 'update'])->name('subscription.update');
             });
 
         // Plans Resource

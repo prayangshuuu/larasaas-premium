@@ -94,6 +94,11 @@ class SystemSettingsController extends Controller
                 'impersonation'                       => Setting::bool('features.impersonation', false),
                 'allow_username_change'               => Setting::bool('features.allow_username_change', true),
                 'require_admin_mfa_for_impersonation' => Setting::bool('security.require_admin_mfa_for_impersonation', true),
+                'subscription_module_enabled'         => Setting::bool('features.subscription_module_enabled', false),
+                'stripe_payment_enabled'              => Setting::bool('features.stripe_payment_enabled', false),
+                'stripe_key'                          => Setting::get('stripe.key'),
+                'stripe_secret'                       => Setting::get('stripe.secret'),
+                'stripe_webhook_secret'               => Setting::get('stripe.webhook.secret'),
             ],
 
             // API keys (Sanctum)
@@ -197,8 +202,15 @@ class SystemSettingsController extends Controller
         Setting::put('features.impersonation',                       (bool) ($v['impersonation'] ?? false));
         Setting::put('features.allow_username_change',               (bool) ($v['allow_username_change'] ?? false));
         Setting::put('security.require_admin_mfa_for_impersonation', (bool) ($v['require_admin_mfa_for_impersonation'] ?? true));
+        Setting::put('features.subscription_module_enabled',         (bool) ($v['subscription_module_enabled'] ?? false));
+        Setting::put('features.stripe_payment_enabled',              (bool) ($v['stripe_payment_enabled'] ?? false));
 
-        $this->logAudit('settings.update', 'Updated feature flags', $v);
+        // Save Stripe keys if present (nullable)
+        if (array_key_exists('stripe_key', $v)) Setting::put('stripe.key', $v['stripe_key']);
+        if (array_key_exists('stripe_secret', $v)) Setting::put('stripe.secret', $v['stripe_secret']);
+        if (array_key_exists('stripe_webhook_secret', $v)) Setting::put('stripe.webhook.secret', $v['stripe_webhook_secret']);
+
+        $this->logAudit('settings.update', 'Updated feature flags and modules', $v);
 
         return redirect()->route('admin.settings.index')->with('status', 'settings-features-updated');
     }

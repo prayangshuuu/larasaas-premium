@@ -223,95 +223,136 @@
             </form>
         </div>
 
-        {{-- Subscription Settings --}}
-        <div class="bg-zinc-900 border border-zinc-800 shadow-xl rounded-xl p-6 sm:p-8">
-            <h2 class="text-xl font-semibold text-white">Subscription Settings</h2>
-            <p class="text-sm text-zinc-400 mt-1">Configure global billing and payment module behavior.</p>
+        {{-- Platform Features & Modules --}}
+        <div class="bg-zinc-900 border border-zinc-800 shadow-xl rounded-xl p-6 sm:p-8"
+             x-data="{
+                stripeEnabled: {{ old('stripe_payment_enabled', (int)$features['stripe_payment_enabled']) ? 'true' : 'false' }},
+                subscriptionEnabled: {{ old('subscription_module_enabled', (int)$features['subscription_module_enabled']) ? 'true' : 'false' }},
+                impersonationEnabled: {{ old('impersonation', (int)$features['impersonation']) ? 'true' : 'false' }},
+                usernameChangeEnabled: {{ old('allow_username_change', (int)$features['allow_username_change']) ? 'true' : 'false' }},
+                adminMfaEnabled: {{ old('require_admin_mfa_for_impersonation', (int)$features['require_admin_mfa_for_impersonation']) ? 'true' : 'false' }}
+             }">
+            <h2 class="text-xl font-semibold text-white">Platform Features & Modules</h2>
+            <p class="text-sm text-zinc-400 mt-1">Configure global system modules and feature flags.</p>
 
-            <form method="POST" action="{{ route('admin.settings.subscription.update') }}" class="mt-8 space-y-6">
+            <form method="POST" action="{{ route('admin.settings.features.update') }}" class="mt-8 space-y-0 divide-y divide-zinc-800/50">
                 @csrf
-                
-                <div class="flex items-center justify-between py-4 border-b border-zinc-800/50">
-                    <div>
-                        <div class="font-medium text-zinc-200">enable Subscription Module</div>
-                        <div class="text-sm text-zinc-500">Enable or disable the entire subscription system.</div>
-                    </div>
-                    <label class="flex items-center cursor-pointer">
-                        <input type="hidden" name="subscription_module_enabled" value="0">
-                        <input type="checkbox" name="subscription_module_enabled" value="1"
-                               class="rounded border-zinc-700 bg-zinc-800 text-indigo-600 focus:ring-indigo-600/50 h-5 w-5"
-                               {{ old('subscription_module_enabled', (int)($features['subscription_module_enabled'] ?? 0)) ? 'checked' : '' }}>
-                    </label>
-                </div>
 
+                {{-- 1. Subscription Module --}}
                 <div class="flex items-center justify-between py-4">
                     <div>
-                        <div class="font-medium text-zinc-200">Enable Stripe Payments</div>
-                        <div class="text-sm text-zinc-500">Enable real payment processing via Stripe.</div>
+                        <div class="font-medium text-zinc-200">Enable Subscription Module</div>
+                        <div class="text-sm text-zinc-500">Enable or disable the entire subscription & billing system.</div>
                     </div>
-                    <label class="flex items-center cursor-pointer">
-                        <input type="hidden" name="stripe_payment_enabled" value="0">
-                        <input type="checkbox" name="stripe_payment_enabled" value="1"
-                               class="rounded border-zinc-700 bg-zinc-800 text-indigo-600 focus:ring-indigo-600/50 h-5 w-5"
-                               {{ old('stripe_payment_enabled', (int)($features['stripe_payment_enabled'] ?? 0)) ? 'checked' : '' }}>
-                    </label>
+                    <input type="hidden" name="subscription_module_enabled" :value="subscriptionEnabled ? 1 : 0">
+                    <button type="button" 
+                            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-zinc-900" 
+                            :class="{ 'bg-indigo-600': subscriptionEnabled, 'bg-zinc-700': !subscriptionEnabled }"
+                            @click="subscriptionEnabled = !subscriptionEnabled">
+                        <span class="sr-only">Use setting</span>
+                        <span aria-hidden="true" 
+                              class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                              :class="{ 'translate-x-5': subscriptionEnabled, 'translate-x-0': !subscriptionEnabled }"></span>
+                    </button>
                 </div>
 
-                <div class="flex justify-end pt-4">
-                    <button type="submit" class="inline-flex items-center justify-center rounded-md bg-indigo-600 px-6 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 transition-colors">Save Subscription Settings</button>
+                {{-- 2. Stripe Payments --}}
+                <div class="py-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="font-medium text-zinc-200">Enable Stripe Payments</div>
+                            <div class="text-sm text-zinc-500">Enable real payment processing via Stripe.</div>
+                        </div>
+                        <input type="hidden" name="stripe_payment_enabled" :value="stripeEnabled ? 1 : 0">
+                        <button type="button" 
+                                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-zinc-900" 
+                                :class="{ 'bg-indigo-600': stripeEnabled, 'bg-zinc-700': !stripeEnabled }"
+                                @click="stripeEnabled = !stripeEnabled">
+                            <span class="sr-only">Use setting</span>
+                            <span aria-hidden="true" 
+                                  class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                                  :class="{ 'translate-x-5': stripeEnabled, 'translate-x-0': !stripeEnabled }"></span>
+                        </button>
+                    </div>
+                    
+                    {{-- Conditional Stripe Config --}}
+                    <div x-show="stripeEnabled" x-transition.opacity.duration.300ms class="mt-6 pl-4 border-l-2 border-indigo-600/50 space-y-5">
+                        <div class="grid grid-cols-1 gap-5">
+                            <div>
+                                <label class="block text-sm font-medium text-zinc-300 mb-1">Stripe Public Key</label>
+                                <x-ui.input type="text" name="stripe_key" value="{{ old('stripe_key', $features['stripe_key'] ?? '') }}" placeholder="pk_test_..." />
+                                @error('stripe_key') <p class="text-red-400 text-sm mt-1">{{ $message }}</p> @enderror
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-zinc-300 mb-1">Stripe Secret Key</label>
+                                <x-ui.input type="password" name="stripe_secret" value="{{ old('stripe_secret', $features['stripe_secret'] ?? '') }}" placeholder="sk_test_..." />
+                                @error('stripe_secret') <p class="text-red-400 text-sm mt-1">{{ $message }}</p> @enderror
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-zinc-300 mb-1">Stripe Webhook Secret</label>
+                                <x-ui.input type="password" name="stripe_webhook_secret" value="{{ old('stripe_webhook_secret', $features['stripe_webhook_secret'] ?? '') }}" placeholder="whsec_..." />
+                                @error('stripe_webhook_secret') <p class="text-red-400 text-sm mt-1">{{ $message }}</p> @enderror
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </form>
-        </div>
 
-        {{-- Feature Flags --}}
-        <div class="bg-zinc-900 border border-zinc-800 shadow-xl rounded-xl p-6 sm:p-8">
-            <h2 class="text-xl font-semibold text-white">Features</h2>
-            <p class="text-sm text-zinc-400 mt-1">Toggle system capabilities.</p>
-
-            <form method="POST" action="{{ route('admin.settings.features.update') }}" class="mt-8 space-y-6">
-                @csrf
-                
-                <div class="flex items-center justify-between py-4 border-b border-zinc-800/50">
+                {{-- 3. Impersonation --}}
+                <div class="flex items-center justify-between py-4">
                     <div>
                         <div class="font-medium text-zinc-200">Impersonation</div>
                         <div class="text-sm text-zinc-500">Allow admins to log in as other users.</div>
                     </div>
-                    <label class="flex items-center cursor-pointer">
-                        <input type="hidden" name="impersonation" value="0">
-                        <input type="checkbox" name="impersonation" value="1"
-                               class="rounded border-zinc-700 bg-zinc-800 text-indigo-600 focus:ring-indigo-600/50 h-5 w-5"
-                               {{ old('impersonation', (int)($features['impersonation'])) ? 'checked' : '' }}>
-                    </label>
+                    <input type="hidden" name="impersonation" :value="impersonationEnabled ? 1 : 0">
+                    <button type="button" 
+                            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-zinc-900" 
+                            :class="{ 'bg-indigo-600': impersonationEnabled, 'bg-zinc-700': !impersonationEnabled }"
+                            @click="impersonationEnabled = !impersonationEnabled">
+                        <span class="sr-only">Use setting</span>
+                        <span aria-hidden="true" 
+                              class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                              :class="{ 'translate-x-5': impersonationEnabled, 'translate-x-0': !impersonationEnabled }"></span>
+                    </button>
                 </div>
 
-                <div class="flex items-center justify-between py-4 border-b border-zinc-800/50">
+                {{-- 4. Editable Usernames --}}
+                <div class="flex items-center justify-between py-4">
                     <div>
                         <div class="font-medium text-zinc-200">Editable Usernames</div>
                         <div class="text-sm text-zinc-500">Allow admins to change user handles.</div>
                     </div>
-                    <label class="flex items-center cursor-pointer">
-                        <input type="hidden" name="allow_username_change" value="0">
-                        <input type="checkbox" name="allow_username_change" value="1"
-                               class="rounded border-zinc-700 bg-zinc-800 text-indigo-600 focus:ring-indigo-600/50 h-5 w-5"
-                               {{ old('allow_username_change', (int)($features['allow_username_change'])) ? 'checked' : '' }}>
-                    </label>
+                    <input type="hidden" name="allow_username_change" :value="usernameChangeEnabled ? 1 : 0">
+                    <button type="button" 
+                            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-zinc-900" 
+                            :class="{ 'bg-indigo-600': usernameChangeEnabled, 'bg-zinc-700': !usernameChangeEnabled }"
+                            @click="usernameChangeEnabled = !usernameChangeEnabled">
+                        <span class="sr-only">Use setting</span>
+                        <span aria-hidden="true" 
+                              class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                              :class="{ 'translate-x-5': usernameChangeEnabled, 'translate-x-0': !usernameChangeEnabled }"></span>
+                    </button>
                 </div>
 
+                {{-- 5. Require Admin MFA --}}
                 <div class="flex items-center justify-between py-4">
                     <div>
                         <div class="font-medium text-zinc-200">Require Admin MFA</div>
                         <div class="text-sm text-zinc-500">Admins must have 2FA enabled to access sensitive tools.</div>
                     </div>
-                    <label class="flex items-center cursor-pointer">
-                        <input type="hidden" name="require_admin_mfa_for_impersonation" value="0">
-                        <input type="checkbox" name="require_admin_mfa_for_impersonation" value="1"
-                               class="rounded border-zinc-700 bg-zinc-800 text-indigo-600 focus:ring-indigo-600/50 h-5 w-5"
-                               {{ old('require_admin_mfa_for_impersonation', (int)($features['require_admin_mfa_for_impersonation'])) ? 'checked' : '' }}>
-                    </label>
+                    <input type="hidden" name="require_admin_mfa_for_impersonation" :value="adminMfaEnabled ? 1 : 0">
+                    <button type="button" 
+                            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-zinc-900" 
+                            :class="{ 'bg-indigo-600': adminMfaEnabled, 'bg-zinc-700': !adminMfaEnabled }"
+                            @click="adminMfaEnabled = !adminMfaEnabled">
+                        <span class="sr-only">Use setting</span>
+                        <span aria-hidden="true" 
+                              class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                              :class="{ 'translate-x-5': adminMfaEnabled, 'translate-x-0': !adminMfaEnabled }"></span>
+                    </button>
                 </div>
 
                 <div class="flex justify-end pt-4">
-                    <button type="submit" class="inline-flex items-center justify-center rounded-md bg-indigo-600 px-6 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 transition-colors">Save Features</button>
+                    <button type="submit" class="inline-flex items-center justify-center rounded-md bg-indigo-600 px-6 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 transition-colors">Save Platform Features</button>
                 </div>
             </form>
         </div>
