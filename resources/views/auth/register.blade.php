@@ -38,10 +38,13 @@
                 </span>
             </button>
         </div>
-
-        <div class="text-center mt-4">
-             <span class="text-xs text-zinc-500">Already registered?</span>
-             <a href="{{ route('login') }}" class="text-xs font-semibold text-zinc-300 hover:text-white ml-1">Log in</a>
-        </div>
     </form>
+
+    {{-- Social Login Section --}}
+    @include('auth.partials.social-login-buttons')
+
+    <div class="text-center mt-6">
+         <span class="text-xs text-zinc-500">Already registered?</span>
+         <a href="{{ route('login') }}" class="text-xs font-semibold text-zinc-300 hover:text-white ml-1">Log in</a>
+    </div>
 </x-guest-layout>
