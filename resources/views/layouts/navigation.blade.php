@@ -154,31 +154,60 @@
                          x-transition:leave="transition ease-in duration-75"
                          x-transition:leave-start="opacity-100 scale-100"
                          x-transition:leave-end="opacity-0 scale-95"
-                         class="absolute right-0 z-50 mt-2 w-56 origin-top-right rounded-xl bg-zinc-900 border border-zinc-800 py-1 shadow-2xl ring-1 ring-black ring-opacity-5 focus:outline-none"
+                         class="absolute right-0 z-50 mt-2 w-64 origin-top-right rounded-xl bg-zinc-900 border border-zinc-800 py-1 shadow-2xl ring-1 ring-black ring-opacity-5 focus:outline-none"
                          style="display: none;">
                         
+                        {{-- Header: Signed in as --}}
                         <div class="px-4 py-3 border-b border-zinc-800">
                             <p class="text-xs font-medium text-zinc-500 uppercase tracking-wider">Signed in as</p>
                             <p class="truncate text-sm font-semibold text-white">{{ $user->email }}</p>
                         </div>
 
-                        <a href="{{ route('profile.edit') }}" class="block px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors">
-                            Profile Settings
-                        </a>
+                        {{-- Admin Shortcuts --}}
+                        @if($user && $user->isAdmin())
+                            <div class="py-1 border-b border-zinc-800">
+                                <span class="block px-4 py-1 text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">Admin Shortcuts</span>
+                                
+                                <a href="{{ route('admin.dashboard') }}" class="block px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors">
+                                    Dashboard
+                                </a>
 
-                        @if(\App\Helpers\Feature::enabled('subscription_module_enabled') && Route::has('billing.index'))
-                        <a href="{{ route('billing.index') }}" class="block px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors">
-                            Billing & Plans
-                        </a>
+                                @if(\App\Helpers\Feature::enabled('support_enabled'))
+                                    <a href="{{ route('admin.support.index') }}" class="block px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors">
+                                        Support Tickets
+                                    </a>
+                                @endif
+
+                                @if(\App\Helpers\Feature::enabled('announcement_enabled'))
+                                    <a href="{{ route('admin.announcements.index') }}" class="block px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors">
+                                        Announcements
+                                    </a>
+                                @endif
+
+                                @if(\App\Helpers\Feature::enabled('subscription_module_enabled'))
+                                    <a href="{{ route('admin.plans.index') }}" class="block px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors">
+                                        Plans & Billing
+                                    </a>
+                                @endif
+                            </div>
                         @endif
-                        
 
-                        <form method="POST" action="{{ route('logout') }}">
-                            @csrf
-                            <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors">
-                                Log Out
-                            </button>
-                        </form>
+                        {{-- User Options --}}
+                        <div class="py-1">
+                            <a href="{{ route('profile.edit') }}" class="block px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors">
+                                Profile Settings
+                            </a>
+                            <a href="{{ route('webhooks.index') }}" class="block px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors">
+                                Webhooks
+                            </a>
+                            
+                            <form method="POST" action="{{ route('logout') }}">
+                                @csrf
+                                <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors">
+                                    Log Out
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -217,6 +246,10 @@
             <a href="{{ route('profile.edit') }}" 
                class="block rounded-md py-2 px-3 text-base font-medium {{ request()->routeIs('profile.edit') ? 'bg-indigo-500/10 text-indigo-400' : 'text-zinc-400 hover:bg-zinc-800 hover:text-white' }}">
                 Profile
+            </a>
+            <a href="{{ route('webhooks.index') }}" 
+               class="block rounded-md py-2 px-3 text-base font-medium {{ request()->routeIs('webhooks.*') ? 'bg-indigo-500/10 text-indigo-400' : 'text-zinc-400 hover:bg-zinc-800 hover:text-white' }}">
+                Webhooks
             </a>
             
             @if($user && $user->isAdmin())

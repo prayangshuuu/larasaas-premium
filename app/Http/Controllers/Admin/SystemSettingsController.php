@@ -101,6 +101,7 @@ class SystemSettingsController extends Controller
                 'stripe_key'                          => SystemSetting::where('key', 'stripe_key')->first()?->value,
                 'stripe_secret'                       => SystemSetting::where('key', 'stripe_secret')->first()?->value,
                 'stripe_webhook_secret'               => SystemSetting::where('key', 'stripe_webhook_secret')->first()?->value,
+                'announcement_enabled'                => Feature::enabled('announcement_enabled'),
             ],
 
             // Support Settings - read from system_settings via Feature helper
@@ -231,6 +232,7 @@ class SystemSettingsController extends Controller
             'require_admin_mfa_for_impersonation' => $request->boolean('require_admin_mfa_for_impersonation', true),
             'support_enabled'                     => $request->boolean('support_enabled'),
             'support_auto_reply_enabled'          => $request->boolean('support_auto_reply_enabled'),
+            'announcement_enabled'                => $request->boolean('announcement_enabled'),
         ];
 
         // Persist each feature flag to system_settings table

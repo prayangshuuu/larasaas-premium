@@ -27,6 +27,9 @@ use App\Http\Controllers\Auth\SocialiteController;
 |--------------------------------------------------------------------------
 */
 Route::get('/', fn () => view('welcome'));
+Route::get('/changelog', [App\Http\Controllers\ChangelogController::class, 'index'])
+    ->middleware('feature:announcement_enabled')
+    ->name('changelog');
 
 /*
 |--------------------------------------------------------------------------
@@ -96,6 +99,13 @@ Route::middleware(['auth', 'verified', 'not-banned'])->group(function () {
         Route::post('/{ticket}/reply', 'reply')->name('reply');
         Route::post('/{ticket}/close', 'close')->name('close');
     });
+
+    // Mark Announcement as Read
+    Route::post('/announcements/{announcement}/read', [App\Http\Controllers\ChangelogController::class, 'markAsRead'])
+        ->middleware('feature:announcement_enabled')
+        ->name('announcements.read');
+    // Outgoing Webhooks
+    Route::resource('webhooks', \App\Http\Controllers\WebhookController::class);
 });
 
 /*
@@ -207,6 +217,10 @@ Route::middleware(['auth', 'verified', 'admin', 'not-banned', 'impersonation'])
         // Global Subscriptions Resource
         Route::resource('subscriptions', \App\Http\Controllers\Admin\SubscriptionController::class);
 
+        // Announcements Resource
+        Route::resource('announcements', \App\Http\Controllers\Admin\AnnouncementController::class)
+            ->middleware('feature:announcement_enabled');
+
         /*
         |------------------------------------------------------------------
         | Support Tickets (Admin)
@@ -214,6 +228,8 @@ Route::middleware(['auth', 'verified', 'admin', 'not-banned', 'impersonation'])
         */
         Route::prefix('support')->as('support.')->middleware('feature:support_enabled')->controller(\App\Http\Controllers\Admin\SupportTicketController::class)->group(function () {
             Route::get('/', 'index')->name('index');
+            Route::get('/create', 'create')->name('create');
+            Route::post('/', 'store')->name('store');
             Route::get('/{supportTicket}', 'show')->name('show');
             Route::post('/{supportTicket}/reply', 'reply')->name('reply');
             Route::patch('/{supportTicket}/status', 'updateStatus')->name('status.update');
