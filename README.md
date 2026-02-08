@@ -26,6 +26,59 @@ This application is built from the ground up with developer experience and end-u
 
 ---
 
+## 🔑 Demo Credentials
+
+After running `php artisan migrate --seed`, the following demo accounts are available:
+
+| Role | Email | Password | Username |
+|------|-------|----------|----------|
+| **Admin** | `admin@demo.com` | `password` | `admin` |
+| **User** | `user@demo.com` | `password` | `user` |
+
+> **Note:** These credentials are for development/testing only. Create secure admin accounts for production use.
+
+---
+
+## ⚡ Quick Start
+
+```bash
+# Clone & setup
+git clone https://github.com/prayangshuuu/IELTSBandBooster.git
+cd IELTSBandBooster
+composer install && npm install
+cp .env.example .env
+php artisan key:generate
+
+# Database
+php artisan migrate --seed
+
+# Run (in separate terminals)
+php artisan serve          # → http://127.0.0.1:8000
+npm run dev                # → Vite HMR
+
+# Or run everything at once with Composer
+composer dev
+```
+
+---
+
+## 🛠️ Useful Commands
+
+| Command | Description |
+|---------|-------------|
+| `php artisan serve` | Start the Laravel development server |
+| `npm run dev` | Start Vite development server with HMR |
+| `npm run build` | Build production assets |
+| `composer dev` | Run server, queue, logs & Vite concurrently |
+| `php artisan migrate --seed` | Run migrations and seed demo data |
+| `php artisan migrate:fresh --seed` | Reset database and reseed |
+| `php artisan queue:listen` | Process queued jobs (emails, webhooks) |
+| `php artisan cache:clear` | Clear application cache |
+| `php artisan config:clear` | Clear configuration cache |
+| `php artisan test` | Run PestPHP test suite |
+
+---
+
 ## ✨ Key Features
 
 ### 🎨 Premium UI/UX
@@ -325,6 +378,158 @@ php artisan test
 # Or using the composer script
 composer test
 ```
+
+---
+
+## 🔗 Stripe Webhook Setup
+
+For local development, use the Stripe CLI to forward webhooks:
+
+```bash
+# Install Stripe CLI (macOS)
+brew install stripe/stripe-cli/stripe
+
+# Login to Stripe
+stripe login
+
+# Forward webhooks to your local server
+stripe listen --forward-to localhost:8000/api/v1/stripe/webhook
+```
+
+Copy the webhook signing secret (`whsec_...`) and add it to your `.env`:
+
+```env
+STRIPE_WEBHOOK_SECRET=whsec_xxxxxxxxxxxx
+```
+
+### Webhook Events Handled
+
+| Event | Action |
+|-------|--------|
+| `checkout.session.completed` | Creates/activates subscription |
+| `customer.subscription.updated` | Syncs subscription status changes |
+| `customer.subscription.deleted` | Marks subscription as cancelled |
+| `invoice.payment_succeeded` | Records successful payment |
+| `invoice.payment_failed` | Handles failed payments |
+
+---
+
+## 🔐 Google OAuth Setup (Optional)
+
+Enable social login with Google:
+
+1. Create OAuth credentials at [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+2. Add authorized redirect URI: `https://yourdomain.com/auth/google/callback`
+3. Configure your `.env`:
+
+```env
+GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-client-secret
+GOOGLE_REDIRECT_URI="${APP_URL}/auth/google/callback"
+```
+
+---
+
+## 🎛️ Feature Flags
+
+The application uses a centralized feature flag system. Toggle modules via **Admin → Settings → Features**:
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `subscription_module_enabled` | Enable/disable billing & subscription routes | `true` |
+| `support_enabled` | Enable/disable support ticket system | `true` |
+| `impersonation` | Allow admins to impersonate users | `true` |
+| `usernames` | Enable unique usernames for users | `true` |
+| `auto_reply_enabled` | Auto-reply to new support tickets | `false` |
+
+Feature flags are cached for performance. Changes take effect immediately after saving.
+
+---
+
+## 📁 Project Structure
+
+```
+├── app/
+│   ├── Helpers/           # Feature flags, utility helpers
+│   ├── Http/
+│   │   ├── Controllers/
+│   │   │   ├── Admin/     # Admin panel controllers
+│   │   │   ├── Api/V1/    # REST API controllers
+│   │   │   ├── Auth/      # Authentication controllers
+│   │   │   └── Webhook/   # Stripe webhook handler
+│   │   ├── Middleware/    # Custom middleware (feature gates, etc.)
+│   │   └── Requests/      # Form request validation
+│   ├── Mail/              # Mailable classes
+│   ├── Models/            # Eloquent models
+│   └── Services/          # Business logic (StripeService, etc.)
+├── config/                # App configuration files
+├── database/
+│   ├── migrations/        # Database migrations
+│   └── seeders/           # Demo data seeders
+├── resources/
+│   ├── css/               # Tailwind CSS source
+│   ├── js/                # Alpine.js & app scripts
+│   └── views/             # Blade templates
+│       ├── admin/         # Admin panel views
+│       ├── billing/       # Subscription & billing views
+│       ├── components/    # Reusable Blade components
+│       ├── layouts/       # App layouts (app, guest, admin)
+│       └── support/       # Support ticket views
+├── routes/
+│   ├── api.php            # API routes (v1)
+│   ├── auth.php           # Authentication routes
+│   └── web.php            # Web routes
+└── tests/                 # PestPHP tests
+```
+
+---
+
+## 🔧 Troubleshooting
+
+### Common Issues
+
+| Problem | Solution |
+|---------|----------|
+| **Styles not loading** | Run `npm run dev` or `npm run build` |
+| **419 Page Expired** | Clear browser cookies or run `php artisan cache:clear` |
+| **Feature flag not updating** | Run `php artisan cache:clear` to bust cache |
+| **Stripe webhooks failing** | Verify `STRIPE_WEBHOOK_SECRET` matches CLI output |
+| **Queue jobs not processing** | Run `php artisan queue:listen` in a separate terminal |
+| **500 errors on API** | Check `storage/logs/laravel.log` for details |
+
+### Resetting Everything
+
+```bash
+# Nuclear reset (drops all tables, re-migrates, re-seeds)
+php artisan migrate:fresh --seed
+php artisan cache:clear
+php artisan config:clear
+php artisan view:clear
+```
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please follow these guidelines:
+
+1. **Fork** the repository
+2. **Create** a feature branch: `git checkout -b feature/amazing-feature`
+3. **Commit** your changes: `git commit -m 'feat: add amazing feature'`
+4. **Push** to your branch: `git push origin feature/amazing-feature`
+5. **Open** a Pull Request
+
+### Commit Convention
+
+This project follows [Conventional Commits](https://www.conventionalcommits.org/):
+
+- `feat:` New features
+- `fix:` Bug fixes
+- `docs:` Documentation changes
+- `style:` Code style changes (formatting, etc.)
+- `refactor:` Code refactoring
+- `test:` Adding or updating tests
+- `chore:` Maintenance tasks
 
 ---
 
