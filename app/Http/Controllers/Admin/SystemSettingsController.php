@@ -205,18 +205,26 @@ class SystemSettingsController extends Controller
      */
     public function updateFeatures(UpdateFeatureFlagsRequest $request)
     {
+        // Use Laravel's boolean() helper for reliable boolean casting
+        // This correctly handles: 1, "1", "true", "on", true -> true; 0, "0", "false", "off", false, null -> false
+        Setting::put('features.impersonation',                       $request->boolean('impersonation'));
+        Setting::put('features.allow_username_change',               $request->boolean('allow_username_change'));
+        Setting::put('security.require_admin_mfa_for_impersonation', $request->boolean('require_admin_mfa_for_impersonation', true));
+        Setting::put('features.subscription_module_enabled',         $request->boolean('subscription_module_enabled'));
+        Setting::put('features.stripe_payment_enabled',              $request->boolean('stripe_payment_enabled'));
+
+        // Support Desk toggles
+        Setting::put('features.support_enabled',            $request->boolean('support_enabled'));
+        Setting::put('features.support_auto_reply_enabled', $request->boolean('support_auto_reply_enabled'));
+
+        // Save Stripe keys if present (nullable strings)
         $v = $request->validated();
-
-        Setting::put('features.impersonation',                       (bool) ($v['impersonation'] ?? false));
-        Setting::put('features.allow_username_change',               (bool) ($v['allow_username_change'] ?? false));
-        Setting::put('security.require_admin_mfa_for_impersonation', (bool) ($v['require_admin_mfa_for_impersonation'] ?? true));
-        Setting::put('features.subscription_module_enabled',         (bool) ($v['subscription_module_enabled'] ?? false));
-        Setting::put('features.stripe_payment_enabled',              (bool) ($v['stripe_payment_enabled'] ?? false));
-
-        // Save Stripe keys if present (nullable)
         if (array_key_exists('stripe_key', $v)) Setting::put('stripe.key', $v['stripe_key']);
         if (array_key_exists('stripe_secret', $v)) Setting::put('stripe.secret', $v['stripe_secret']);
         if (array_key_exists('stripe_webhook_secret', $v)) Setting::put('stripe.webhook.secret', $v['stripe_webhook_secret']);
+
+        // Clear cache to ensure settings take effect immediately
+        \Illuminate\Support\Facades\Cache::flush();
 
         $this->logAudit('settings.update', 'Updated feature flags and modules', $v);
 

@@ -22,6 +22,8 @@ class UpdateFeatureFlagsRequest extends FormRequest
             'stripe_key'                            => ['nullable', 'string', 'max:255'],
             'stripe_secret'                         => ['nullable', 'string', 'max:255'],
             'stripe_webhook_secret'                 => ['nullable', 'string', 'max:255'],
+            'support_enabled'                       => ['nullable', 'boolean'],
+            'support_auto_reply_enabled'            => ['nullable', 'boolean'],
         ];
     }
 }

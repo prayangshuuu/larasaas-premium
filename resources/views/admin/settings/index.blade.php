@@ -230,7 +230,9 @@
                 subscriptionEnabled: {{ old('subscription_module_enabled', (int)$features['subscription_module_enabled']) ? 'true' : 'false' }},
                 impersonationEnabled: {{ old('impersonation', (int)$features['impersonation']) ? 'true' : 'false' }},
                 usernameChangeEnabled: {{ old('allow_username_change', (int)$features['allow_username_change']) ? 'true' : 'false' }},
-                adminMfaEnabled: {{ old('require_admin_mfa_for_impersonation', (int)$features['require_admin_mfa_for_impersonation']) ? 'true' : 'false' }}
+                adminMfaEnabled: {{ old('require_admin_mfa_for_impersonation', (int)$features['require_admin_mfa_for_impersonation']) ? 'true' : 'false' }},
+                supportEnabled: {{ old('support_enabled', (int)($support['enabled'] ?? 0)) ? 'true' : 'false' }},
+                autoReplyEnabled: {{ old('support_auto_reply_enabled', (int)($support['auto_reply_enabled'] ?? 0)) ? 'true' : 'false' }}
              }">
             <h2 class="text-xl font-semibold text-white">Platform Features & Modules</h2>
             <p class="text-sm text-zinc-400 mt-1">Configure global system modules and feature flags.</p>
@@ -351,25 +353,7 @@
                     </button>
                 </div>
 
-                <div class="flex justify-end pt-4">
-                    <button type="submit" class="inline-flex items-center justify-center rounded-md bg-indigo-600 px-6 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 transition-colors">Save Platform Features</button>
-                </div>
-            </form>
-        </div>
-
-        {{-- Support System Settings --}}
-        <div class="bg-zinc-900 border border-zinc-800 shadow-xl rounded-xl p-6 sm:p-8"
-             x-data="{
-                supportEnabled: {{ old('support_enabled', (int)($support['enabled'] ?? 0)) ? 'true' : 'false' }},
-                autoReplyEnabled: {{ old('support_auto_reply_enabled', (int)($support['auto_reply_enabled'] ?? 0)) ? 'true' : 'false' }}
-             }">
-            <h2 class="text-xl font-semibold text-white">Support System</h2>
-            <p class="text-sm text-zinc-400 mt-1">Configure the help desk and auto-replies.</p>
-
-            <form method="POST" action="{{ route('admin.settings.support.update') }}" class="mt-8 space-y-0 divide-y divide-zinc-800/50">
-                @csrf
-
-                {{-- 1. Enable Support Module --}}
+                {{-- 6. Enable Support Desk --}}
                 <div class="flex items-center justify-between py-4">
                     <div>
                         <div class="font-medium text-zinc-200">Enable Support Desk</div>
@@ -387,8 +371,8 @@
                     </button>
                 </div>
 
-                {{-- 2. Auto-Reply --}}
-                <div class="py-4">
+                {{-- 7. Auto-Reply to New Tickets (only visible when Support Desk is enabled) --}}
+                <div class="py-4" x-show="supportEnabled" x-transition.opacity.duration.300ms>
                     <div class="flex items-center justify-between">
                         <div>
                             <div class="font-medium text-zinc-200">Auto-Reply to New Tickets</div>
@@ -405,22 +389,14 @@
                                   :class="{ 'translate-x-5': autoReplyEnabled, 'translate-x-0': !autoReplyEnabled }"></span>
                         </button>
                     </div>
-                    
-                    {{-- Conditional Auto-Reply Text --}}
-                    <div x-show="autoReplyEnabled" x-transition.opacity.duration.300ms class="mt-6 pl-4 border-l-2 border-indigo-600/50 space-y-5">
-                        <div>
-                            <label class="block text-sm font-medium text-zinc-300 mb-1">Auto-Reply Message</label>
-                            <textarea name="support_auto_reply_text" rows="3" class="block w-full rounded-md border-0 bg-zinc-950 py-1.5 text-zinc-300 shadow-sm ring-1 ring-inset ring-zinc-800 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">{{ old('support_auto_reply_text', $support['auto_reply_text'] ?? '') }}</textarea>
-                            @error('support_auto_reply_text') <p class="text-red-400 text-sm mt-1">{{ $message }}</p> @enderror
-                        </div>
-                    </div>
                 </div>
 
                 <div class="flex justify-end pt-4">
-                    <button type="submit" class="inline-flex items-center justify-center rounded-md bg-indigo-600 px-6 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 transition-colors">Save Support Settings</button>
+                    <button type="submit" class="inline-flex items-center justify-center rounded-md bg-indigo-600 px-6 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 transition-colors">Save Platform Features</button>
                 </div>
             </form>
         </div>
+
 
         {{-- API Keys --}}
         <div class="bg-zinc-900 border border-zinc-800 shadow-xl rounded-xl p-6 sm:p-8">
