@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="public/logo-dark.svg" alt="IELTS Band Booster Logo" width="200">
-</p>
-
 <h1 align="center">IELTS Band Booster</h1>
 
 <p align="center">
