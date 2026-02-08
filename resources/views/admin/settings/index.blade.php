@@ -228,17 +228,23 @@
         {{-- Platform Features & Modules --}}
         @php
             $socialEnabled = old('social_login_enabled', (int)($social['enabled'] ?? 0));
+            $googleEnabled = old('google_login_enabled', (int)($social['google_enabled'] ?? 0));
+            $facebookEnabled = old('facebook_login_enabled', (int)($social['facebook_enabled'] ?? 0));
+            $twitterEnabled = old('twitter_login_enabled', (int)($social['twitter_enabled'] ?? 0));
         @endphp
         <div class="bg-zinc-900 border border-zinc-800 shadow-xl rounded-xl p-6 sm:p-8"
              x-data="{
-                socialLoginEnabled: {{ $socialEnabled ? 'true' : 'false' }},
                 stripeEnabled: {{ old('stripe_payment_enabled', (int)$features['stripe_payment_enabled']) ? 'true' : 'false' }},
                 subscriptionEnabled: {{ old('subscription_module_enabled', (int)$features['subscription_module_enabled']) ? 'true' : 'false' }},
                 impersonationEnabled: {{ old('impersonation', (int)$features['impersonation']) ? 'true' : 'false' }},
                 usernameChangeEnabled: {{ old('allow_username_change', (int)$features['allow_username_change']) ? 'true' : 'false' }},
                 adminMfaEnabled: {{ old('require_admin_mfa_for_impersonation', (int)$features['require_admin_mfa_for_impersonation']) ? 'true' : 'false' }},
                 supportEnabled: {{ old('support_enabled', (int)($support['enabled'] ?? 0)) ? 'true' : 'false' }},
-                autoReplyEnabled: {{ old('support_auto_reply_enabled', (int)($support['auto_reply_enabled'] ?? 0)) ? 'true' : 'false' }}
+                autoReplyEnabled: {{ old('support_auto_reply_enabled', (int)($support['auto_reply_enabled'] ?? 0)) ? 'true' : 'false' }},
+                socialLoginEnabled: {{ $socialEnabled ? 'true' : 'false' }},
+                googleEnabled: {{ $googleEnabled ? 'true' : 'false' }},
+                facebookEnabled: {{ $facebookEnabled ? 'true' : 'false' }},
+                twitterEnabled: {{ $twitterEnabled ? 'true' : 'false' }}
              }">
             <h2 class="text-xl font-semibold text-white">Platform Features & Modules</h2>
             <p class="text-sm text-zinc-400 mt-1">Configure global system modules and feature flags.</p>
@@ -246,25 +252,7 @@
             <form method="POST" action="{{ route('admin.settings.features.update') }}" class="mt-8 space-y-0 divide-y divide-zinc-800/50">
                 @csrf
 
-                {{-- 1. Enable Social Login --}}
-                <div class="flex items-center justify-between py-4">
-                    <div>
-                        <div class="font-medium text-zinc-200">Enable Social Login</div>
-                        <div class="text-sm text-zinc-500">Master switch for all social authentication providers.</div>
-                    </div>
-                    <input type="hidden" name="social_login_enabled" :value="socialLoginEnabled ? 1 : 0">
-                    <button type="button" 
-                            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-zinc-900" 
-                            :class="{ 'bg-indigo-600': socialLoginEnabled, 'bg-zinc-700': !socialLoginEnabled }"
-                            @click="socialLoginEnabled = !socialLoginEnabled">
-                        <span class="sr-only">Use setting</span>
-                        <span aria-hidden="true" 
-                              class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
-                              :class="{ 'translate-x-5': socialLoginEnabled, 'translate-x-0': !socialLoginEnabled }"></span>
-                    </button>
-                </div>
-
-                {{-- 2. Subscription Module --}}
+                {{-- 1. Subscription Module --}}
                 <div class="flex items-center justify-between py-4">
                     <div>
                         <div class="font-medium text-zinc-200">Enable Subscription Module</div>
@@ -378,214 +366,184 @@
                 </div>
 
                 {{-- 6. Enable Support Desk --}}
-                <div class="flex items-center justify-between py-4">
-                    <div>
-                        <div class="font-medium text-zinc-200">Enable Support Desk</div>
-                        <div class="text-sm text-zinc-500">Allow users to view and create support tickets.</div>
-                    </div>
-                    <input type="hidden" name="support_enabled" :value="supportEnabled ? 1 : 0">
-                    <button type="button" 
-                            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-zinc-900" 
-                            :class="{ 'bg-indigo-600': supportEnabled, 'bg-zinc-700': !supportEnabled }"
-                            @click="supportEnabled = !supportEnabled">
-                        <span class="sr-only">Use setting</span>
-                        <span aria-hidden="true" 
-                              class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
-                              :class="{ 'translate-x-5': supportEnabled, 'translate-x-0': !supportEnabled }"></span>
-                    </button>
-                </div>
-
-                {{-- 7. Auto-Reply to New Tickets (only visible when Support Desk is enabled) --}}
-                <div class="py-4" x-show="supportEnabled" x-transition.opacity.duration.300ms>
+                <div class="py-4">
                     <div class="flex items-center justify-between">
                         <div>
-                            <div class="font-medium text-zinc-200">Auto-Reply to New Tickets</div>
-                            <div class="text-sm text-zinc-500">Automatically post a system message when a user creates a ticket.</div>
+                            <div class="font-medium text-zinc-200">Enable Support Desk</div>
+                            <div class="text-sm text-zinc-500">Allow users to view and create support tickets.</div>
                         </div>
-                        <input type="hidden" name="support_auto_reply_enabled" :value="autoReplyEnabled ? 1 : 0">
+                        <input type="hidden" name="support_enabled" :value="supportEnabled ? 1 : 0">
                         <button type="button" 
                                 class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-zinc-900" 
-                                :class="{ 'bg-indigo-600': autoReplyEnabled, 'bg-zinc-700': !autoReplyEnabled }"
-                                @click="autoReplyEnabled = !autoReplyEnabled">
+                                :class="{ 'bg-indigo-600': supportEnabled, 'bg-zinc-700': !supportEnabled }"
+                                @click="supportEnabled = !supportEnabled">
                             <span class="sr-only">Use setting</span>
                             <span aria-hidden="true" 
                                   class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
-                                  :class="{ 'translate-x-5': autoReplyEnabled, 'translate-x-0': !autoReplyEnabled }"></span>
+                                  :class="{ 'translate-x-5': supportEnabled, 'translate-x-0': !supportEnabled }"></span>
                         </button>
+                    </div>
+
+                    {{-- Auto-Reply sub-toggle (visible when Support Desk enabled) --}}
+                    <div x-show="supportEnabled" x-transition.opacity.duration.300ms class="mt-6 pl-4 border-l-2 border-indigo-600/50">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="font-medium text-zinc-200">Auto-Reply to New Tickets</div>
+                                <div class="text-sm text-zinc-500">Automatically post a system message when a user creates a ticket.</div>
+                            </div>
+                            <input type="hidden" name="support_auto_reply_enabled" :value="autoReplyEnabled ? 1 : 0">
+                            <button type="button" 
+                                    class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-zinc-900" 
+                                    :class="{ 'bg-indigo-600': autoReplyEnabled, 'bg-zinc-700': !autoReplyEnabled }"
+                                    @click="autoReplyEnabled = !autoReplyEnabled">
+                                <span class="sr-only">Use setting</span>
+                                <span aria-hidden="true" 
+                                      class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                                      :class="{ 'translate-x-5': autoReplyEnabled, 'translate-x-0': !autoReplyEnabled }"></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- 7. Enable Social Login (LAST) --}}
+                <div class="py-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="font-medium text-zinc-200">Enable Social Login</div>
+                            <div class="text-sm text-zinc-500">Allow users to sign in with their social accounts.</div>
+                        </div>
+                        <input type="hidden" name="social_login_enabled" :value="socialLoginEnabled ? 1 : 0">
+                        <button type="button" 
+                                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-zinc-900" 
+                                :class="{ 'bg-indigo-600': socialLoginEnabled, 'bg-zinc-700': !socialLoginEnabled }"
+                                @click="socialLoginEnabled = !socialLoginEnabled">
+                            <span class="sr-only">Use setting</span>
+                            <span aria-hidden="true" 
+                                  class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                                  :class="{ 'translate-x-5': socialLoginEnabled, 'translate-x-0': !socialLoginEnabled }"></span>
+                        </button>
+                    </div>
+                    
+                    {{-- Social Login Providers (visible when enabled) --}}
+                    <div x-show="socialLoginEnabled" x-transition.opacity.duration.300ms class="mt-6 pl-4 border-l-2 border-indigo-600/50 space-y-6">
+                        
+                        {{-- Google --}}
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                                    <span class="font-medium text-zinc-200">Google</span>
+                                </div>
+                                <input type="hidden" name="google_login_enabled" :value="googleEnabled ? 1 : 0">
+                                <button type="button" 
+                                        class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-zinc-900" 
+                                        :class="{ 'bg-indigo-600': googleEnabled, 'bg-zinc-700': !googleEnabled }"
+                                        @click="googleEnabled = !googleEnabled">
+                                    <span class="sr-only">Use setting</span>
+                                    <span aria-hidden="true" class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out" :class="{ 'translate-x-5': googleEnabled, 'translate-x-0': !googleEnabled }"></span>
+                                </button>
+                            </div>
+                            <div x-show="googleEnabled" x-transition.opacity.duration.300ms class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-zinc-300 mb-1">Client ID</label>
+                                    <x-ui.input type="text" name="google_client_id" value="{{ old('google_client_id', $social['google_client_id'] ?? '') }}" placeholder="123456789.apps.googleusercontent.com" />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-zinc-300 mb-1">Client Secret</label>
+                                    <x-ui.input type="password" name="google_client_secret" value="{{ old('google_client_secret', $social['google_client_secret'] ?? '') }}" placeholder="GOCSPX-..." />
+                                </div>
+                                <div class="md:col-span-2 rounded-md bg-zinc-950/50 p-3 border border-zinc-800">
+                                    <div class="text-xs text-zinc-500 mb-1">Callback URL</div>
+                                    <div class="flex items-center gap-2">
+                                        <code id="googleCallbackUrl" class="text-xs text-indigo-400 font-mono break-all">{{ url('/auth/google/callback') }}</code>
+                                        <button type="button" onclick="copyToClipboard('googleCallbackUrl', this)" class="shrink-0 text-xs text-zinc-400 hover:text-white">Copy</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Facebook --}}
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-5 h-5 text-[#1877F2]" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                                    <span class="font-medium text-zinc-200">Facebook</span>
+                                </div>
+                                <input type="hidden" name="facebook_login_enabled" :value="facebookEnabled ? 1 : 0">
+                                <button type="button" 
+                                        class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-zinc-900" 
+                                        :class="{ 'bg-indigo-600': facebookEnabled, 'bg-zinc-700': !facebookEnabled }"
+                                        @click="facebookEnabled = !facebookEnabled">
+                                    <span class="sr-only">Use setting</span>
+                                    <span aria-hidden="true" class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out" :class="{ 'translate-x-5': facebookEnabled, 'translate-x-0': !facebookEnabled }"></span>
+                                </button>
+                            </div>
+                            <div x-show="facebookEnabled" x-transition.opacity.duration.300ms class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-zinc-300 mb-1">App ID</label>
+                                    <x-ui.input type="text" name="facebook_client_id" value="{{ old('facebook_client_id', $social['facebook_client_id'] ?? '') }}" placeholder="123456789012345" />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-zinc-300 mb-1">App Secret</label>
+                                    <x-ui.input type="password" name="facebook_client_secret" value="{{ old('facebook_client_secret', $social['facebook_client_secret'] ?? '') }}" placeholder="abc123..." />
+                                </div>
+                                <div class="md:col-span-2 rounded-md bg-zinc-950/50 p-3 border border-zinc-800">
+                                    <div class="text-xs text-zinc-500 mb-1">Callback URL</div>
+                                    <div class="flex items-center gap-2">
+                                        <code id="facebookCallbackUrl" class="text-xs text-blue-400 font-mono break-all">{{ url('/auth/facebook/callback') }}</code>
+                                        <button type="button" onclick="copyToClipboard('facebookCallbackUrl', this)" class="shrink-0 text-xs text-zinc-400 hover:text-white">Copy</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Twitter/X --}}
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                                    <span class="font-medium text-zinc-200">Twitter / X</span>
+                                </div>
+                                <input type="hidden" name="twitter_login_enabled" :value="twitterEnabled ? 1 : 0">
+                                <button type="button" 
+                                        class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-zinc-900" 
+                                        :class="{ 'bg-indigo-600': twitterEnabled, 'bg-zinc-700': !twitterEnabled }"
+                                        @click="twitterEnabled = !twitterEnabled">
+                                    <span class="sr-only">Use setting</span>
+                                    <span aria-hidden="true" class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out" :class="{ 'translate-x-5': twitterEnabled, 'translate-x-0': !twitterEnabled }"></span>
+                                </button>
+                            </div>
+                            <div x-show="twitterEnabled" x-transition.opacity.duration.300ms class="space-y-4">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-zinc-300 mb-1">Client ID</label>
+                                        <x-ui.input type="text" name="twitter_client_id" value="{{ old('twitter_client_id', $social['twitter_client_id'] ?? '') }}" placeholder="Your Twitter OAuth 2.0 Client ID" />
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-zinc-300 mb-1">Client Secret</label>
+                                        <x-ui.input type="password" name="twitter_client_secret" value="{{ old('twitter_client_secret', $social['twitter_client_secret'] ?? '') }}" placeholder="Your Twitter OAuth 2.0 Client Secret" />
+                                    </div>
+                                </div>
+                                <div class="rounded-md bg-zinc-950/50 p-3 border border-zinc-800">
+                                    <div class="text-xs text-zinc-500 mb-1">Callback URL</div>
+                                    <div class="flex items-center gap-2">
+                                        <code id="twitterCallbackUrl" class="text-xs text-zinc-400 font-mono break-all">{{ url('/auth/twitter/callback') }}</code>
+                                        <button type="button" onclick="copyToClipboard('twitterCallbackUrl', this)" class="shrink-0 text-xs text-zinc-400 hover:text-white">Copy</button>
+                                    </div>
+                                </div>
+                                <div class="rounded-md bg-amber-500/10 p-3 border border-amber-500/20">
+                                    <div class="text-xs text-amber-400">
+                                        <strong>Note:</strong> Twitter OAuth 2.0 requires enabling "Request email from users" in your app settings.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
 
                 <div class="flex justify-end pt-4">
                     <button type="submit" class="inline-flex items-center justify-center rounded-md bg-indigo-600 px-6 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 transition-colors">Save Platform Features</button>
-                </div>
-            </form>
-        </div>
-
-
-        {{-- Social Authentication --}}
-        @php
-            $social = $social ?? [];
-            $googleEnabled = old('google_login_enabled', (int)($social['google_enabled'] ?? 0));
-            $facebookEnabled = old('facebook_login_enabled', (int)($social['facebook_enabled'] ?? 0));
-            $twitterEnabled = old('twitter_login_enabled', (int)($social['twitter_enabled'] ?? 0));
-        @endphp
-        <div class="bg-zinc-900 border border-zinc-800 shadow-xl rounded-xl p-6 sm:p-8"
-             x-data="{
-                googleEnabled: {{ $googleEnabled ? 'true' : 'false' }},
-                facebookEnabled: {{ $facebookEnabled ? 'true' : 'false' }},
-                twitterEnabled: {{ $twitterEnabled ? 'true' : 'false' }}
-             }">
-            <h2 class="text-xl font-semibold text-white">Social Authentication</h2>
-            <p class="text-sm text-zinc-400 mt-1">Configure individual social login providers. The master switch is in <span class="text-indigo-400">Platform Features</span> above.</p>
-
-            <form method="POST" action="{{ route('admin.settings.social.update') }}" class="mt-8 space-y-0 divide-y divide-zinc-800/50">
-                @csrf
-
-                {{-- Google Section --}}
-                <div class="py-4">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <div class="font-medium text-zinc-200 flex items-center gap-2">
-                                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
-                                Google
-                            </div>
-                            <div class="text-sm text-zinc-500">Allow users to sign in with Google.</div>
-                        </div>
-                        <input type="hidden" name="google_login_enabled" :value="googleEnabled ? 1 : 0">
-                        <button type="button" 
-                                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-zinc-900" 
-                                :class="{ 'bg-indigo-600': googleEnabled, 'bg-zinc-700': !googleEnabled }"
-                                @click="googleEnabled = !googleEnabled">
-                            <span class="sr-only">Use setting</span>
-                            <span aria-hidden="true" 
-                                  class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
-                                  :class="{ 'translate-x-5': googleEnabled, 'translate-x-0': !googleEnabled }"></span>
-                        </button>
-                    </div>
-                    
-                    {{-- Google Config (visible when enabled) --}}
-                    <div x-show="googleEnabled" x-transition.opacity.duration.300ms class="mt-6 pl-4 border-l-2 border-indigo-600/50 space-y-5">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            <div>
-                                <label class="block text-sm font-medium text-zinc-300 mb-1">Client ID</label>
-                                <x-ui.input type="text" name="google_client_id" value="{{ old('google_client_id', $social['google_client_id'] ?? '') }}" placeholder="123456789.apps.googleusercontent.com" />
-                                @error('google_client_id') <p class="text-red-400 text-sm mt-1">{{ $message }}</p> @enderror
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-zinc-300 mb-1">Client Secret</label>
-                                <x-ui.input type="password" name="google_client_secret" value="{{ old('google_client_secret', $social['google_client_secret'] ?? '') }}" placeholder="GOCSPX-..." />
-                                @error('google_client_secret') <p class="text-red-400 text-sm mt-1">{{ $message }}</p> @enderror
-                            </div>
-                        </div>
-                        <div class="rounded-md bg-zinc-950/50 p-3 border border-zinc-800">
-                            <div class="text-xs text-zinc-500 mb-1">Callback URL (copy to Google Console)</div>
-                            <div class="flex items-center gap-2">
-                                <code id="googleCallbackUrl" class="text-xs text-indigo-400 font-mono break-all">{{ url('/auth/google/callback') }}</code>
-                                <button type="button" onclick="copyToClipboard('googleCallbackUrl', this)" class="shrink-0 text-xs text-zinc-400 hover:text-white">Copy</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Facebook Section --}}
-                <div class="py-4">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <div class="font-medium text-zinc-200 flex items-center gap-2">
-                                <svg class="w-5 h-5 text-[#1877F2]" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-                                Facebook
-                            </div>
-                            <div class="text-sm text-zinc-500">Allow users to sign in with Facebook.</div>
-                        </div>
-                        <input type="hidden" name="facebook_login_enabled" :value="facebookEnabled ? 1 : 0">
-                        <button type="button" 
-                                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-zinc-900" 
-                                :class="{ 'bg-indigo-600': facebookEnabled, 'bg-zinc-700': !facebookEnabled }"
-                                @click="facebookEnabled = !facebookEnabled">
-                            <span class="sr-only">Use setting</span>
-                            <span aria-hidden="true" 
-                                  class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
-                                  :class="{ 'translate-x-5': facebookEnabled, 'translate-x-0': !facebookEnabled }"></span>
-                        </button>
-                    </div>
-                    
-                    {{-- Facebook Config (visible when enabled) --}}
-                    <div x-show="facebookEnabled" x-transition.opacity.duration.300ms class="mt-6 pl-4 border-l-2 border-blue-600/50 space-y-5">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            <div>
-                                <label class="block text-sm font-medium text-zinc-300 mb-1">App ID</label>
-                                <x-ui.input type="text" name="facebook_client_id" value="{{ old('facebook_client_id', $social['facebook_client_id'] ?? '') }}" placeholder="123456789012345" />
-                                @error('facebook_client_id') <p class="text-red-400 text-sm mt-1">{{ $message }}</p> @enderror
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-zinc-300 mb-1">App Secret</label>
-                                <x-ui.input type="password" name="facebook_client_secret" value="{{ old('facebook_client_secret', $social['facebook_client_secret'] ?? '') }}" placeholder="abc123..." />
-                                @error('facebook_client_secret') <p class="text-red-400 text-sm mt-1">{{ $message }}</p> @enderror
-                            </div>
-                        </div>
-                        <div class="rounded-md bg-zinc-950/50 p-3 border border-zinc-800">
-                            <div class="text-xs text-zinc-500 mb-1">Callback URL (copy to Facebook Developers)</div>
-                            <div class="flex items-center gap-2">
-                                <code id="facebookCallbackUrl" class="text-xs text-blue-400 font-mono break-all">{{ url('/auth/facebook/callback') }}</code>
-                                <button type="button" onclick="copyToClipboard('facebookCallbackUrl', this)" class="shrink-0 text-xs text-zinc-400 hover:text-white">Copy</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Twitter/X Section --}}
-                <div class="py-4">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <div class="font-medium text-zinc-200 flex items-center gap-2">
-                                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-                                Twitter / X
-                            </div>
-                            <div class="text-sm text-zinc-500">Allow users to sign in with Twitter (X).</div>
-                        </div>
-                        <input type="hidden" name="twitter_login_enabled" :value="twitterEnabled ? 1 : 0">
-                        <button type="button" 
-                                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-zinc-900" 
-                                :class="{ 'bg-indigo-600': twitterEnabled, 'bg-zinc-700': !twitterEnabled }"
-                                @click="twitterEnabled = !twitterEnabled">
-                            <span class="sr-only">Use setting</span>
-                            <span aria-hidden="true" 
-                                  class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
-                                  :class="{ 'translate-x-5': twitterEnabled, 'translate-x-0': !twitterEnabled }"></span>
-                        </button>
-                    </div>
-                    
-                    {{-- Twitter Config (visible when enabled) --}}
-                    <div x-show="twitterEnabled" x-transition.opacity.duration.300ms class="mt-6 pl-4 border-l-2 border-zinc-600/50 space-y-5">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            <div>
-                                <label class="block text-sm font-medium text-zinc-300 mb-1">Client ID</label>
-                                <x-ui.input type="text" name="twitter_client_id" value="{{ old('twitter_client_id', $social['twitter_client_id'] ?? '') }}" placeholder="Your Twitter OAuth 2.0 Client ID" />
-                                @error('twitter_client_id') <p class="text-red-400 text-sm mt-1">{{ $message }}</p> @enderror
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-zinc-300 mb-1">Client Secret</label>
-                                <x-ui.input type="password" name="twitter_client_secret" value="{{ old('twitter_client_secret', $social['twitter_client_secret'] ?? '') }}" placeholder="Your Twitter OAuth 2.0 Client Secret" />
-                                @error('twitter_client_secret') <p class="text-red-400 text-sm mt-1">{{ $message }}</p> @enderror
-                            </div>
-                        </div>
-                        <div class="rounded-md bg-zinc-950/50 p-3 border border-zinc-800">
-                            <div class="text-xs text-zinc-500 mb-1">Callback URL (copy to Twitter Developer Portal)</div>
-                            <div class="flex items-center gap-2">
-                                <code id="twitterCallbackUrl" class="text-xs text-zinc-400 font-mono break-all">{{ url('/auth/twitter/callback') }}</code>
-                                <button type="button" onclick="copyToClipboard('twitterCallbackUrl', this)" class="shrink-0 text-xs text-zinc-400 hover:text-white">Copy</button>
-                            </div>
-                        </div>
-                        <div class="rounded-md bg-amber-500/10 p-3 border border-amber-500/20">
-                            <div class="text-xs text-amber-400">
-                                <strong>Note:</strong> Twitter OAuth 2.0 requires enabling "Request email from users" in your app settings for email access.
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="flex justify-end pt-4">
-                    <button type="submit" class="inline-flex items-center justify-center rounded-md bg-indigo-600 px-6 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 transition-colors">Save Social Settings</button>
                 </div>
             </form>
         </div>
