@@ -18,6 +18,32 @@
 
 ---
 
+## 📖 Table of Contents
+
+- [Introduction](#-introduction)
+- [Demo Credentials](#-demo-credentials)
+- [Quick Start](#-quick-start)
+- [Tech Stack](#-tech-stack)
+- [Key Features](#-key-features)
+  - [Premium UI/UX](#-premium-uiux)
+  - [Authentication System](#-authentication-system)
+  - [Billing & Subscriptions](#-billing--subscription-engine-stripe)
+  - [Support Ticket System](#-support-ticket-system)
+  - [Admin Panel](#-advanced-admin-panel)
+  - [API & Developer Experience](#-api--developer-experience)
+  - [Notifications System](#-in-app-notification-center)
+- [Installation Guide](#-installation-guide)
+- [Configuration](#-configuration)
+- [Key Routes](#-key-routes)
+- [Feature Flags](#-feature-flags)
+- [Project Structure](#-project-structure)
+- [Testing](#-testing)
+- [Troubleshooting](#-troubleshooting)
+- [Contributing](#-contributing)
+- [License](#-license)
+
+---
+
 ## 📖 Introduction
 
 **IELTS Band Booster** is a high-end SaaS platform designed for IELTS test preparation. It provides a comprehensive suite of tools for learners while offering administrators a powerful, feature-rich backend to manage users, billing, support, and system configuration—all wrapped in a beautiful, modern dark theme UI.
@@ -79,6 +105,21 @@ composer dev
 
 ---
 
+## 🛠️ Tech Stack
+
+| Category | Technology |
+|----------|------------|
+| **Backend** | Laravel 12, PHP 8.2+ |
+| **Frontend** | TailwindCSS v4, Alpine.js 3.x |
+| **Authentication** | Laravel Fortify (2FA support), Laravel Sanctum (API), Laravel Socialite (OAuth) |
+| **Billing** | Stripe PHP SDK |
+| **Database** | MySQL 8.x |
+| **Caching/Queues** | Redis (or Database fallback) |
+| **Build Tools** | Vite 7.x |
+| **Testing** | PestPHP |
+
+---
+
 ## ✨ Key Features
 
 ### 🎨 Premium UI/UX
@@ -88,8 +129,30 @@ composer dev
 | **Aceternity Dark Theme** | A consistent, high-contrast dark theme using a curated `Zinc-950` / `Indigo-500` palette with glassmorphism effects and subtle glow accents. |
 | **Bento Grid Dashboard** | A modern, widget-based user dashboard providing an at-a-glance view of key information. |
 | **Command Palette (`Cmd+K`)** | A global navigation and action menu implemented with Alpine.js for power-user efficiency. Search pages, actions, and settings instantly. |
+| **Dark/Light Theme Toggle** | Users can switch between dark and light themes with persistent preference storage. |
 | **Fully Responsive** | Mobile-first layouts that adapt seamlessly across all screen sizes. |
 | **Smooth Micro-Animations** | Subtle transitions and hover effects for a polished, interactive experience. |
+
+---
+
+### 🔐 Authentication System
+
+A complete, enterprise-grade authentication system with multiple security layers:
+
+| Feature | Description |
+|---------|-------------|
+| **Email/Password Login** | Standard secure authentication with email verification. |
+| **Two-Factor Authentication (2FA)** | TOTP-based 2FA with recovery codes. Users can view, regenerate, and download backup codes. |
+| **Social Login (OAuth)** | **Google**, **Facebook**, and **Twitter/X** authentication via Laravel Socialite. Each provider can be independently enabled/disabled from the admin panel. |
+| **Password Confirmation** | Sensitive actions require password re-confirmation for security. |
+| **Account Banning** | Administrators can ban/unban users, with banned users automatically prevented from accessing the application. |
+
+#### Social Login Architecture
+
+- **Dynamic Configuration**: OAuth credentials are stored in the database and loaded dynamically via a `DynamicSocialiteProvider`.
+- **Admin-Controlled**: Each provider (Google, Facebook, Twitter) can be enabled/disabled independently.
+- **Auto-Registration**: New users signing in via OAuth are automatically registered.
+- **Account Linking**: Existing users can link their social accounts.
 
 ---
 
@@ -101,10 +164,21 @@ A complete, end-to-end subscription management system powered by **Stripe**.
 |---------|-------------|
 | **Complete Subscription Lifecycle** | Handles Subscribe, Cancel, Resume, and Grace Period states gracefully. |
 | **Admin Plan Management** | Dynamically create, edit, and delete subscription plans, including setting feature limits (e.g., `ai_generations`). |
-| **Coupons & Discounts Module** | Admin-managed coupon codes (Percentage or Fixed Amount) with usage limits and tracking. |
+| **Coupons & Discounts Module** | Admin-managed coupon codes (Percentage or Fixed Amount) with usage limits, expiration dates, and usage tracking. |
 | **Automated Invoicing** | PDF invoice generation and a full history view for users. |
 | **Stripe Webhooks** | Automatically syncs subscription state from Stripe events (`checkout.session.completed`, `customer.subscription.updated`, etc.). |
 | **Middleware Gating** | Routes are automatically blocked if the subscription is inactive, on a grace period, or if the billing module itself is disabled via feature flags. |
+| **Plan Feature Limits** | Enforce per-plan feature limits (e.g., "You can only generate X items per month"). |
+
+#### Webhook Events Handled
+
+| Event | Action |
+|-------|--------|
+| `checkout.session.completed` | Creates/activates subscription |
+| `customer.subscription.updated` | Syncs subscription status changes |
+| `customer.subscription.deleted` | Marks subscription as cancelled |
+| `invoice.payment_succeeded` | Records successful payment |
+| `invoice.payment_failed` | Handles failed payments |
 
 ---
 
@@ -115,7 +189,9 @@ A full-featured helpdesk system for managing user inquiries.
 | Feature | Description |
 |---------|-------------|
 | **User Workflow** | Users can create new tickets with detailed descriptions and file attachments. |
-| **Admin Dashboard** | Admins can view all tickets, reply to users, and manage ticket status (`Open`, `In Progress`, `Resolved`, `Closed`). |
+| **Ticket Statuses** | `Open`, `In Progress`, `Resolved`, `Closed` — with admin-managed transitions. |
+| **User Actions** | Users can reply to tickets and close their own tickets. |
+| **Admin Dashboard** | Admins can view all tickets, reply to users, and manage ticket status. |
 | **Auto-Reply System** | A configurable automatic response sent to users upon ticket creation. Editable in System Settings. |
 | **Feature Flag** | The entire support module can be globally toggled on or off from the admin panel. |
 
@@ -123,15 +199,20 @@ A full-featured helpdesk system for managing user inquiries.
 
 ### ⚙️ Advanced Admin Panel
 
-A comprehensive, secure, and user-friendly admin interface.
+A comprehensive, secure, and user-friendly admin interface at `/admin`.
 
 | Module | Capabilities |
 |--------|--------------|
+| **Dashboard** | Overview with key metrics: total users, subscriptions, revenue, recent activity. |
 | **System Settings** | GUI for managing App Name, Light/Dark Logos, SMTP Credentials (Host, Port, Username, Password), and Stripe API Keys. |
-| **Feature Flags** | Granular toggle switches to enable/disable modules across the application: Billing, Support, User Impersonation, Usernames. |
+| **Feature Flags** | Granular toggle switches to enable/disable modules across the application: Billing, Support, User Impersonation, Usernames, Social Login (per-provider). |
 | **User Management** | Full CRUD, Bulk Actions (Ban, Delete, Promote, Demote), and CSV Export. |
-| **User Impersonation** | Securely log in as any user to debug issues. Gated behind MFA verification and a dedicated feature flag. |
+| **Plan Management** | Create, update, delete subscription plans with custom features and limits. |
+| **Coupon Management** | Create and manage discount codes with percentage/fixed discounts, usage limits, and expiration. |
+| **Subscription Overview** | View all active subscriptions across all users. |
+| **User Impersonation** | Securely log in as any user to debug issues. Gated behind MFA verification and a dedicated feature flag. Impersonated sessions have restricted admin access. |
 | **Audit Logs** | Detailed, immutable logs of all significant administrative actions for security and compliance. |
+| **API Documentation** | Interactive, "Stripe-like" API reference at `/admin/api/docs`. |
 
 ---
 
@@ -145,18 +226,15 @@ A comprehensive, secure, and user-friendly admin interface.
 
 ---
 
-## 🛠️ Tech Stack
+### 🔔 In-App Notification Center
 
-| Category | Technology |
-|----------|------------|
-| **Backend** | Laravel 12, PHP 8.2+ |
-| **Frontend** | TailwindCSS v4, Alpine.js 3.x |
-| **Authentication** | Laravel Fortify (2FA support), Laravel Sanctum (API) |
-| **Billing** | Stripe PHP SDK |
-| **Database** | MySQL 8.x |
-| **Caching/Queues** | Redis (or Database fallback) |
-| **Build Tools** | Vite 7.x |
-| **Testing** | PestPHP |
+A real-time notification system for keeping users informed:
+
+| Feature | Description |
+|---------|-------------|
+| **Bell Icon Widget** | Visible in the navigation bar with unread count badge. |
+| **Mark as Read** | Individual and bulk "mark all as read" functionality. |
+| **Persistent Storage** | Notifications stored in database for history. |
 
 ---
 
@@ -176,8 +254,8 @@ Laravel Sail provides a simple Docker-based development environment.
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/your-username/ieltsbandbooster.git
-cd ieltsbandbooster
+git clone https://github.com/prayangshuuu/IELTSBandBooster.git
+cd IELTSBandBooster
 
 # 2. Install Composer dependencies (to get Sail)
 docker run --rm \
@@ -210,8 +288,8 @@ The application will be available at `http://localhost`.
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/your-username/ieltsbandbooster.git
-cd ieltsbandbooster
+git clone https://github.com/prayangshuuu/IELTSBandBooster.git
+cd IELTSBandBooster
 
 # 2. Install PHP dependencies
 composer install
@@ -243,7 +321,15 @@ npm run dev           # Vite dev server
 
 Below are the critical environment variables you need to configure:
 
+#### Application
+
+```env
+APP_NAME="IELTS Band Booster"
+APP_URL=http://localhost:8000
+```
+
 #### Database
+
 ```env
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
@@ -254,6 +340,7 @@ DB_PASSWORD=your_password
 ```
 
 #### Stripe (Billing)
+
 ```env
 STRIPE_KEY=pk_live_xxxxxxxxxxxx
 STRIPE_SECRET=sk_live_xxxxxxxxxxxx
@@ -261,6 +348,7 @@ STRIPE_WEBHOOK_SECRET=whsec_xxxxxxxxxxxx
 ```
 
 #### Mail (SMTP)
+
 ```env
 MAIL_MAILER=smtp
 MAIL_HOST=smtp.mailgun.org
@@ -272,6 +360,7 @@ MAIL_FROM_NAME="${APP_NAME}"
 ```
 
 #### Redis (Optional but Recommended)
+
 ```env
 CACHE_STORE=redis
 QUEUE_CONNECTION=redis
@@ -280,11 +369,13 @@ REDIS_PASSWORD=null
 REDIS_PORT=6379
 ```
 
+#### Social Authentication (OAuth)
+
+Social login credentials are managed via the Admin Panel → Settings → Social Authentication. No `.env` configuration required!
+
 ---
 
 ### Creating the First Admin User
-
-There are two methods to create an admin user:
 
 #### Method 1: Database Seeder (Recommended for Development)
 
@@ -324,46 +415,208 @@ User::create([
 
 ## 🗺️ Key Routes
 
-### User Routes
+### Public Routes
 
 | URL | Description |
 |-----|-------------|
 | `/` | Public landing page |
+| `/auth/{provider}/redirect` | Social login redirect (google, facebook, twitter) |
+| `/auth/{provider}/callback` | Social login callback |
+
+### User Routes (Authenticated)
+
+| URL | Description |
+|-----|-------------|
 | `/dashboard` | User Bento Grid Dashboard |
-| `/profile` | User profile settings |
+| `/profile` | User profile settings, 2FA management, API tokens |
 | `/billing` | Billing hub (subscription status) |
 | `/billing/plans` | View available subscription plans |
 | `/billing/invoices` | Invoice history |
+| `/billing/checkout/{plan}` | Checkout for a specific plan |
 | `/support` | User support ticket center |
+| `/support/create` | Create new support ticket |
+| `/support/{ticket}` | View/reply to ticket |
+| `/two-factor/recovery-codes` | View 2FA recovery codes |
 
-### Admin Routes
+### Admin Routes (`/admin/*`)
 
 | URL | Description |
 |-----|-------------|
 | `/admin/dashboard` | Admin overview dashboard |
-| `/admin/settings` | System Settings (App, SMTP, Features, Stripe) |
-| `/admin/users` | User management (CRUD, bulk actions) |
+| `/admin/settings` | System Settings (App, SMTP, Features, Stripe, Social Auth) |
+| `/admin/users` | User management (CRUD, bulk actions, export) |
+| `/admin/users/{user}/edit` | Edit user details |
 | `/admin/plans` | Subscription plan management |
 | `/admin/coupons` | Coupon/discount code management |
 | `/admin/subscriptions` | Global subscription overview |
 | `/admin/support` | Admin support ticket queue |
 | `/admin/audit` | Audit logs |
 | `/admin/api/docs` | Interactive API documentation |
+| `/admin/impersonate/start/{user}` | Impersonate user (requires 2FA) |
+| `/admin/impersonate/stop` | Stop impersonation |
 
 ### API Endpoints (v1)
 
-| Endpoint | Auth | Description |
-|----------|------|-------------|
-| `GET /api/v1/ping` | Public | Health check |
-| `GET /api/v1/plans` | Public | List available plans |
-| `GET /api/v1/me` | Sanctum | Get current user profile |
-| `PUT /api/v1/me` | Sanctum | Update current user profile |
-| `GET /api/v1/invoices` | Sanctum | List user invoices |
-| `POST /api/v1/subscriptions/checkout` | Sanctum | Create checkout session |
-| `POST /api/v1/subscriptions/cancel` | Sanctum | Cancel subscription |
-| `GET /api/v1/admin/users` | Admin | List all users |
-| `GET /api/v1/admin/audit` | Admin | View audit logs |
-| `GET /api/v1/admin/settings` | Admin | View system settings |
+#### Public
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/v1/ping` | Health check |
+| `GET /api/v1/plans` | List available plans |
+
+#### User (Sanctum Auth Required)
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/v1/me` | Get current user profile |
+| `PUT /api/v1/me` | Update current user profile |
+| `GET /api/v1/invoices` | List user invoices |
+| `GET /api/v1/invoices/{invoice}` | Get specific invoice |
+| `POST /api/v1/subscriptions/checkout` | Create checkout session |
+| `POST /api/v1/subscriptions/cancel` | Cancel subscription |
+| `POST /api/v1/subscriptions/resume` | Resume subscription |
+
+#### Admin (Sanctum + Admin Required)
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/v1/admin/users` | List all users |
+| `POST /api/v1/admin/users` | Create user |
+| `PUT /api/v1/admin/users/{user}` | Update user |
+| `DELETE /api/v1/admin/users/{user}` | Delete user |
+| `GET /api/v1/admin/audit` | View audit logs |
+| `GET /api/v1/admin/settings` | View system settings |
+| `PUT /api/v1/admin/settings/{key}` | Update system setting |
+| `GET /api/v1/admin/plans` | List plans |
+| `POST /api/v1/admin/plans` | Create plan |
+
+#### Webhooks
+
+| Endpoint | Description |
+|----------|-------------|
+| `POST /api/v1/stripe/webhook` | Stripe webhook handler |
+
+---
+
+## 🎛️ Feature Flags
+
+The application uses a centralized feature flag system stored in the `system_settings` table. Toggle modules via **Admin → Settings → Platform Features & Modules**:
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `subscription_module_enabled` | Enable/disable billing & subscription routes | `true` |
+| `support_enabled` | Enable/disable support ticket system | `true` |
+| `impersonation` | Allow admins to impersonate users | `true` |
+| `usernames` | Enable unique usernames for users | `true` |
+| `auto_reply_enabled` | Auto-reply to new support tickets | `false` |
+| `social_login_enabled` | Master toggle for all social login | `false` |
+| `google_login_enabled` | Enable Google OAuth login | `true` |
+| `facebook_login_enabled` | Enable Facebook OAuth login | `true` |
+| `twitter_login_enabled` | Enable Twitter/X OAuth login | `true` |
+
+### How Feature Flags Work
+
+1. **Database Storage**: All flags are stored in `system_settings` table.
+2. **Caching**: Settings are cached for 24 hours via `App\Helpers\Feature`.
+3. **Middleware**: `feature:{flag}` middleware blocks routes when disabled.
+4. **UI Integration**: Blade views use `Feature::enabled('flag')` for conditional rendering.
+5. **Instant Updates**: Cache is cleared automatically when settings are updated.
+
+---
+
+## 📁 Project Structure
+
+```
+├── app/
+│   ├── Actions/               # Fortify authentication actions
+│   ├── Console/               # Artisan commands
+│   ├── Helpers/               # Feature flags helper
+│   │   └── Feature.php        # Centralized feature flag system
+│   ├── Http/
+│   │   ├── Controllers/
+│   │   │   ├── Admin/         # Admin panel controllers (12 files)
+│   │   │   │   ├── AdminDashboardController.php
+│   │   │   │   ├── AuditController.php
+│   │   │   │   ├── CouponController.php
+│   │   │   │   ├── ImpersonationController.php
+│   │   │   │   ├── PlanController.php
+│   │   │   │   ├── SubscriptionController.php
+│   │   │   │   ├── SupportTicketController.php
+│   │   │   │   ├── SystemSettingsController.php
+│   │   │   │   ├── UserController.php
+│   │   │   │   └── UserSubscriptionController.php
+│   │   │   ├── Api/V1/        # REST API controllers
+│   │   │   │   ├── Admin/     # Admin API endpoints
+│   │   │   │   ├── InvoiceController.php
+│   │   │   │   ├── PlanController.php
+│   │   │   │   ├── ProfileController.php
+│   │   │   │   └── SubscriptionController.php
+│   │   │   ├── Auth/          # Authentication controllers
+│   │   │   │   └── SocialiteController.php  # OAuth handling
+│   │   │   ├── Webhook/       # Stripe webhook handler
+│   │   │   ├── BillingController.php
+│   │   │   ├── DashboardController.php
+│   │   │   ├── InvoiceController.php
+│   │   │   ├── NotificationController.php
+│   │   │   ├── ProfileController.php
+│   │   │   ├── SubscriptionController.php
+│   │   │   ├── SupportTicketController.php
+│   │   │   └── TwoFactorRecoveryCodesController.php
+│   │   ├── Middleware/        # Custom middleware
+│   │   │   ├── AdminMiddleware.php
+│   │   │   ├── AdminMfaVerificationMiddleware.php
+│   │   │   ├── EnsureFeatureEnabled.php
+│   │   │   ├── EnsureNotBanned.php
+│   │   │   ├── ImpersonationGuard.php
+│   │   │   └── PlanLimitMiddleware.php
+│   │   └── Requests/          # Form request validation
+│   ├── Mail/                  # Mailable classes
+│   ├── Models/                # Eloquent models (10 files)
+│   │   ├── AuditLog.php
+│   │   ├── Coupon.php
+│   │   ├── Invoice.php
+│   │   ├── Plan.php
+│   │   ├── Setting.php
+│   │   ├── Subscription.php
+│   │   ├── SupportTicket.php
+│   │   ├── SupportTicketMessage.php
+│   │   ├── SystemSetting.php
+│   │   └── User.php
+│   ├── Providers/             # Service providers
+│   │   └── DynamicSocialiteProvider.php  # Dynamic OAuth config
+│   ├── Services/              # Business logic
+│   │   └── StripeService.php
+│   └── View/                  # View composers
+├── config/                    # App configuration files
+├── database/
+│   ├── migrations/            # Database migrations (30 files)
+│   └── seeders/               # Demo data seeders
+├── resources/
+│   ├── css/                   # Tailwind CSS source
+│   ├── js/                    # Alpine.js & app scripts
+│   └── views/                 # Blade templates
+│       ├── admin/             # Admin panel views
+│       │   ├── api/           # API documentation
+│       │   ├── audit/         # Audit logs
+│       │   ├── coupons/       # Coupon management
+│       │   ├── plans/         # Plan management
+│       │   ├── settings/      # System settings
+│       │   ├── subscriptions/ # Subscription overview
+│       │   ├── support/       # Admin support tickets
+│       │   └── users/         # User management
+│       ├── auth/              # Authentication views
+│       ├── billing/           # Subscription & billing views
+│       ├── components/        # Reusable Blade components
+│       ├── emails/            # Email templates
+│       ├── layouts/           # App layouts (app, guest, admin)
+│       ├── profile/           # User profile views
+│       └── support/           # User support ticket views
+├── routes/
+│   ├── api.php                # API routes (v1)
+│   ├── auth.php               # Authentication routes
+│   └── web.php                # Web routes (319 lines)
+└── tests/                     # PestPHP tests
+```
 
 ---
 
@@ -377,6 +630,9 @@ php artisan test
 
 # Or using the composer script
 composer test
+
+# Run specific test file
+php artisan test tests/Feature/AuthTest.php
 ```
 
 ---
@@ -402,85 +658,35 @@ Copy the webhook signing secret (`whsec_...`) and add it to your `.env`:
 STRIPE_WEBHOOK_SECRET=whsec_xxxxxxxxxxxx
 ```
 
-### Webhook Events Handled
-
-| Event | Action |
-|-------|--------|
-| `checkout.session.completed` | Creates/activates subscription |
-| `customer.subscription.updated` | Syncs subscription status changes |
-| `customer.subscription.deleted` | Marks subscription as cancelled |
-| `invoice.payment_succeeded` | Records successful payment |
-| `invoice.payment_failed` | Handles failed payments |
-
 ---
 
-## 🔐 Google OAuth Setup (Optional)
+## 🔐 Social Authentication Setup
 
-Enable social login with Google:
+Social authentication is configured entirely through the **Admin Panel** — no `.env` changes required!
 
-1. Create OAuth credentials at [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
-2. Add authorized redirect URI: `https://yourdomain.com/auth/google/callback`
-3. Configure your `.env`:
+### Setup Steps
 
-```env
-GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=your-client-secret
-GOOGLE_REDIRECT_URI="${APP_URL}/auth/google/callback"
-```
+1. **Enable Social Login**: Navigate to **Admin → Settings** and toggle "Enable Social Login" in the Platform Features section.
 
----
+2. **Configure Providers**: Expand the Social Login section and configure each provider:
 
-## 🎛️ Feature Flags
+   #### Google
+   1. Create OAuth credentials at [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+   2. Add authorized redirect URI: `https://yourdomain.com/auth/google/callback`
+   3. Enter Client ID and Client Secret in admin panel
 
-The application uses a centralized feature flag system. Toggle modules via **Admin → Settings → Features**:
+   #### Facebook
+   1. Create an app at [Facebook Developers](https://developers.facebook.com/)
+   2. Add Facebook Login product
+   3. Set Valid OAuth Redirect URI: `https://yourdomain.com/auth/facebook/callback`
+   4. Enter App ID and App Secret in admin panel
 
-| Flag | Description | Default |
-|------|-------------|---------|
-| `subscription_module_enabled` | Enable/disable billing & subscription routes | `true` |
-| `support_enabled` | Enable/disable support ticket system | `true` |
-| `impersonation` | Allow admins to impersonate users | `true` |
-| `usernames` | Enable unique usernames for users | `true` |
-| `auto_reply_enabled` | Auto-reply to new support tickets | `false` |
+   #### Twitter/X
+   1. Create a project at [Twitter Developer Portal](https://developer.twitter.com/)
+   2. Enable OAuth 1.0a and set callback URL: `https://yourdomain.com/auth/twitter/callback`
+   3. Enter API Key and API Secret in admin panel
 
-Feature flags are cached for performance. Changes take effect immediately after saving.
-
----
-
-## 📁 Project Structure
-
-```
-├── app/
-│   ├── Helpers/           # Feature flags, utility helpers
-│   ├── Http/
-│   │   ├── Controllers/
-│   │   │   ├── Admin/     # Admin panel controllers
-│   │   │   ├── Api/V1/    # REST API controllers
-│   │   │   ├── Auth/      # Authentication controllers
-│   │   │   └── Webhook/   # Stripe webhook handler
-│   │   ├── Middleware/    # Custom middleware (feature gates, etc.)
-│   │   └── Requests/      # Form request validation
-│   ├── Mail/              # Mailable classes
-│   ├── Models/            # Eloquent models
-│   └── Services/          # Business logic (StripeService, etc.)
-├── config/                # App configuration files
-├── database/
-│   ├── migrations/        # Database migrations
-│   └── seeders/           # Demo data seeders
-├── resources/
-│   ├── css/               # Tailwind CSS source
-│   ├── js/                # Alpine.js & app scripts
-│   └── views/             # Blade templates
-│       ├── admin/         # Admin panel views
-│       ├── billing/       # Subscription & billing views
-│       ├── components/    # Reusable Blade components
-│       ├── layouts/       # App layouts (app, guest, admin)
-│       └── support/       # Support ticket views
-├── routes/
-│   ├── api.php            # API routes (v1)
-│   ├── auth.php           # Authentication routes
-│   └── web.php            # Web routes
-└── tests/                 # PestPHP tests
-```
+3. **Enable Individual Providers**: Toggle each provider on/off independently.
 
 ---
 
@@ -496,6 +702,9 @@ Feature flags are cached for performance. Changes take effect immediately after 
 | **Stripe webhooks failing** | Verify `STRIPE_WEBHOOK_SECRET` matches CLI output |
 | **Queue jobs not processing** | Run `php artisan queue:listen` in a separate terminal |
 | **500 errors on API** | Check `storage/logs/laravel.log` for details |
+| **Social login not working** | Ensure master "Enable Social Login" is toggled on AND provider credentials are configured |
+| **Can't stop impersonation** | The stop route is always accessible at `/admin/impersonate/stop` |
+| **2FA recovery codes not showing** | Requires recent password confirmation |
 
 ### Resetting Everything
 
