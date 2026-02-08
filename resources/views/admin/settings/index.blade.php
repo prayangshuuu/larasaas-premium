@@ -425,44 +425,24 @@
         {{-- Social Authentication --}}
         @php
             $social = $social ?? [];
-            $socialEnabled = old('social_login_enabled', (int)($social['enabled'] ?? 0));
             $googleEnabled = old('google_login_enabled', (int)($social['google_enabled'] ?? 0));
             $facebookEnabled = old('facebook_login_enabled', (int)($social['facebook_enabled'] ?? 0));
             $twitterEnabled = old('twitter_login_enabled', (int)($social['twitter_enabled'] ?? 0));
         @endphp
         <div class="bg-zinc-900 border border-zinc-800 shadow-xl rounded-xl p-6 sm:p-8"
              x-data="{
-                socialEnabled: {{ $socialEnabled ? 'true' : 'false' }},
                 googleEnabled: {{ $googleEnabled ? 'true' : 'false' }},
                 facebookEnabled: {{ $facebookEnabled ? 'true' : 'false' }},
                 twitterEnabled: {{ $twitterEnabled ? 'true' : 'false' }}
              }">
             <h2 class="text-xl font-semibold text-white">Social Authentication</h2>
-            <p class="text-sm text-zinc-400 mt-1">Allow users to sign in with their social accounts.</p>
+            <p class="text-sm text-zinc-400 mt-1">Configure individual social login providers. The master switch is in <span class="text-indigo-400">Platform Features</span> above.</p>
 
             <form method="POST" action="{{ route('admin.settings.social.update') }}" class="mt-8 space-y-0 divide-y divide-zinc-800/50">
                 @csrf
 
-                {{-- Global Social Login Toggle --}}
-                <div class="flex items-center justify-between py-4">
-                    <div>
-                        <div class="font-medium text-zinc-200">Enable Social Login</div>
-                        <div class="text-sm text-zinc-500">Master switch for all social authentication providers.</div>
-                    </div>
-                    <input type="hidden" name="social_login_enabled" :value="socialEnabled ? 1 : 0">
-                    <button type="button" 
-                            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-zinc-900" 
-                            :class="{ 'bg-indigo-600': socialEnabled, 'bg-zinc-700': !socialEnabled }"
-                            @click="socialEnabled = !socialEnabled">
-                        <span class="sr-only">Use setting</span>
-                        <span aria-hidden="true" 
-                              class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
-                              :class="{ 'translate-x-5': socialEnabled, 'translate-x-0': !socialEnabled }"></span>
-                    </button>
-                </div>
-
                 {{-- Google Section --}}
-                <div class="py-4" x-show="socialEnabled" x-transition.opacity.duration.300ms>
+                <div class="py-4">
                     <div class="flex items-center justify-between">
                         <div>
                             <div class="font-medium text-zinc-200 flex items-center gap-2">
@@ -508,7 +488,7 @@
                 </div>
 
                 {{-- Facebook Section --}}
-                <div class="py-4" x-show="socialEnabled" x-transition.opacity.duration.300ms>
+                <div class="py-4">
                     <div class="flex items-center justify-between">
                         <div>
                             <div class="font-medium text-zinc-200 flex items-center gap-2">
@@ -554,7 +534,7 @@
                 </div>
 
                 {{-- Twitter/X Section --}}
-                <div class="py-4" x-show="socialEnabled" x-transition.opacity.duration.300ms>
+                <div class="py-4">
                     <div class="flex items-center justify-between">
                         <div>
                             <div class="font-medium text-zinc-200 flex items-center gap-2">
