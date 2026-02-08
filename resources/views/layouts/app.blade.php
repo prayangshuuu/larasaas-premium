@@ -20,6 +20,9 @@
         {{-- Navigation can be injected or included here --}}
         @include('layouts.navigation')
 
+        {{-- Announcement Banner --}}
+        <x-announcement-banner />
+
         {{-- Impersonation Banner --}}
         @if(session()->has('impersonator_id'))
             <div 
