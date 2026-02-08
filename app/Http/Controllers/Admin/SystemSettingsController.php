@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UpdateAppSettingsRequest;
 use App\Http\Requests\Admin\UpdateFeatureFlagsRequest;
 use App\Http\Requests\Admin\UpdateSmtpSettingsRequest;
+use App\Helpers\Feature;
 use App\Models\AuditLog;
 use App\Models\Setting;
+use App\Models\SystemSetting;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -89,24 +91,23 @@ class SystemSettingsController extends Controller
                 'from_addr'  => $s->smtp_from_addr,
             ],
 
-            // Features
+            // Features - read from system_settings via Feature helper
             'features' => [
-                'impersonation'                       => Setting::bool('features.impersonation', false),
-                'allow_username_change'               => Setting::bool('features.allow_username_change', true),
-                'require_admin_mfa_for_impersonation' => Setting::bool('security.require_admin_mfa_for_impersonation', true),
-                'subscription_module_enabled'         => Setting::bool('features.subscription_module_enabled', false),
-                'stripe_payment_enabled'              => Setting::bool('features.stripe_payment_enabled', false),
-                'stripe_key'                          => Setting::get('stripe.key'),
-                'stripe_secret'                       => Setting::get('stripe.secret'),
-                'stripe_secret'                       => Setting::get('stripe.secret'),
-                'stripe_webhook_secret'               => Setting::get('stripe.webhook.secret'),
+                'impersonation'                       => Feature::enabled('impersonation'),
+                'allow_username_change'               => Feature::enabled('allow_username_change'),
+                'require_admin_mfa_for_impersonation' => Feature::enabled('require_admin_mfa_for_impersonation'),
+                'subscription_module_enabled'         => Feature::enabled('subscription_module_enabled'),
+                'stripe_payment_enabled'              => Feature::enabled('stripe_payment_enabled'),
+                'stripe_key'                          => SystemSetting::where('key', 'stripe_key')->first()?->value,
+                'stripe_secret'                       => SystemSetting::where('key', 'stripe_secret')->first()?->value,
+                'stripe_webhook_secret'               => SystemSetting::where('key', 'stripe_webhook_secret')->first()?->value,
             ],
 
-            // Support Settings
+            // Support Settings - read from system_settings via Feature helper
             'support' => [
-                'enabled'            => Setting::bool('features.support_enabled', false),
-                'auto_reply_enabled' => Setting::bool('features.support_auto_reply_enabled', false),
-                'auto_reply_text'    => Setting::get('features.support_auto_reply_text', "Thank you for contacting us. We have received your ticket and will get back to you shortly."),
+                'enabled'            => Feature::enabled('support_enabled'),
+                'auto_reply_enabled' => Feature::enabled('support_auto_reply_enabled'),
+                'auto_reply_text'    => SystemSetting::where('key', 'support_auto_reply_text')->first()?->value ?? "Thank you for contacting us. We have received your ticket and will get back to you shortly.",
             ],
 
             // API keys (Sanctum)
@@ -201,30 +202,44 @@ class SystemSettingsController extends Controller
 
     /**
      * POST /admin/settings/features  (admin.settings.features.update)
-     * Persists feature flags (booleans).
+     * Persists feature flags to the system_settings table.
      */
     public function updateFeatures(UpdateFeatureFlagsRequest $request)
     {
-        // Use Laravel's boolean() helper for reliable boolean casting
-        // This correctly handles: 1, "1", "true", "on", true -> true; 0, "0", "false", "off", false, null -> false
-        Setting::put('features.impersonation',                       $request->boolean('impersonation'));
-        Setting::put('features.allow_username_change',               $request->boolean('allow_username_change'));
-        Setting::put('security.require_admin_mfa_for_impersonation', $request->boolean('require_admin_mfa_for_impersonation', true));
-        Setting::put('features.subscription_module_enabled',         $request->boolean('subscription_module_enabled'));
-        Setting::put('features.stripe_payment_enabled',              $request->boolean('stripe_payment_enabled'));
+        // Define all feature flags with their keys
+        // Use $request->boolean() for reliable boolean casting from checkboxes
+        $features = [
+            'subscription_module_enabled'         => $request->boolean('subscription_module_enabled'),
+            'stripe_payment_enabled'              => $request->boolean('stripe_payment_enabled'),
+            'impersonation'                       => $request->boolean('impersonation'),
+            'allow_username_change'               => $request->boolean('allow_username_change'),
+            'require_admin_mfa_for_impersonation' => $request->boolean('require_admin_mfa_for_impersonation', true),
+            'support_enabled'                     => $request->boolean('support_enabled'),
+            'support_auto_reply_enabled'          => $request->boolean('support_auto_reply_enabled'),
+        ];
 
-        // Support Desk toggles
-        Setting::put('features.support_enabled',            $request->boolean('support_enabled'));
-        Setting::put('features.support_auto_reply_enabled', $request->boolean('support_auto_reply_enabled'));
+        // Persist each feature flag to system_settings table
+        foreach ($features as $key => $value) {
+            SystemSetting::updateOrCreate(
+                ['key' => $key],
+                ['value' => $value]
+            );
+        }
 
         // Save Stripe keys if present (nullable strings)
         $v = $request->validated();
-        if (array_key_exists('stripe_key', $v)) Setting::put('stripe.key', $v['stripe_key']);
-        if (array_key_exists('stripe_secret', $v)) Setting::put('stripe.secret', $v['stripe_secret']);
-        if (array_key_exists('stripe_webhook_secret', $v)) Setting::put('stripe.webhook.secret', $v['stripe_webhook_secret']);
+        if (array_key_exists('stripe_key', $v)) {
+            SystemSetting::updateOrCreate(['key' => 'stripe_key'], ['value' => $v['stripe_key']]);
+        }
+        if (array_key_exists('stripe_secret', $v)) {
+            SystemSetting::updateOrCreate(['key' => 'stripe_secret'], ['value' => $v['stripe_secret']]);
+        }
+        if (array_key_exists('stripe_webhook_secret', $v)) {
+            SystemSetting::updateOrCreate(['key' => 'stripe_webhook_secret'], ['value' => $v['stripe_webhook_secret']]);
+        }
 
-        // Clear cache to ensure settings take effect immediately
-        \Illuminate\Support\Facades\Cache::flush();
+        // Clear the Feature helper cache to ensure settings take effect immediately
+        Feature::clearCache();
 
         $this->logAudit('settings.update', 'Updated feature flags and modules', $v);
 
@@ -551,7 +566,7 @@ class SystemSettingsController extends Controller
     }
     /**
      * POST /admin/settings/support
-     * Persists support ticket system settings.
+     * Persists support ticket system settings to system_settings table.
      */
     public function updateSupport(Request $request)
     {
@@ -561,9 +576,22 @@ class SystemSettingsController extends Controller
             'support_auto_reply_text'     => 'nullable|string',
         ]);
 
-        Setting::put('features.support_enabled', (bool) ($request->support_enabled ?? false));
-        Setting::put('features.support_auto_reply_enabled', (bool) ($request->support_auto_reply_enabled ?? false));
-        Setting::put('features.support_auto_reply_text', $request->support_auto_reply_text);
+        // Use boolean() for checkbox handling, persist to system_settings
+        SystemSetting::updateOrCreate(
+            ['key' => 'support_enabled'],
+            ['value' => $request->boolean('support_enabled')]
+        );
+        SystemSetting::updateOrCreate(
+            ['key' => 'support_auto_reply_enabled'],
+            ['value' => $request->boolean('support_auto_reply_enabled')]
+        );
+        SystemSetting::updateOrCreate(
+            ['key' => 'support_auto_reply_text'],
+            ['value' => $request->input('support_auto_reply_text', '')]
+        );
+
+        // Clear the Feature helper cache
+        Feature::clearCache();
 
         $this->logAudit('settings.update', 'Updated support settings', $v);
 
