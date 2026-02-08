@@ -110,6 +110,17 @@ class SystemSettingsController extends Controller
                 'auto_reply_text'    => SystemSetting::where('key', 'support_auto_reply_text')->first()?->value ?? "Thank you for contacting us. We have received your ticket and will get back to you shortly.",
             ],
 
+            // Social Authentication Settings
+            'social' => [
+                'enabled'                => Feature::enabled('social_login_enabled'),
+                'google_enabled'         => Feature::enabled('google_login_enabled'),
+                'google_client_id'       => SystemSetting::where('key', 'google_client_id')->first()?->value,
+                'google_client_secret'   => SystemSetting::where('key', 'google_client_secret')->first()?->value,
+                'facebook_enabled'       => Feature::enabled('facebook_login_enabled'),
+                'facebook_client_id'     => SystemSetting::where('key', 'facebook_client_id')->first()?->value,
+                'facebook_client_secret' => SystemSetting::where('key', 'facebook_client_secret')->first()?->value,
+            ],
+
             // API keys (Sanctum)
             'api_tokens' => $apiTokens,
 
@@ -596,5 +607,61 @@ class SystemSettingsController extends Controller
         $this->logAudit('settings.update', 'Updated support settings', $v);
 
         return redirect()->route('admin.settings.index')->with('status', 'settings-support-updated');
+    }
+
+    /**
+     * POST /admin/settings/social
+     * Persists social authentication settings to system_settings table.
+     */
+    public function updateSocial(Request $request)
+    {
+        $v = $request->validate([
+            'social_login_enabled'    => 'nullable',
+            'google_login_enabled'    => 'nullable',
+            'google_client_id'        => 'nullable|string|max:255',
+            'google_client_secret'    => 'nullable|string|max:255',
+            'facebook_login_enabled'  => 'nullable',
+            'facebook_client_id'      => 'nullable|string|max:255',
+            'facebook_client_secret'  => 'nullable|string|max:255',
+        ]);
+
+        // Boolean toggles
+        SystemSetting::updateOrCreate(
+            ['key' => 'social_login_enabled'],
+            ['value' => $request->boolean('social_login_enabled')]
+        );
+        SystemSetting::updateOrCreate(
+            ['key' => 'google_login_enabled'],
+            ['value' => $request->boolean('google_login_enabled')]
+        );
+        SystemSetting::updateOrCreate(
+            ['key' => 'facebook_login_enabled'],
+            ['value' => $request->boolean('facebook_login_enabled')]
+        );
+
+        // String credentials (only update if provided, preserve existing if empty)
+        if ($request->filled('google_client_id')) {
+            SystemSetting::updateOrCreate(['key' => 'google_client_id'], ['value' => $v['google_client_id']]);
+        }
+        if ($request->filled('google_client_secret')) {
+            SystemSetting::updateOrCreate(['key' => 'google_client_secret'], ['value' => $v['google_client_secret']]);
+        }
+        if ($request->filled('facebook_client_id')) {
+            SystemSetting::updateOrCreate(['key' => 'facebook_client_id'], ['value' => $v['facebook_client_id']]);
+        }
+        if ($request->filled('facebook_client_secret')) {
+            SystemSetting::updateOrCreate(['key' => 'facebook_client_secret'], ['value' => $v['facebook_client_secret']]);
+        }
+
+        // Clear the Feature helper cache
+        Feature::clearCache();
+
+        $this->logAudit('settings.update', 'Updated social authentication settings', [
+            'social_login_enabled' => $request->boolean('social_login_enabled'),
+            'google_enabled' => $request->boolean('google_login_enabled'),
+            'facebook_enabled' => $request->boolean('facebook_login_enabled'),
+        ]);
+
+        return redirect()->route('admin.settings.index')->with('status', 'settings-social-updated');
     }
 }

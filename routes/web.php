@@ -30,14 +30,16 @@ Route::get('/', fn () => view('welcome'));
 
 /*
 |--------------------------------------------------------------------------
-| Social Login (Google)
-| Requires: config/services.php 'google' + .env GOOGLE_* + SocialiteController
+| Social Login (Google, Facebook, etc.)
+| Dynamically configured via Admin Panel → Settings → Social Authentication
 |--------------------------------------------------------------------------
 */
-Route::get('/auth/google/redirect', [SocialiteController::class, 'redirect'])
-    ->name('oauth.google.redirect');
-Route::get('/auth/google/callback', [SocialiteController::class, 'callback'])
-    ->name('oauth.google.callback');
+Route::get('/auth/{provider}/redirect', [SocialiteController::class, 'redirect'])
+    ->where('provider', 'google|facebook')
+    ->name('social.redirect');
+Route::get('/auth/{provider}/callback', [SocialiteController::class, 'callback'])
+    ->where('provider', 'google|facebook')
+    ->name('social.callback');
 
 /*
 |--------------------------------------------------------------------------
@@ -183,6 +185,9 @@ Route::middleware(['auth', 'verified', 'admin', 'not-banned', 'impersonation'])
                 
                 // Support Settings
                 Route::post('/support',    'updateSupport')->name('support.update');      // POST /admin/settings/support
+
+                // Social Authentication Settings
+                Route::post('/social',     'updateSocial')->name('social.update');        // POST /admin/settings/social
 
                 // API Keys (Sanctum) — create, reveal, revoke (current admin only)
                 Route::post('/api-tokens', 'createApiToken')->name('api.create');           // POST   /admin/settings/api-tokens

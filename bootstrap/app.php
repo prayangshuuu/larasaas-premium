@@ -75,6 +75,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withProviders([
         \App\Providers\AuthServiceProvider::class,      // <-- registers 'access-admin' gate
         \App\Providers\SettingsServiceProvider::class,
+        \App\Providers\SocialiteConfigServiceProvider::class, // Dynamic OAuth config from database
     ])
     ->withCommands([
         \App\Console\Commands\SanctumTokenCreate::class,

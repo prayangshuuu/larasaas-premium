@@ -62,6 +62,8 @@
                             @case('settings-app-logo-updated') App logo(s) updated. @break
                             @case('settings-smtp-updated') SMTP settings updated. @break
                             @case('settings-features-updated') Feature flags updated. @break
+                            @case('settings-social-updated') Social authentication settings updated. @break
+                            @case('settings-support-updated') Support settings updated. @break
                             @default {{ $status }}
                         @endswitch
                     </div>
@@ -398,6 +400,142 @@
         </div>
 
 
+        {{-- Social Authentication --}}
+        @php
+            $social = $social ?? [];
+            $socialEnabled = old('social_login_enabled', (int)($social['enabled'] ?? 0));
+            $googleEnabled = old('google_login_enabled', (int)($social['google_enabled'] ?? 0));
+            $facebookEnabled = old('facebook_login_enabled', (int)($social['facebook_enabled'] ?? 0));
+        @endphp
+        <div class="bg-zinc-900 border border-zinc-800 shadow-xl rounded-xl p-6 sm:p-8"
+             x-data="{
+                socialEnabled: {{ $socialEnabled ? 'true' : 'false' }},
+                googleEnabled: {{ $googleEnabled ? 'true' : 'false' }},
+                facebookEnabled: {{ $facebookEnabled ? 'true' : 'false' }}
+             }">
+            <h2 class="text-xl font-semibold text-white">Social Authentication</h2>
+            <p class="text-sm text-zinc-400 mt-1">Allow users to sign in with their social accounts.</p>
+
+            <form method="POST" action="{{ route('admin.settings.social.update') }}" class="mt-8 space-y-0 divide-y divide-zinc-800/50">
+                @csrf
+
+                {{-- Global Social Login Toggle --}}
+                <div class="flex items-center justify-between py-4">
+                    <div>
+                        <div class="font-medium text-zinc-200">Enable Social Login</div>
+                        <div class="text-sm text-zinc-500">Master switch for all social authentication providers.</div>
+                    </div>
+                    <input type="hidden" name="social_login_enabled" :value="socialEnabled ? 1 : 0">
+                    <button type="button" 
+                            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-zinc-900" 
+                            :class="{ 'bg-indigo-600': socialEnabled, 'bg-zinc-700': !socialEnabled }"
+                            @click="socialEnabled = !socialEnabled">
+                        <span class="sr-only">Use setting</span>
+                        <span aria-hidden="true" 
+                              class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                              :class="{ 'translate-x-5': socialEnabled, 'translate-x-0': !socialEnabled }"></span>
+                    </button>
+                </div>
+
+                {{-- Google Section --}}
+                <div class="py-4" x-show="socialEnabled" x-transition.opacity.duration.300ms>
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="font-medium text-zinc-200 flex items-center gap-2">
+                                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                                Google
+                            </div>
+                            <div class="text-sm text-zinc-500">Allow users to sign in with Google.</div>
+                        </div>
+                        <input type="hidden" name="google_login_enabled" :value="googleEnabled ? 1 : 0">
+                        <button type="button" 
+                                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-zinc-900" 
+                                :class="{ 'bg-indigo-600': googleEnabled, 'bg-zinc-700': !googleEnabled }"
+                                @click="googleEnabled = !googleEnabled">
+                            <span class="sr-only">Use setting</span>
+                            <span aria-hidden="true" 
+                                  class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                                  :class="{ 'translate-x-5': googleEnabled, 'translate-x-0': !googleEnabled }"></span>
+                        </button>
+                    </div>
+                    
+                    {{-- Google Config (visible when enabled) --}}
+                    <div x-show="googleEnabled" x-transition.opacity.duration.300ms class="mt-6 pl-4 border-l-2 border-indigo-600/50 space-y-5">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div>
+                                <label class="block text-sm font-medium text-zinc-300 mb-1">Client ID</label>
+                                <x-ui.input type="text" name="google_client_id" value="{{ old('google_client_id', $social['google_client_id'] ?? '') }}" placeholder="123456789.apps.googleusercontent.com" />
+                                @error('google_client_id') <p class="text-red-400 text-sm mt-1">{{ $message }}</p> @enderror
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-zinc-300 mb-1">Client Secret</label>
+                                <x-ui.input type="password" name="google_client_secret" value="{{ old('google_client_secret', $social['google_client_secret'] ?? '') }}" placeholder="GOCSPX-..." />
+                                @error('google_client_secret') <p class="text-red-400 text-sm mt-1">{{ $message }}</p> @enderror
+                            </div>
+                        </div>
+                        <div class="rounded-md bg-zinc-950/50 p-3 border border-zinc-800">
+                            <div class="text-xs text-zinc-500 mb-1">Callback URL (copy to Google Console)</div>
+                            <div class="flex items-center gap-2">
+                                <code id="googleCallbackUrl" class="text-xs text-indigo-400 font-mono break-all">{{ url('/auth/google/callback') }}</code>
+                                <button type="button" onclick="copyToClipboard('googleCallbackUrl', this)" class="shrink-0 text-xs text-zinc-400 hover:text-white">Copy</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Facebook Section --}}
+                <div class="py-4" x-show="socialEnabled" x-transition.opacity.duration.300ms>
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="font-medium text-zinc-200 flex items-center gap-2">
+                                <svg class="w-5 h-5 text-[#1877F2]" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                                Facebook
+                            </div>
+                            <div class="text-sm text-zinc-500">Allow users to sign in with Facebook.</div>
+                        </div>
+                        <input type="hidden" name="facebook_login_enabled" :value="facebookEnabled ? 1 : 0">
+                        <button type="button" 
+                                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-zinc-900" 
+                                :class="{ 'bg-indigo-600': facebookEnabled, 'bg-zinc-700': !facebookEnabled }"
+                                @click="facebookEnabled = !facebookEnabled">
+                            <span class="sr-only">Use setting</span>
+                            <span aria-hidden="true" 
+                                  class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                                  :class="{ 'translate-x-5': facebookEnabled, 'translate-x-0': !facebookEnabled }"></span>
+                        </button>
+                    </div>
+                    
+                    {{-- Facebook Config (visible when enabled) --}}
+                    <div x-show="facebookEnabled" x-transition.opacity.duration.300ms class="mt-6 pl-4 border-l-2 border-blue-600/50 space-y-5">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div>
+                                <label class="block text-sm font-medium text-zinc-300 mb-1">App ID</label>
+                                <x-ui.input type="text" name="facebook_client_id" value="{{ old('facebook_client_id', $social['facebook_client_id'] ?? '') }}" placeholder="123456789012345" />
+                                @error('facebook_client_id') <p class="text-red-400 text-sm mt-1">{{ $message }}</p> @enderror
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-zinc-300 mb-1">App Secret</label>
+                                <x-ui.input type="password" name="facebook_client_secret" value="{{ old('facebook_client_secret', $social['facebook_client_secret'] ?? '') }}" placeholder="abc123..." />
+                                @error('facebook_client_secret') <p class="text-red-400 text-sm mt-1">{{ $message }}</p> @enderror
+                            </div>
+                        </div>
+                        <div class="rounded-md bg-zinc-950/50 p-3 border border-zinc-800">
+                            <div class="text-xs text-zinc-500 mb-1">Callback URL (copy to Facebook Developers)</div>
+                            <div class="flex items-center gap-2">
+                                <code id="facebookCallbackUrl" class="text-xs text-blue-400 font-mono break-all">{{ url('/auth/facebook/callback') }}</code>
+                                <button type="button" onclick="copyToClipboard('facebookCallbackUrl', this)" class="shrink-0 text-xs text-zinc-400 hover:text-white">Copy</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-end pt-4">
+                    <button type="submit" class="inline-flex items-center justify-center rounded-md bg-indigo-600 px-6 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 transition-colors">Save Social Settings</button>
+                </div>
+            </form>
+        </div>
+
+
         {{-- API Keys --}}
         <div class="bg-zinc-900 border border-zinc-800 shadow-xl rounded-xl p-6 sm:p-8">
             <h2 class="text-xl font-semibold text-white">API Keys</h2>
@@ -538,6 +676,17 @@
                 const old = btn.innerText;
                 btn.innerText = 'Copied';
                 setTimeout(() => { btn.innerText = old; }, 900);
+            });
+        }
+        function copyToClipboard(elementId, btn) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            const text = el.textContent.trim();
+            if (!text) return;
+            navigator.clipboard.writeText(text).then(() => {
+                const old = btn.innerText;
+                btn.innerText = 'Copied!';
+                setTimeout(() => { btn.innerText = old; }, 1200);
             });
         }
     </script>
