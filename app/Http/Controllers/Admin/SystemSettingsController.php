@@ -119,6 +119,9 @@ class SystemSettingsController extends Controller
                 'facebook_enabled'       => Feature::enabled('facebook_login_enabled'),
                 'facebook_client_id'     => SystemSetting::where('key', 'facebook_client_id')->first()?->value,
                 'facebook_client_secret' => SystemSetting::where('key', 'facebook_client_secret')->first()?->value,
+                'twitter_enabled'        => Feature::enabled('twitter_login_enabled'),
+                'twitter_client_id'      => SystemSetting::where('key', 'twitter_client_id')->first()?->value,
+                'twitter_client_secret'  => SystemSetting::where('key', 'twitter_client_secret')->first()?->value,
             ],
 
             // API keys (Sanctum)
@@ -623,6 +626,9 @@ class SystemSettingsController extends Controller
             'facebook_login_enabled'  => 'nullable',
             'facebook_client_id'      => 'nullable|string|max:255',
             'facebook_client_secret'  => 'nullable|string|max:255',
+            'twitter_login_enabled'   => 'nullable',
+            'twitter_client_id'       => 'nullable|string|max:255',
+            'twitter_client_secret'   => 'nullable|string|max:255',
         ]);
 
         // Boolean toggles
@@ -638,6 +644,10 @@ class SystemSettingsController extends Controller
             ['key' => 'facebook_login_enabled'],
             ['value' => $request->boolean('facebook_login_enabled')]
         );
+        SystemSetting::updateOrCreate(
+            ['key' => 'twitter_login_enabled'],
+            ['value' => $request->boolean('twitter_login_enabled')]
+        );
 
         // String credentials (only update if provided, preserve existing if empty)
         if ($request->filled('google_client_id')) {
@@ -652,6 +662,12 @@ class SystemSettingsController extends Controller
         if ($request->filled('facebook_client_secret')) {
             SystemSetting::updateOrCreate(['key' => 'facebook_client_secret'], ['value' => $v['facebook_client_secret']]);
         }
+        if ($request->filled('twitter_client_id')) {
+            SystemSetting::updateOrCreate(['key' => 'twitter_client_id'], ['value' => $v['twitter_client_id']]);
+        }
+        if ($request->filled('twitter_client_secret')) {
+            SystemSetting::updateOrCreate(['key' => 'twitter_client_secret'], ['value' => $v['twitter_client_secret']]);
+        }
 
         // Clear the Feature helper cache
         Feature::clearCache();
@@ -660,6 +676,7 @@ class SystemSettingsController extends Controller
             'social_login_enabled' => $request->boolean('social_login_enabled'),
             'google_enabled' => $request->boolean('google_login_enabled'),
             'facebook_enabled' => $request->boolean('facebook_login_enabled'),
+            'twitter_enabled' => $request->boolean('twitter_login_enabled'),
         ]);
 
         return redirect()->route('admin.settings.index')->with('status', 'settings-social-updated');

@@ -406,12 +406,14 @@
             $socialEnabled = old('social_login_enabled', (int)($social['enabled'] ?? 0));
             $googleEnabled = old('google_login_enabled', (int)($social['google_enabled'] ?? 0));
             $facebookEnabled = old('facebook_login_enabled', (int)($social['facebook_enabled'] ?? 0));
+            $twitterEnabled = old('twitter_login_enabled', (int)($social['twitter_enabled'] ?? 0));
         @endphp
         <div class="bg-zinc-900 border border-zinc-800 shadow-xl rounded-xl p-6 sm:p-8"
              x-data="{
                 socialEnabled: {{ $socialEnabled ? 'true' : 'false' }},
                 googleEnabled: {{ $googleEnabled ? 'true' : 'false' }},
-                facebookEnabled: {{ $facebookEnabled ? 'true' : 'false' }}
+                facebookEnabled: {{ $facebookEnabled ? 'true' : 'false' }},
+                twitterEnabled: {{ $twitterEnabled ? 'true' : 'false' }}
              }">
             <h2 class="text-xl font-semibold text-white">Social Authentication</h2>
             <p class="text-sm text-zinc-400 mt-1">Allow users to sign in with their social accounts.</p>
@@ -524,6 +526,57 @@
                             <div class="flex items-center gap-2">
                                 <code id="facebookCallbackUrl" class="text-xs text-blue-400 font-mono break-all">{{ url('/auth/facebook/callback') }}</code>
                                 <button type="button" onclick="copyToClipboard('facebookCallbackUrl', this)" class="shrink-0 text-xs text-zinc-400 hover:text-white">Copy</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Twitter/X Section --}}
+                <div class="py-4" x-show="socialEnabled" x-transition.opacity.duration.300ms>
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="font-medium text-zinc-200 flex items-center gap-2">
+                                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                                Twitter / X
+                            </div>
+                            <div class="text-sm text-zinc-500">Allow users to sign in with Twitter (X).</div>
+                        </div>
+                        <input type="hidden" name="twitter_login_enabled" :value="twitterEnabled ? 1 : 0">
+                        <button type="button" 
+                                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-zinc-900" 
+                                :class="{ 'bg-indigo-600': twitterEnabled, 'bg-zinc-700': !twitterEnabled }"
+                                @click="twitterEnabled = !twitterEnabled">
+                            <span class="sr-only">Use setting</span>
+                            <span aria-hidden="true" 
+                                  class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                                  :class="{ 'translate-x-5': twitterEnabled, 'translate-x-0': !twitterEnabled }"></span>
+                        </button>
+                    </div>
+                    
+                    {{-- Twitter Config (visible when enabled) --}}
+                    <div x-show="twitterEnabled" x-transition.opacity.duration.300ms class="mt-6 pl-4 border-l-2 border-zinc-600/50 space-y-5">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div>
+                                <label class="block text-sm font-medium text-zinc-300 mb-1">Client ID</label>
+                                <x-ui.input type="text" name="twitter_client_id" value="{{ old('twitter_client_id', $social['twitter_client_id'] ?? '') }}" placeholder="Your Twitter OAuth 2.0 Client ID" />
+                                @error('twitter_client_id') <p class="text-red-400 text-sm mt-1">{{ $message }}</p> @enderror
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-zinc-300 mb-1">Client Secret</label>
+                                <x-ui.input type="password" name="twitter_client_secret" value="{{ old('twitter_client_secret', $social['twitter_client_secret'] ?? '') }}" placeholder="Your Twitter OAuth 2.0 Client Secret" />
+                                @error('twitter_client_secret') <p class="text-red-400 text-sm mt-1">{{ $message }}</p> @enderror
+                            </div>
+                        </div>
+                        <div class="rounded-md bg-zinc-950/50 p-3 border border-zinc-800">
+                            <div class="text-xs text-zinc-500 mb-1">Callback URL (copy to Twitter Developer Portal)</div>
+                            <div class="flex items-center gap-2">
+                                <code id="twitterCallbackUrl" class="text-xs text-zinc-400 font-mono break-all">{{ url('/auth/twitter/callback') }}</code>
+                                <button type="button" onclick="copyToClipboard('twitterCallbackUrl', this)" class="shrink-0 text-xs text-zinc-400 hover:text-white">Copy</button>
+                            </div>
+                        </div>
+                        <div class="rounded-md bg-amber-500/10 p-3 border border-amber-500/20">
+                            <div class="text-xs text-amber-400">
+                                <strong>Note:</strong> Twitter OAuth 2.0 requires enabling "Request email from users" in your app settings for email access.
                             </div>
                         </div>
                     </div>

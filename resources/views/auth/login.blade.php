@@ -87,6 +87,17 @@
                         <span>Continue with Facebook</span>
                     </a>
                 @endif
+
+                {{-- Twitter/X Button --}}
+                @if (\App\Helpers\Feature::enabled('twitter_login_enabled'))
+                    <a href="{{ route('social.redirect', 'twitter') }}" 
+                       class="flex w-full items-center justify-center gap-3 rounded-md bg-black px-4 py-3 text-sm font-semibold text-white shadow-sm ring-1 ring-inset ring-zinc-800 hover:bg-zinc-900 transition-colors">
+                        <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                        </svg>
+                        <span>Continue with X</span>
+                    </a>
+                @endif
             </div>
         </div>
     @endif

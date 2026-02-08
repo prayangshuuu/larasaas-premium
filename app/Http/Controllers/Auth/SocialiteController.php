@@ -16,7 +16,7 @@ class SocialiteController extends Controller
     /**
      * Supported OAuth providers.
      */
-    protected array $supportedProviders = ['google', 'facebook'];
+    protected array $supportedProviders = ['google', 'facebook', 'twitter'];
 
     /**
      * Redirect the user to the OAuth provider authentication page.
@@ -53,6 +53,7 @@ class SocialiteController extends Controller
             } elseif ($provider === 'facebook') {
                 $driver->scopes(['email', 'public_profile']);
             }
+            // Twitter OAuth 2.0 uses default scopes
 
             return $driver->redirect();
         } catch (\Throwable $e) {
@@ -102,8 +103,17 @@ class SocialiteController extends Controller
         $providerId = $socialUser->getId();
         $avatar = $socialUser->getAvatar();
 
+        // Twitter may not return email - handle gracefully
         if (empty($email)) {
-            return redirect()->route('login')->with('error', ucfirst($provider) . ' did not return an email. Please use password login.');
+            // Try to get email from user data for Twitter
+            if ($provider === 'twitter') {
+                $userData = $socialUser->user ?? [];
+                $email = $userData['email'] ?? null;
+            }
+            
+            if (empty($email)) {
+                return redirect()->route('login')->with('error', ucfirst($provider) . ' did not return an email. Please use password login or ensure email access is granted.');
+            }
         }
 
         // Provider ID column name
@@ -137,7 +147,7 @@ class SocialiteController extends Controller
             if (!$name) {
                 // Try to get name from user data
                 $userData = $socialUser->user ?? [];
-                $name = $userData['given_name'] ?? $userData['first_name'] ?? '';
+                $name = $userData['given_name'] ?? $userData['first_name'] ?? $userData['name'] ?? '';
                 if (!$name) {
                     $name = strstr($email, '@', true) ?: 'User';
                 }

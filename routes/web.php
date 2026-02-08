@@ -30,15 +30,15 @@ Route::get('/', fn () => view('welcome'));
 
 /*
 |--------------------------------------------------------------------------
-| Social Login (Google, Facebook, etc.)
+| Social Login (Google, Facebook, Twitter/X)
 | Dynamically configured via Admin Panel → Settings → Social Authentication
 |--------------------------------------------------------------------------
 */
 Route::get('/auth/{provider}/redirect', [SocialiteController::class, 'redirect'])
-    ->where('provider', 'google|facebook')
+    ->where('provider', 'google|facebook|twitter')
     ->name('social.redirect');
 Route::get('/auth/{provider}/callback', [SocialiteController::class, 'callback'])
-    ->where('provider', 'google|facebook')
+    ->where('provider', 'google|facebook|twitter')
     ->name('social.callback');
 
 /*

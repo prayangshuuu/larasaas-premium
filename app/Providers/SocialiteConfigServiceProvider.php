@@ -66,6 +66,9 @@ class SocialiteConfigServiceProvider extends ServiceProvider
                 'facebook_login_enabled',
                 'facebook_client_id',
                 'facebook_client_secret',
+                'twitter_login_enabled',
+                'twitter_client_id',
+                'twitter_client_secret',
             ])->pluck('value', 'key');
 
             // Configure Google
@@ -76,7 +79,7 @@ class SocialiteConfigServiceProvider extends ServiceProvider
                 config([
                     'services.google.client_id' => $googleClientId,
                     'services.google.client_secret' => $googleClientSecret,
-                    'services.google.redirect' => config('app.url') . '/auth/google/callback',
+                    'services.google.redirect' => url('/auth/google/callback'),
                 ]);
             }
 
@@ -88,7 +91,19 @@ class SocialiteConfigServiceProvider extends ServiceProvider
                 config([
                     'services.facebook.client_id' => $facebookClientId,
                     'services.facebook.client_secret' => $facebookClientSecret,
-                    'services.facebook.redirect' => config('app.url') . '/auth/facebook/callback',
+                    'services.facebook.redirect' => url('/auth/facebook/callback'),
+                ]);
+            }
+
+            // Configure Twitter (X)
+            $twitterClientId = $settings->get('twitter_client_id');
+            $twitterClientSecret = $settings->get('twitter_client_secret');
+
+            if ($twitterClientId && $twitterClientSecret) {
+                config([
+                    'services.twitter.client_id' => $twitterClientId,
+                    'services.twitter.client_secret' => $twitterClientSecret,
+                    'services.twitter.redirect' => url('/auth/twitter/callback'),
                 ]);
             }
 
