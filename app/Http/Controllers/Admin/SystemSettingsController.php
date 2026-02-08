@@ -223,6 +223,7 @@ class SystemSettingsController extends Controller
         // Define all feature flags with their keys
         // Use $request->boolean() for reliable boolean casting from checkboxes
         $features = [
+            'social_login_enabled'                => $request->boolean('social_login_enabled'),
             'subscription_module_enabled'         => $request->boolean('subscription_module_enabled'),
             'stripe_payment_enabled'              => $request->boolean('stripe_payment_enabled'),
             'impersonation'                       => $request->boolean('impersonation'),

@@ -226,8 +226,12 @@
         </div>
 
         {{-- Platform Features & Modules --}}
+        @php
+            $socialEnabled = old('social_login_enabled', (int)($social['enabled'] ?? 0));
+        @endphp
         <div class="bg-zinc-900 border border-zinc-800 shadow-xl rounded-xl p-6 sm:p-8"
              x-data="{
+                socialLoginEnabled: {{ $socialEnabled ? 'true' : 'false' }},
                 stripeEnabled: {{ old('stripe_payment_enabled', (int)$features['stripe_payment_enabled']) ? 'true' : 'false' }},
                 subscriptionEnabled: {{ old('subscription_module_enabled', (int)$features['subscription_module_enabled']) ? 'true' : 'false' }},
                 impersonationEnabled: {{ old('impersonation', (int)$features['impersonation']) ? 'true' : 'false' }},
@@ -242,7 +246,25 @@
             <form method="POST" action="{{ route('admin.settings.features.update') }}" class="mt-8 space-y-0 divide-y divide-zinc-800/50">
                 @csrf
 
-                {{-- 1. Subscription Module --}}
+                {{-- 1. Enable Social Login --}}
+                <div class="flex items-center justify-between py-4">
+                    <div>
+                        <div class="font-medium text-zinc-200">Enable Social Login</div>
+                        <div class="text-sm text-zinc-500">Master switch for all social authentication providers.</div>
+                    </div>
+                    <input type="hidden" name="social_login_enabled" :value="socialLoginEnabled ? 1 : 0">
+                    <button type="button" 
+                            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-zinc-900" 
+                            :class="{ 'bg-indigo-600': socialLoginEnabled, 'bg-zinc-700': !socialLoginEnabled }"
+                            @click="socialLoginEnabled = !socialLoginEnabled">
+                        <span class="sr-only">Use setting</span>
+                        <span aria-hidden="true" 
+                              class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                              :class="{ 'translate-x-5': socialLoginEnabled, 'translate-x-0': !socialLoginEnabled }"></span>
+                    </button>
+                </div>
+
+                {{-- 2. Subscription Module --}}
                 <div class="flex items-center justify-between py-4">
                     <div>
                         <div class="font-medium text-zinc-200">Enable Subscription Module</div>

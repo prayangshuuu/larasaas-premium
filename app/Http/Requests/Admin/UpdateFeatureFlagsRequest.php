@@ -14,6 +14,7 @@ class UpdateFeatureFlagsRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'social_login_enabled'                  => ['nullable', 'boolean'],
             'impersonation'                         => ['nullable', 'boolean'],
             'allow_username_change'                 => ['nullable', 'boolean'],
             'require_admin_mfa_for_impersonation'   => ['nullable', 'boolean'],
