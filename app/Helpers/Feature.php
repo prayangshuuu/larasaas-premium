@@ -2,8 +2,7 @@
 
 namespace App\Helpers;
 
-use App\Models\SystemSetting;
-use Illuminate\Support\Facades\Cache;
+use App\Models\Setting;
 
 class Feature
 {
@@ -15,24 +14,19 @@ class Feature
      */
     public static function enabled(string $key): bool
     {
-        // Cache mapping of keys to their boolean values for 60 minutes
-        // We act on the assumption that settings don't change every second.
-        // If they do, we should clear this cache in the SystemSetting observer/controller.
-        return Cache::remember("feature_flag:{$key}", 60 * 60, function () use ($key) {
-            $setting = SystemSetting::where('key', $key)->first();
+        // 1. Try exact key match (cached by Setting class)
+        // We use get() checks to distinguish between "doesn't exist" (null) and "exists but false" (false/0)
+        // although bool() implementation in Setting handles defaults nicely.
+        if (Setting::get($key) !== null) {
+            return Setting::bool($key);
+        }
 
-            if (!$setting) {
-                return false;
-            }
+        // 2. If no exact match and no dot notation, try 'features.' prefix
+        // This handles cases like 'support_enabled' mapping to 'features.support_enabled'
+        if (!str_contains($key, '.')) {
+            return Setting::bool("features.{$key}");
+        }
 
-            $value = $setting->value;
-
-            // Handle string booleans if stored as 'true'/'false'
-            if (is_string($value)) {
-                return filter_var($value, FILTER_VALIDATE_BOOLEAN);
-            }
-
-            return (bool) $value;
-        });
+        return false;
     }
 }
