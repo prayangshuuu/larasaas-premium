@@ -1,9 +1,9 @@
 <x-app-layout>
-    {{-- Header Background --}}
-    <div class="relative bg-zinc-900 border-b border-zinc-800 pb-32 overflow-hidden">
-        <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-zinc-900/50 to-purple-500/10 opacity-50 z-0"></div>
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 relative z-10">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+    <div class="space-y-8">
+        {{-- Header Section --}}
+        <div class="relative bg-zinc-900 border border-zinc-800 rounded-2xl p-8 overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-zinc-900/50 to-purple-500/10 opacity-50"></div>
+            <div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div>
                     <h1 class="text-3xl font-bold text-white tracking-tight">{{ __('My Teams') }}</h1>
                     <p class="mt-2 text-zinc-400 max-w-2xl">
@@ -18,15 +18,13 @@
                 </a>
             </div>
         </div>
-    </div>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-24 pb-12 relative z-20 space-y-8">
-        
+        {{-- Content Section --}}
         @if($teams->count() > 0)
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 @foreach($teams as $team)
                     <a href="{{ route('teams.show', $team) }}" class="group block h-full">
-                        <div class="h-full bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 backdrop-blur-xl transition-all duration-300 hover:bg-zinc-800/80 hover:border-indigo-500/30 hover:shadow-2xl hover:shadow-indigo-500/10 hover:-translate-y-1 relative overflow-hidden">
+                        <div class="h-full bg-zinc-910 border border-zinc-800 rounded-2xl p-6 backdrop-blur-xl transition-all duration-300 hover:bg-zinc-800/80 hover:border-indigo-500/30 hover:shadow-2xl hover:shadow-indigo-500/10 hover:-translate-y-1 relative overflow-hidden">
                             
                             {{-- Gradient Glow on Hover --}}
                             <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
