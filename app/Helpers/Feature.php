@@ -98,4 +98,15 @@ class Feature
 
         return (bool) $value;
     }
+
+    /**
+     * Fake the feature flags for testing.
+     *
+     * @param array $features
+     * @return void
+     */
+    public static function fake(array $features): void
+    {
+        Cache::put(self::CACHE_KEY, $features, self::CACHE_TTL);
+    }
 }

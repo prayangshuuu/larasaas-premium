@@ -102,6 +102,7 @@ class SystemSettingsController extends Controller
                 'stripe_secret'                       => SystemSetting::where('key', 'stripe_secret')->first()?->value,
                 'stripe_webhook_secret'               => SystemSetting::where('key', 'stripe_webhook_secret')->first()?->value,
                 'announcement_enabled'                => Feature::enabled('announcement_enabled'),
+                'team_management_enabled'             => Feature::enabled('team_management_enabled'),
             ],
 
             // Support Settings - read from system_settings via Feature helper
@@ -233,6 +234,7 @@ class SystemSettingsController extends Controller
             'support_enabled'                     => $request->boolean('support_enabled'),
             'support_auto_reply_enabled'          => $request->boolean('support_auto_reply_enabled'),
             'announcement_enabled'                => $request->boolean('announcement_enabled'),
+            'team_management_enabled'             => $request->boolean('team_management_enabled'),
         ];
 
         // Persist each feature flag to system_settings table

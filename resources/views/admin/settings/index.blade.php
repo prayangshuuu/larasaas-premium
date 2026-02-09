@@ -271,6 +271,25 @@
                     </button>
                 </div>
 
+                {{-- 0.5. Team Management (Multi-tenancy) --}}
+                <div class="flex items-center justify-between py-4"
+                     x-data="{ enabled: {{ old('team_management_enabled', (int)($features['team_management_enabled'] ?? 0)) ? 'true' : 'false' }} }">
+                    <div>
+                        <div class="font-medium text-zinc-200">Enable Team Management</div>
+                        <div class="text-sm text-zinc-500">Allow users to create and manage teams (multi-tenancy).</div>
+                    </div>
+                    <input type="hidden" name="team_management_enabled" :value="enabled ? 1 : 0">
+                    <button type="button" 
+                            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-zinc-900" 
+                            :class="{ 'bg-indigo-600': enabled, 'bg-zinc-700': !enabled }"
+                            @click="enabled = !enabled">
+                        <span class="sr-only">Use setting</span>
+                        <span aria-hidden="true" 
+                              class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                              :class="{ 'translate-x-5': enabled, 'translate-x-0': !enabled }"></span>
+                    </button>
+                </div>
+
                 {{-- 1. Subscription Module --}}
                 <div class="flex items-center justify-between py-4">
                     <div>

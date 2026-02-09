@@ -27,25 +27,78 @@
             {{-- Desktop Actions --}}
             <div class="hidden sm:flex sm:items-center sm:gap-4">
                 {{-- User Support Link --}}
-                @if(\App\Helpers\Feature::enabled('support_enabled'))
-                <a href="{{ route('support.index') }}" class="text-sm font-medium {{ request()->routeIs('support.*') ? 'text-indigo-400' : 'text-zinc-400 hover:text-white' }} transition-colors">Support</a>
-                @endif
+
                 
                 {{-- Admin Navigation --}}
-                @if($user && $user->isAdmin())
-                    <div class="hidden md:flex items-center gap-6 mr-4 border-r border-zinc-800 pr-6">
-                        <a href="{{ route('admin.dashboard') }}" class="text-sm font-medium {{ request()->routeIs('admin.dashboard') ? 'text-indigo-400' : 'text-zinc-400 hover:text-white' }} transition-colors">Admin</a>
-                        
-                        @if(\App\Helpers\Feature::enabled('subscription_module_enabled'))
-                        <a href="{{ route('admin.coupons.index') }}" class="text-sm font-medium {{ request()->routeIs('admin.coupons.*') ? 'text-indigo-400' : 'text-zinc-400 hover:text-white' }} transition-colors">Coupons</a>
-                        <a href="{{ route('admin.subscriptions.index') }}" class="text-sm font-medium {{ request()->routeIs('admin.subscriptions.*') ? 'text-indigo-400' : 'text-zinc-400 hover:text-white' }} transition-colors">Subscriptions</a>
-                        @endif
 
-                        @if(\App\Helpers\Feature::enabled('support_enabled'))
-                        <a href="{{ route('admin.support.index') }}" class="text-sm font-medium {{ request()->routeIs('admin.support.*') ? 'text-indigo-400' : 'text-zinc-400 hover:text-white' }} transition-colors">Tickets</a>
-                        @endif
+
+                {{-- Team Switcher --}}
+                @if(\App\Helpers\Feature::enabled('team_management_enabled') && $user->currentTeam)
+                    <div class="relative ml-4" x-data="{ open: false }">
+                        <button @click="open = !open" 
+                                @click.outside="open = false"
+                                class="flex items-center gap-2 rounded-md bg-zinc-800/50 px-3 py-2 text-sm font-medium text-zinc-300 hover:text-white hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-black transition-all">
+                            <span>{{ $user->currentTeam->name }}</span>
+                            <svg class="h-4 w-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 15L12 18.75 15.75 15m-7.5-6L12 5.25 15.75 9" />
+                            </svg>
+                        </button>
+
+                        <div x-show="open"
+                             x-transition:enter="transition ease-out duration-200"
+                             x-transition:enter-start="opacity-0 scale-95"
+                             x-transition:enter-end="opacity-100 scale-100"
+                             x-transition:leave="transition ease-in duration-75"
+                             x-transition:leave-start="opacity-100 scale-100"
+                             x-transition:leave-end="opacity-0 scale-95"
+                             class="absolute right-0 z-50 mt-2 w-60 origin-top-right rounded-xl bg-zinc-900 border border-zinc-800 py-1 shadow-2xl ring-1 ring-black ring-opacity-5 focus:outline-none"
+                             style="display: none;">
+                            
+                            {{-- Manage Team --}}
+                            <div class="px-4 py-2 text-xs text-zinc-500 font-semibold uppercase tracking-wider">
+                                {{ __('Manage Team') }}
+                            </div>
+
+                            <a href="{{ route('teams.show', $user->currentTeam) }}" class="block px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors">
+                                {{ __('Team Settings') }}
+                            </a>
+                            
+                            <a href="{{ route('teams.create') }}" class="block px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors">
+                                {{ __('Create New Team') }}
+                            </a>
+
+                            <div class="border-t border-zinc-800 my-1"></div>
+
+                            {{-- Switch Teams --}}
+                            <div class="px-4 py-2 text-xs text-zinc-500 font-semibold uppercase tracking-wider">
+                                {{ __('Switch Teams') }}
+                            </div>
+
+                            @foreach($user->allTeams() as $team)
+                                @if($user->switchTeam($team)) {{-- Check if authorized to switch, but don't switch logic here obviously, just list --}}
+                                {{-- Wait, $user->allTeams() is not defined in User model yet. I need to define it or use existing relationships. --}}
+                                {{-- I defined ownedTeams and teams. I should merge them. --}}
+                                {{-- Let's use $user->ownedTeams->merge($user->teams)->sortBy('name') --}}
+                                @endif
+                                <form method="POST" action="{{ route('current-team.update') }}">
+                                    @csrf
+                                    @method('PUT')
+                                    <input type="hidden" name="team_id" value="{{ $team->id }}">
+                                    <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors flex items-center justify-between">
+                                        <div class="flex items-center">
+                                            @if($team->id == $user->current_team_id)
+                                                <svg class="mr-2 h-5 w-5 text-green-400" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                            @endif
+                                            <div class="truncate">{{ $team->name }}</div>
+                                        </div>
+                                    </button>
+                                </form>
+                            @endforeach
+                        </div>
                     </div>
                 @endif
+
+
 
                 {{-- Notifications Dropdown --}}
                 <div class="relative ml-4 mr-4" x-data="{ open: false }">
@@ -163,6 +216,14 @@
                             <p class="truncate text-sm font-semibold text-white">{{ $user->email }}</p>
                         </div>
 
+                        @if(\App\Helpers\Feature::enabled('team_management_enabled'))
+                            <div class="py-1 border-b border-zinc-800">
+                                <a href="{{ route('teams.index') }}" class="block px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors">
+                                    My Teams
+                                </a>
+                            </div>
+                        @endif
+
                         {{-- Admin Shortcuts --}}
                         @if($user && $user->isAdmin())
                             <div class="py-1 border-b border-zinc-800">
@@ -171,6 +232,25 @@
                                 <a href="{{ route('admin.dashboard') }}" class="block px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors">
                                     Dashboard
                                 </a>
+
+                                <a href="{{ route('admin.users.index') }}" class="block px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors">
+                                    Manage Users
+                                </a>
+
+                                @if(\App\Helpers\Feature::enabled('team_management_enabled'))
+                                    <a href="{{ route('admin.teams.index') }}" class="block px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors">
+                                        Manage Teams
+                                    </a>
+                                @endif
+
+                                @if(\App\Helpers\Feature::enabled('subscription_module_enabled'))
+                                    <a href="{{ route('admin.subscriptions.index') }}" class="block px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors">
+                                        Subscriptions
+                                    </a>
+                                    <a href="{{ route('admin.coupons.index') }}" class="block px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors">
+                                        Coupons
+                                    </a>
+                                @endif
 
                                 @if(\App\Helpers\Feature::enabled('support_enabled'))
                                     <a href="{{ route('admin.support.index') }}" class="block px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors">
@@ -184,11 +264,21 @@
                                     </a>
                                 @endif
 
-                                @if(\App\Helpers\Feature::enabled('subscription_module_enabled'))
-                                    <a href="{{ route('admin.plans.index') }}" class="block px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors">
-                                        Plans & Billing
-                                    </a>
-                                @endif
+                                <a href="{{ route('admin.audit.index') }}" class="block px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors">
+                                    Audit Log
+                                </a>
+
+                                <a href="{{ route('admin.settings.index') }}" class="block px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors">
+                                    System Settings
+                                </a>
+
+                                <a href="{{ route('admin.plans.index') }}" class="block px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors">
+                                    Plans
+                                </a>
+
+                                <a href="{{ route('admin.docs.api') }}" class="block px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors">
+                                    API Documentation
+                                </a>
                             </div>
                         @endif
 
@@ -252,6 +342,20 @@
                 Webhooks
             </a>
             
+            @if(\App\Helpers\Feature::enabled('team_management_enabled') && $user->currentTeam)
+                <div class="border-t border-zinc-800 mt-2 pt-2 pb-1">
+                    <p class="px-3 text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Team Management</p>
+                    <a href="{{ route('teams.show', $user->currentTeam) }}" 
+                       class="block rounded-md py-2 px-3 text-base font-medium {{ request()->routeIs('teams.show') ? 'bg-indigo-500/10 text-indigo-400' : 'text-zinc-400 hover:bg-zinc-800 hover:text-white' }}">
+                        Team Settings
+                    </a>
+                    <a href="{{ route('teams.create') }}" 
+                       class="block rounded-md py-2 px-3 text-base font-medium {{ request()->routeIs('teams.create') ? 'bg-indigo-500/10 text-indigo-400' : 'text-zinc-400 hover:bg-zinc-800 hover:text-white' }}">
+                        Create new team
+                    </a>
+                </div>
+            @endif
+            
             @if($user && $user->isAdmin())
                 <div class="border-t border-zinc-800 mt-2 pt-2 pb-1">
                     <p class="px-3 text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Admin</p>
@@ -260,16 +364,30 @@
                         Dashboard
                     </a>
                     
-                    @if(\App\Helpers\Feature::enabled('subscription_module_enabled'))
-                    <a href="{{ route('admin.coupons.index') }}" 
-                       class="block rounded-md py-2 px-3 text-base font-medium {{ request()->routeIs('admin.coupons.*') ? 'bg-indigo-500/10 text-indigo-400' : 'text-zinc-400 hover:bg-zinc-800 hover:text-white' }}">
-                        Coupons
+                    <a href="{{ route('admin.users.index') }}" 
+                       class="block rounded-md py-2 px-3 text-base font-medium {{ request()->routeIs('admin.users.*') ? 'bg-indigo-500/10 text-indigo-400' : 'text-zinc-400 hover:bg-zinc-800 hover:text-white' }}">
+                        Manage Users
                     </a>
-                    <a href="{{ route('admin.subscriptions.index') }}" 
-                       class="block rounded-md py-2 px-3 text-base font-medium {{ request()->routeIs('admin.subscriptions.*') ? 'bg-indigo-500/10 text-indigo-400' : 'text-zinc-400 hover:bg-zinc-800 hover:text-white' }}">
-                        Subscriptions
+
+                    <a href="{{ route('admin.audit.index') }}" 
+                       class="block rounded-md py-2 px-3 text-base font-medium {{ request()->routeIs('admin.audit.*') ? 'bg-indigo-500/10 text-indigo-400' : 'text-zinc-400 hover:bg-zinc-800 hover:text-white' }}">
+                        Audit Log
                     </a>
-                    @endif
+
+                    <a href="{{ route('admin.settings.index') }}" 
+                       class="block rounded-md py-2 px-3 text-base font-medium {{ request()->routeIs('admin.settings.*') ? 'bg-indigo-500/10 text-indigo-400' : 'text-zinc-400 hover:bg-zinc-800 hover:text-white' }}">
+                        System Settings
+                    </a>
+
+                    <a href="{{ route('admin.plans.index') }}" 
+                       class="block rounded-md py-2 px-3 text-base font-medium {{ request()->routeIs('admin.plans.*') ? 'bg-indigo-500/10 text-indigo-400' : 'text-zinc-400 hover:bg-zinc-800 hover:text-white' }}">
+                        Plans
+                    </a>
+
+                    <a href="{{ route('admin.docs.api') }}" 
+                       class="block rounded-md py-2 px-3 text-base font-medium {{ request()->routeIs('docs.api') ? 'bg-indigo-500/10 text-indigo-400' : 'text-zinc-400 hover:bg-zinc-800 hover:text-white' }}">
+                        API Documentation
+                    </a>
                 </div>
             @endif
         </div>

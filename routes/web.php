@@ -106,6 +106,18 @@ Route::middleware(['auth', 'verified', 'not-banned'])->group(function () {
         ->name('announcements.read');
     // Outgoing Webhooks
     Route::resource('webhooks', \App\Http\Controllers\WebhookController::class);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Team Management Routes
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware(['feature:team_management_enabled'])->group(function () {
+        Route::resource('teams', \App\Http\Controllers\TeamController::class);
+        Route::put('/current-team', [\App\Http\Controllers\CurrentTeamController::class, 'update'])->name('current-team.update');
+        Route::post('/teams/{team}/members', [\App\Http\Controllers\TeamMemberController::class, 'store'])->name('teams.members.store');
+        Route::delete('/teams/{team}/members/{user}', [\App\Http\Controllers\TeamMemberController::class, 'destroy'])->name('teams.members.destroy');
+    });
 });
 
 /*
@@ -234,6 +246,18 @@ Route::middleware(['auth', 'verified', 'admin', 'not-banned', 'impersonation'])
             Route::post('/{supportTicket}/reply', 'reply')->name('reply');
             Route::patch('/{supportTicket}/status', 'updateStatus')->name('status.update');
         });
+
+        /*
+        |------------------------------------------------------------------
+        | Team Management (Admin)
+        |------------------------------------------------------------------
+        */
+        Route::delete('teams/{team}/members/{user}', [\App\Http\Controllers\Admin\TeamController::class, 'removeMember'])
+            ->name('teams.members.remove')
+            ->middleware('feature:team_management_enabled');
+
+        Route::resource('teams', \App\Http\Controllers\Admin\TeamController::class)
+            ->middleware('feature:team_management_enabled');
 
         /*
         |------------------------------------------------------------------
