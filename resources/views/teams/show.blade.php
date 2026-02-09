@@ -208,34 +208,13 @@
                     <h3 class="text-lg font-semibold text-red-500 mb-2">Danger Zone</h3>
                     <p class="text-sm text-red-400/60 mb-4">Permanently delete this team and all data.</p>
                     
-                    <x-danger-button x-data="" x-on:click.prevent="$dispatch('open-modal', 'confirm-team-deletion')" class="w-full justify-center">
-                        {{ __('Delete Team') }}
-                    </x-danger-button>
-
-                    <x-modal name="confirm-team-deletion" :show="$errors->userDeletion->isNotEmpty()" focusable>
-                        <form method="post" action="{{ route('teams.destroy', $team) }}" class="p-6 bg-zinc-900">
-                            @csrf
-                            @method('delete')
-
-                            <h2 class="text-lg font-medium text-white">
-                                {{ __('Are you sure you want to delete this team?') }}
-                            </h2>
-
-                            <p class="mt-1 text-sm text-zinc-400">
-                                {{ __('Once your team is deleted, all of its resources and data will be permanently deleted. Please enter your password to confirm you would like to permanently delete your team.') }}
-                            </p>
-
-                            <div class="mt-6 flex justify-end">
-                                <x-secondary-button x-on:click="$dispatch('close')" class="bg-zinc-800 text-zinc-300 border-zinc-700 hover:bg-zinc-700">
-                                    {{ __('Cancel') }}
-                                </x-secondary-button>
-
-                                <x-danger-button class="ml-3">
-                                    {{ __('Delete Team') }}
-                                </x-danger-button>
-                            </div>
-                        </form>
-                    </x-modal>
+                    <form method="post" action="{{ route('teams.destroy', $team) }}">
+                        @csrf
+                        @method('delete')
+                        <x-danger-button type="submit" onclick="return confirm('Are you sure you want to delete this team? This action cannot be undone.')" class="w-full justify-center">
+                            {{ __('Delete Team') }}
+                        </x-danger-button>
+                    </form>
                 </div>
                 @endif
 

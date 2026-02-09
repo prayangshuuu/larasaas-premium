@@ -1,7 +1,7 @@
 <x-app-layout>
     {{-- Header Background --}}
-    <div class="relative bg-zinc-900 border-b border-zinc-800 pb-32">
-        <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-zinc-900/50 to-purple-500/10 opacity-50"></div>
+    <div class="relative bg-zinc-900 border-b border-zinc-800 pb-32 overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-zinc-900/50 to-purple-500/10 opacity-50 z-0"></div>
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 relative z-10">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div>
