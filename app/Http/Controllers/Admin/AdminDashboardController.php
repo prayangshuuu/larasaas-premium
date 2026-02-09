@@ -24,13 +24,23 @@ class AdminDashboardController extends Controller
         $totalRevenue = \App\Models\Invoice::where('status', 'paid')->sum('amount');
         $activeSubscribers = \App\Models\Subscription::where('status', 'active')->count();
 
+        // New Stats
+        $newUsersCount = User::where('created_at', '>=', now()->subDays(30))->count();
+        
+        $pendingTicketsCount = 0;
+        if (\App\Helpers\Feature::enabled('support_enabled')) {
+            $pendingTicketsCount = \App\Models\SupportTicket::whereIn('status', ['open', 'pending'])->count();
+        }
+
         return view('admin.dashboard', compact(
             'userCount',
             'verifiedCount',
             'twofaCount',
             'recentUsers',
             'totalRevenue',
-            'activeSubscribers'
+            'activeSubscribers',
+            'newUsersCount',
+            'pendingTicketsCount'
         ));
     }
 }

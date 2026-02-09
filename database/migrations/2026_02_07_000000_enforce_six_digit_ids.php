@@ -84,11 +84,12 @@ return new class extends Migration
 
             // Spatie/Standard Polymorphic: causer_id / causer_type
             // Update causer_id where type is User
+            // Custom Audit Log: actor_id / target_id / target_type
+            // Update actor_id (foreign key to users)
             DB::statement("
                 UPDATE audit_logs 
-                SET causer_id = causer_id + 100000 
-                WHERE causer_id < 100000 
-                AND causer_type = 'App\\\\Models\\\\User'
+                SET actor_id = actor_id + 100000 
+                WHERE actor_id < 100000 
             ");
 
             // Update subject_id where subject_type matches our upgraded tables
@@ -103,9 +104,9 @@ return new class extends Migration
             foreach ($polymorphicTypes as $type) {
                 DB::statement("
                     UPDATE audit_logs 
-                    SET subject_id = subject_id + 100000 
-                    WHERE subject_id < 100000 
-                    AND subject_type = '{$type}'
+                    SET target_id = target_id + 100000 
+                    WHERE target_id < 100000 
+                    AND target_type = '{$type}'
                 ");
             }
         }
@@ -179,9 +180,8 @@ return new class extends Migration
         if (Schema::hasTable('audit_logs')) {
              DB::statement("
                 UPDATE audit_logs 
-                SET causer_id = causer_id - 100000 
-                WHERE causer_id >= 100000 AND causer_id < 200000 
-                AND causer_type = 'App\\\\Models\\\\User'
+                SET actor_id = actor_id - 100000 
+                WHERE actor_id >= 100000 AND actor_id < 200000 
             ");
             
             $polymorphicTypes = [
@@ -191,9 +191,9 @@ return new class extends Migration
             foreach ($polymorphicTypes as $type) {
                 DB::statement("
                     UPDATE audit_logs 
-                    SET subject_id = subject_id - 100000 
-                    WHERE subject_id >= 100000 AND subject_id < 200000 
-                    AND subject_type = '{$type}'
+                    SET target_id = target_id - 100000 
+                    WHERE target_id >= 100000 AND target_id < 200000 
+                    AND target_type = '{$type}'
                 ");
             }
         }

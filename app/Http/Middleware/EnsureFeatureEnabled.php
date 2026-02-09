@@ -14,10 +14,10 @@ class EnsureFeatureEnabled
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
-    public function handle(Request $request, Closure $next, string $feature, string $status = '404'): Response
+    public function handle(Request $request, Closure $next, string $feature): Response
     {
-        if (!Feature::enabled($feature)) {
-            abort((int) $status);
+        if (! Feature::enabled($feature)) {
+            abort(404);
         }
 
         return $next($request);

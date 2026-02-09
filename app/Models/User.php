@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Sanctum\HasApiTokens;
@@ -13,6 +16,19 @@ use Laravel\Sanctum\HasApiTokens;
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable, TwoFactorAuthenticatable;
+
+    /**
+     * The "booted" method of the model.
+     */
+    protected static function booted(): void
+    {
+        static::created(function ($user) {
+            // Auto-create personal team if feature enabled
+            if (\App\Helpers\Feature::enabled('team_management_enabled')) {
+                $user->createPersonalTeam();
+            }
+        });
+    }
 
     /**
      * Mass assignable attributes.
@@ -160,6 +176,116 @@ class User extends Authenticatable
     }
 
     /* -----------------------------------------------------------------
+     | Team Management
+     |-----------------------------------------------------------------*/
+
+    /**
+     * Get the current team for the user.
+     */
+    public function currentTeam(): BelongsTo
+    {
+        return $this->belongsTo(Team::class, 'current_team_id');
+    }
+
+    /**
+     * Get all of the teams the user belongs to or owns.
+     */
+    public function allTeams(): \Illuminate\Support\Collection
+    {
+        return $this->ownedTeams->merge($this->teams)->sortBy('name');
+    }
+
+    /**
+     * Get all of the teams the user owns.
+     */
+    public function ownedTeams(): HasMany
+    {
+        return $this->hasMany(Team::class);
+    }
+
+    /**
+     * Get all of the teams the user belongs to.
+     */
+    public function teams(): BelongsToMany
+    {
+        return $this->belongsToMany(Team::class, 'team_user')
+                    ->withPivot('role')
+                    ->withTimestamps()
+                    ->as('membership');
+    }
+
+    /**
+     * Determine if the given team is the current team.
+     */
+    public function isCurrentTeam($team): bool
+    {
+        return $team->id === $this->current_team_id;
+    }
+
+    /**
+     * Switch the user's context to the given team.
+     */
+    public function switchTeam($team): bool
+    {
+        if (! $this->belongsToTeam($team)) {
+            return false;
+        }
+
+        $this->forceFill([
+            'current_team_id' => $team->id,
+        ])->save();
+
+        return true;
+    }
+
+    /**
+     * Determine if the user belongs to the given team.
+     */
+    public function belongsToTeam($team): bool
+    {
+        if (is_null($team)) {
+            return false;
+        }
+
+        return $this->ownsTeam($team) || $this->teams->contains(function ($t) use ($team) {
+            return $t->id === $team->id;
+        });
+    }
+
+    /**
+     * Determine if the user owns the given team.
+     */
+    public function ownsTeam($team): bool
+    {
+        if (is_null($team)) {
+            return false;
+        }
+
+        return $this->id == $team->user_id;
+    }
+
+    /**
+     * Create a personal team for the user.
+     */
+    public function createPersonalTeam(): void
+    {
+        $team = $this->ownedTeams()->create([
+            'name' => explode(' ', $this->name, 2)[0]."'s Team",
+            'personal_team' => true,
+        ]);
+
+        $this->switchTeam($team);
+    }
+
+    /**
+     * Get the user's personal team.
+     */
+    public function personalTeam(): ?Team
+    {
+        return $this->ownedTeams->where('personal_team', true)->first();
+    }
+
+    /* -----------------------------------------------------------------
      | Relationships
      |-----------------------------------------------------------------*/
 
@@ -177,6 +303,14 @@ class User extends Authenticatable
     public function invoices(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Invoice::class);
+    }
+
+    /**
+     * Get the webhooks for the user.
+     */
+    public function webhooks(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Webhook::class);
     }
 
     /**
