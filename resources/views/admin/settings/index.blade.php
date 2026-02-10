@@ -250,7 +250,7 @@
             <h2 class="text-xl font-semibold text-white">Platform Features & Modules</h2>
             <p class="text-sm text-zinc-400 mt-1">Configure global system modules and feature flags.</p>
 
-            <form method="POST" action="{{ route('admin.settings.features.update') }}" class="mt-8 space-y-0 divide-y divide-zinc-800/50">
+            <form method="POST" action="{{ route('admin.settings.features.update') }}" enctype="multipart/form-data" class="mt-8 space-y-0 divide-y divide-zinc-800/50">
                 @csrf
 
                 {{-- 0. Announcement System --}}
@@ -407,6 +407,137 @@
                     </div>
                 </div>
 
+                {{-- 2. Payment Gateways --}}
+                @php
+                    $paymentGatewaysEnabled = old('payment_gateways_enabled', (int)($features['payment_gateways_enabled'] ?? 0));
+                    $stripeLogoName = isset($features['stripe_logo']) ? basename($features['stripe_logo']) : 'Default';
+                    $bkashLogoName  = isset($features['bkash_logo'])  ? basename($features['bkash_logo'])  : 'Default';
+                    $stripeLogoUrl  = isset($features['stripe_logo']) ? asset($features['stripe_logo']) : null;
+                    $bkashLogoUrl   = isset($features['bkash_logo'])  ? asset($features['bkash_logo'])  : null;
+                @endphp
+                <div class="py-4" x-data="{
+                        paymentGatewaysEnabled: {{ $paymentGatewaysEnabled ? 'true' : 'false' }} 
+                     }">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="font-medium text-zinc-200">Enable Payment Gateways</div>
+                            <div class="text-sm text-zinc-500">Configure accepted payment methods and gateways.</div>
+                        </div>
+                        <input type="hidden" name="payment_gateways_enabled" :value="paymentGatewaysEnabled ? 1 : 0">
+                        <button type="button" 
+                                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-zinc-900" 
+                                :class="{ 'bg-indigo-600': paymentGatewaysEnabled, 'bg-zinc-700': !paymentGatewaysEnabled }"
+                                @click="paymentGatewaysEnabled = !paymentGatewaysEnabled">
+                            <span class="sr-only">Use setting</span>
+                            <span aria-hidden="true" 
+                                  class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                                  :class="{ 'translate-x-5': paymentGatewaysEnabled, 'translate-x-0': !paymentGatewaysEnabled }"></span>
+                        </button>
+                    </div>
+
+                    {{-- Gateways (visible when enabled) --}}
+                    <div x-show="paymentGatewaysEnabled" x-transition.opacity.duration.300ms class="mt-6 pl-4 border-l-2 border-indigo-600/50 space-y-6">
+                        
+                        {{-- Stripe --}}
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                     <svg class="h-6 w-6 text-[#635BFF]" viewBox="0 0 32 32" fill="currentColor"><path d="M13.9 16.2c0 1.9 1.4 2.6 3.9 2.6 4.6 0 5.4-1.9 5.4-1.9l2.8 1.8s-1.8 3.5-8.2 3.5c-5.4 0-8.6-2.7-8.6-7.2 0-4.9 3.5-7.7 8.5-7.7 7.7 0 7.8 6.5 7.8 6.8H14c-0.1 1.2 0.3 2.1 -0.1 2.1zM17.7 9.8c-2.3 0-3.3 1.2-3.6 2.3h6.8c0-1.2-1.2-2.3-3.2-2.3z"/></svg>
+                                     <span class="font-medium text-zinc-200">Enable Stripe</span>
+                                </div>
+                                <input type="hidden" name="stripe_payment_enabled" :value="stripeEnabled ? 1 : 0">
+                                <button type="button" 
+                                        class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-zinc-900" 
+                                        :class="{ 'bg-indigo-600': stripeEnabled, 'bg-zinc-700': !stripeEnabled }"
+                                        @click="stripeEnabled = !stripeEnabled">
+                                    <span class="sr-only">Use setting</span>
+                                    <span aria-hidden="true" class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out" :class="{ 'translate-x-5': stripeEnabled, 'translate-x-0': !stripeEnabled }"></span>
+                                </button>
+                            </div>
+
+                            <div x-show="stripeEnabled" x-transition.opacity.duration.300ms class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {{-- Logo Upload --}}
+                                <div x-data="imagePreview(@js($stripeLogoUrl))" class="md:col-span-2 flex gap-6 items-start p-4 rounded-md bg-zinc-950/30 border border-zinc-800/50">
+                                     <div class="flex-1">
+                                        <label class="block text-sm font-medium text-zinc-300 mb-1">Custom Stripe Logo</label>
+                                        <div class="flex items-center gap-3">
+                                            <label for="stripe_logo" class="cursor-pointer inline-flex items-center rounded-md bg-zinc-800 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-zinc-700 ring-1 ring-inset ring-zinc-700">Change Logo</label>
+                                            <input id="stripe_logo" name="stripe_logo" type="file" class="hidden" accept="image/*" @change="onChange($event)">
+                                            <span class="text-xs text-zinc-500 font-mono" x-text="fileName || '{{ $stripeLogoName }}'"></span>
+                                        </div>
+                                        <p class="text-xs text-zinc-500 mt-1">Displayed on checkout page instead of default.</p>
+                                     </div>
+                                     <div class="shrink-0 w-16 h-16 rounded border border-zinc-700 bg-white grid place-items-center overflow-hidden">
+                                          <img x-show="previewUrl" :src="previewUrl" class="w-full h-full object-contain p-1">
+                                          <svg x-show="!previewUrl" class="w-8 h-8 text-zinc-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                     </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-zinc-300 mb-1">Stripe Public Key</label>
+                                    <x-ui.input type="text" name="stripe_key" value="{{ old('stripe_key', $features['stripe_key'] ?? '') }}" placeholder="pk_test_..." />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-zinc-300 mb-1">Stripe Secret Key</label>
+                                    <x-ui.input type="password" name="stripe_secret" value="{{ old('stripe_secret', $features['stripe_secret'] ?? '') }}" placeholder="sk_test_..." />
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-medium text-zinc-300 mb-1">Webhook Secret</label>
+                                    <x-ui.input type="password" name="stripe_webhook_secret" value="{{ old('stripe_webhook_secret', $features['stripe_webhook_secret'] ?? '') }}" placeholder="whsec_..." />
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Bkash (Manual) --}}
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                     <svg class="h-6 w-6 text-[#E2136E]" viewBox="0 0 24 24" fill="currentColor"><path d="M12.9 2L15.6 9.4H22L16.2 13.8L18.7 21.2L11 16L3.3 21.2L5.8 13.8L0 9.4H6.4L9.1 2H12.9Z"/></svg>
+                                     <span class="font-medium text-zinc-200">Enable Bkash (Manual)</span>
+                                </div>
+                                <input type="hidden" name="bkash_enabled" :value="bkashEnabled ? 1 : 0">
+                                <button type="button" 
+                                        class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-zinc-900" 
+                                        :class="{ 'bg-indigo-600': bkashEnabled, 'bg-zinc-700': !bkashEnabled }"
+                                        @click="bkashEnabled = !bkashEnabled">
+                                    <span class="sr-only">Use setting</span>
+                                    <span aria-hidden="true" class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out" :class="{ 'translate-x-5': bkashEnabled, 'translate-x-0': !bkashEnabled }"></span>
+                                </button>
+                            </div>
+
+                            <div x-show="bkashEnabled" x-transition.opacity.duration.300ms class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {{-- Logo Upload --}}
+                                <div x-data="imagePreview(@js($bkashLogoUrl))" class="md:col-span-2 flex gap-6 items-start p-4 rounded-md bg-zinc-950/30 border border-zinc-800/50">
+                                     <div class="flex-1">
+                                        <label class="block text-sm font-medium text-zinc-300 mb-1">Custom Bkash Logo</label>
+                                        <div class="flex items-center gap-3">
+                                            <label for="bkash_logo" class="cursor-pointer inline-flex items-center rounded-md bg-zinc-800 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-zinc-700 ring-1 ring-inset ring-zinc-700">Change Logo</label>
+                                            <input id="bkash_logo" name="bkash_logo" type="file" class="hidden" accept="image/*" @change="onChange($event)">
+                                            <span class="text-xs text-zinc-500 font-mono" x-text="fileName || '{{ $bkashLogoName }}'"></span>
+                                        </div>
+                                     </div>
+                                     <div class="shrink-0 w-16 h-16 rounded border border-zinc-700 bg-white grid place-items-center overflow-hidden">
+                                          <img x-show="previewUrl" :src="previewUrl" class="w-full h-full object-contain p-1">
+                                          <svg x-show="!previewUrl" class="w-8 h-8 text-zinc-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                     </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-zinc-300 mb-1">Admin Bkash Number</label>
+                                    <x-ui.input type="text" name="bkash_admin_number" value="{{ old('bkash_admin_number', $features['bkash_admin_number'] ?? '') }}" placeholder="01XXXXXXXXX" />
+                                    <p class="text-xs text-zinc-500 mt-1">Users will send money to this number.</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-zinc-300 mb-1">Payment Instructions</label>
+                                    <textarea name="bkash_instruction" rows="3" class="block w-full rounded-md border-0 bg-zinc-950 py-1.5 text-zinc-300 shadow-sm ring-1 ring-inset ring-zinc-800 placeholder:text-zinc-600 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">{{ old('bkash_instruction', $features['bkash_instruction'] ?? '') }}</textarea>
+                                    <p class="text-xs text-zinc-500 mt-1">Check *247#... etc.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
                 {{-- 7. Enable Social Login (LAST) --}}
                 <div class="py-4">
                     <div class="flex items-center justify-between">
@@ -553,150 +684,7 @@
         </div>
 
 
-        {{-- Payment Configuration --}}
-        @php
-            $stripeEnabled = old('stripe_payment_enabled', (int)$features['stripe_payment_enabled']);
-            $bkashEnabled  = old('bkash_enabled', (int)($features['bkash_enabled'] ?? 0));
-            // Filenames for logos
-            $stripeLogoName = isset($features['stripe_logo']) ? basename($features['stripe_logo']) : 'Default';
-            $bkashLogoName  = isset($features['bkash_logo'])  ? basename($features['bkash_logo'])  : 'Default';
-            // Preview URLs
-            $stripeLogoUrl  = isset($features['stripe_logo']) ? asset($features['stripe_logo']) : null;
-            $bkashLogoUrl   = isset($features['bkash_logo'])  ? asset($features['bkash_logo'])  : null;
-        @endphp
-        <div class="bg-zinc-900 border border-zinc-800 shadow-xl rounded-xl p-6 sm:p-8"
-             x-data="{
-                stripeEnabled: {{ $stripeEnabled ? 'true' : 'false' }},
-                bkashEnabled:  {{ $bkashEnabled ? 'true' : 'false' }}
-             }">
-            <h2 class="text-xl font-semibold text-white">Payment Configuration</h2>
-            <p class="text-sm text-zinc-400 mt-1">Configure payment providers and manual payment methods.</p>
 
-            <form method="POST" action="{{ route('admin.settings.payments.update') }}" enctype="multipart/form-data" class="mt-8 space-y-6">
-                @csrf
-
-                {{-- Stripe --}}
-                <div class="space-y-4">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                             {{-- Stripe Icon/Logo --}}
-                             <svg class="h-6 w-6 text-[#635BFF]" viewBox="0 0 32 32" fill="currentColor"><path d="M13.9 16.2c0 1.9 1.4 2.6 3.9 2.6 4.6 0 5.4-1.9 5.4-1.9l2.8 1.8s-1.8 3.5-8.2 3.5c-5.4 0-8.6-2.7-8.6-7.2 0-4.9 3.5-7.7 8.5-7.7 7.7 0 7.8 6.5 7.8 6.8H14c-0.1 1.2 0.3 2.1 -0.1 2.1zM17.7 9.8c-2.3 0-3.3 1.2-3.6 2.3h6.8c0-1.2-1.2-2.3-3.2-2.3z"/></svg>
-                             <div>
-                                <div class="font-medium text-zinc-200">Stripe</div>
-                                {{-- <div class="text-sm text-zinc-500">Accept credit/debit cards via Stripe.</div> --}}
-                             </div>
-                        </div>
-                        <input type="hidden" name="stripe_payment_enabled" :value="stripeEnabled ? 1 : 0">
-                        <button type="button" 
-                                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-zinc-900" 
-                                :class="{ 'bg-indigo-600': stripeEnabled, 'bg-zinc-700': !stripeEnabled }"
-                                @click="stripeEnabled = !stripeEnabled">
-                            <span class="sr-only">Use setting</span>
-                            <span aria-hidden="true" 
-                                  class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
-                                  :class="{ 'translate-x-5': stripeEnabled, 'translate-x-0': !stripeEnabled }"></span>
-                        </button>
-                    </div>
-
-                    <div x-show="stripeEnabled" x-transition.opacity.duration.300ms class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {{-- Logo Upload --}}
-                        <div x-data="imagePreview(@js($stripeLogoUrl))" class="md:col-span-2 flex gap-6 items-start p-4 rounded-md bg-zinc-950/30 border border-zinc-800/50">
-                             <div class="flex-1">
-                                <label class="block text-sm font-medium text-zinc-300 mb-1">Custom Stripe Logo</label>
-                                <div class="flex items-center gap-3">
-                                    <label for="stripe_logo" class="cursor-pointer inline-flex items-center rounded-md bg-zinc-800 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-zinc-700 ring-1 ring-inset ring-zinc-700">Change Logo</label>
-                                    <input id="stripe_logo" name="stripe_logo" type="file" class="hidden" accept="image/*" @change="onChange($event)">
-                                    <span class="text-xs text-zinc-500 font-mono" x-text="fileName || '{{ $stripeLogoName }}'"></span>
-                                </div>
-                                <p class="text-xs text-zinc-500 mt-1">Displayed on checkout page instead of default.</p>
-                             </div>
-                             <div class="shrink-0 w-16 h-16 rounded border border-zinc-700 bg-white grid place-items-center overflow-hidden">
-                                  <img x-show="previewUrl" :src="previewUrl" class="w-full h-full object-contain p-1">
-                                  <svg x-show="!previewUrl" class="w-8 h-8 text-zinc-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                             </div>
-                        </div>
-
-                        {{-- Credentials --}}
-                        <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-zinc-300 mb-1">Stripe Public Key</label>
-                                <x-ui.input type="text" name="stripe_key" value="{{ old('stripe_key', $features['stripe_key'] ?? '') }}" placeholder="pk_test_..." />
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-zinc-300 mb-1">Stripe Secret Key</label>
-                                <x-ui.input type="password" name="stripe_secret" value="{{ old('stripe_secret', $features['stripe_secret'] ?? '') }}" placeholder="sk_test_..." />
-                            </div>
-                            <div class="md:col-span-2">
-                                <label class="block text-sm font-medium text-zinc-300 mb-1">Webhook Secret</label>
-                                <x-ui.input type="password" name="stripe_webhook_secret" value="{{ old('stripe_webhook_secret', $features['stripe_webhook_secret'] ?? '') }}" placeholder="whsec_..." />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="border-t border-zinc-800/50"></div>
-
-                {{-- Bkash (Manual) --}}
-                <div class="space-y-4">
-                    <div class="flex items-center justify-between">
-                         <div class="flex items-center gap-2">
-                             {{-- Bkash Icon --}}
-                             <svg class="h-6 w-6 text-[#E2136E]" viewBox="0 0 24 24" fill="currentColor"><path d="M12.9 2L15.6 9.4H22L16.2 13.8L18.7 21.2L11 16L3.3 21.2L5.8 13.8L0 9.4H6.4L9.1 2H12.9Z"/></svg>
-                             <div>
-                                <div class="font-medium text-zinc-200">Bkash (Manual)</div>
-                                {{-- <div class="text-sm text-zinc-500">Manual payment verification.</div> --}}
-                             </div>
-                        </div>
-                        <input type="hidden" name="bkash_enabled" :value="bkashEnabled ? 1 : 0">
-                        <button type="button" 
-                                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-zinc-900" 
-                                :class="{ 'bg-indigo-600': bkashEnabled, 'bg-zinc-700': !bkashEnabled }"
-                                @click="bkashEnabled = !bkashEnabled">
-                            <span class="sr-only">Use setting</span>
-                            <span aria-hidden="true" 
-                                  class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
-                                  :class="{ 'translate-x-5': bkashEnabled, 'translate-x-0': !bkashEnabled }"></span>
-                        </button>
-                    </div>
-
-                    <div x-show="bkashEnabled" x-transition.opacity.duration.300ms class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {{-- Logo Upload --}}
-                        <div x-data="imagePreview(@js($bkashLogoUrl))" class="md:col-span-2 flex gap-6 items-start p-4 rounded-md bg-zinc-950/30 border border-zinc-800/50">
-                             <div class="flex-1">
-                                <label class="block text-sm font-medium text-zinc-300 mb-1">Custom Bkash Logo</label>
-                                <div class="flex items-center gap-3">
-                                    <label for="bkash_logo" class="cursor-pointer inline-flex items-center rounded-md bg-zinc-800 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-zinc-700 ring-1 ring-inset ring-zinc-700">Change Logo</label>
-                                    <input id="bkash_logo" name="bkash_logo" type="file" class="hidden" accept="image/*" @change="onChange($event)">
-                                    <span class="text-xs text-zinc-500 font-mono" x-text="fileName || '{{ $bkashLogoName }}'"></span>
-                                </div>
-                             </div>
-                             <div class="shrink-0 w-16 h-16 rounded border border-zinc-700 bg-white grid place-items-center overflow-hidden">
-                                  <img x-show="previewUrl" :src="previewUrl" class="w-full h-full object-contain p-1">
-                                  <svg x-show="!previewUrl" class="w-8 h-8 text-zinc-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                             </div>
-                        </div>
-
-                        {{-- Config --}}
-                        <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-zinc-300 mb-1">Admin Bkash Number</label>
-                                <x-ui.input type="text" name="bkash_admin_number" value="{{ old('bkash_admin_number', $features['bkash_admin_number'] ?? '') }}" placeholder="01XXXXXXXXX" />
-                                <p class="text-xs text-zinc-500 mt-1">Users will send money to this number.</p>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-zinc-300 mb-1">Payment Instructions</label>
-                                <textarea name="bkash_instruction" rows="3" class="block w-full rounded-md border-0 bg-zinc-950 py-1.5 text-zinc-300 shadow-sm ring-1 ring-inset ring-zinc-800 placeholder:text-zinc-600 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">{{ old('bkash_instruction', $features['bkash_instruction'] ?? '') }}</textarea>
-                                <p class="text-xs text-zinc-500 mt-1">Check *247#... etc.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="flex justify-end pt-4">
-                    <button type="submit" class="inline-flex items-center justify-center rounded-md bg-indigo-600 px-6 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 transition-colors">Save Payment Configuration</button>
-                </div>
-            </form>
-        </div>
 
 
         {{-- API Keys --}}

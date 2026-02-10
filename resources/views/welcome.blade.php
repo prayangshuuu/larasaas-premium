@@ -155,6 +155,30 @@
         </div>
     </section>
 
+    {{-- Featured Plans Section --}}
+    @if(isset($featuredPlans) && $featuredPlans->count() > 0)
+        <section id="pricing" class="py-24 bg-zinc-950 relative z-20 border-t border-white/5">
+            <div class="max-w-7xl mx-auto px-6">
+                <div class="mb-16 text-center">
+                    <h2 class="text-3xl font-bold tracking-tight sm:text-4xl text-white">Pricing Plans</h2>
+                    <p class="mt-4 text-zinc-400">Choose the perfect plan for your IELTS preparation journey.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    @foreach($featuredPlans as $plan)
+                        <x-plan-card :plan="$plan" />
+                    @endforeach
+                </div>
+
+                <div class="mt-12 text-center">
+                    <a href="{{ route('pricing.index') }}" class="text-indigo-400 hover:text-indigo-300 font-semibold text-sm">
+                        View all plans <span aria-hidden="true">→</span>
+                    </a>
+                </div>
+            </div>
+        </section>
+    @endif
+
     {{-- Footer --}}
     <footer class="bg-black py-12 border-t border-white/10 relative z-20">
         <div class="max-w-7xl mx-auto px-6 text-center">

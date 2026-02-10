@@ -97,6 +97,7 @@ class SystemSettingsController extends Controller
                 'allow_username_change'               => Feature::enabled('allow_username_change'),
                 'require_admin_mfa_for_impersonation' => Feature::enabled('require_admin_mfa_for_impersonation'),
                 'subscription_module_enabled'         => Feature::enabled('subscription_module_enabled'),
+                'payment_gateways_enabled'            => Feature::enabled('payment_gateways_enabled'),
                 'stripe_payment_enabled'              => Feature::enabled('stripe_payment_enabled'),
                 'stripe_key'                          => SystemSetting::where('key', 'stripe_key')->first()?->value,
                 'stripe_secret'                       => SystemSetting::where('key', 'stripe_secret')->first()?->value,
@@ -239,6 +240,9 @@ class SystemSettingsController extends Controller
             'support_auto_reply_enabled'          => $request->boolean('support_auto_reply_enabled'),
             'announcement_enabled'                => $request->boolean('announcement_enabled'),
             'team_management_enabled'             => $request->boolean('team_management_enabled'),
+            'payment_gateways_enabled'            => $request->boolean('payment_gateways_enabled'),
+            'stripe_payment_enabled'              => $request->boolean('stripe_payment_enabled'),
+            'bkash_enabled'                       => $request->boolean('bkash_enabled'),
         ];
 
         // Persist each feature flag to system_settings table
@@ -261,9 +265,38 @@ class SystemSettingsController extends Controller
             SystemSetting::updateOrCreate(['key' => 'stripe_webhook_secret'], ['value' => $v['stripe_webhook_secret']]);
         }
         
-        // Save Bkash Number
+        // Save Bkash Number and Instruction
         if ($request->has('bkash_admin_number')) {
              SystemSetting::updateOrCreate(['key' => 'bkash_admin_number'], ['value' => $request->input('bkash_admin_number')]);
+        }
+        if ($request->has('bkash_instruction')) {
+             SystemSetting::updateOrCreate(['key' => 'bkash_instruction'], ['value' => $request->input('bkash_instruction')]);
+        }
+
+        // Handle Payment Logo Uploads
+        if ($request->hasFile('stripe_logo')) {
+            $old = SystemSetting::where('key', 'stripe_logo')->first()?->value;
+            $url = $this->storeManagedAndReturnUrl($request->file('stripe_logo'), $old);
+            SystemSetting::updateOrCreate(['key' => 'stripe_logo'], ['value' => $url]);
+        }
+
+        if ($request->hasFile('bkash_logo')) {
+            $old = SystemSetting::where('key', 'bkash_logo')->first()?->value;
+            $url = $this->storeManagedAndReturnUrl($request->file('bkash_logo'), $old);
+            SystemSetting::updateOrCreate(['key' => 'bkash_logo'], ['value' => $url]);
+        }
+
+        // Also handle social login keys if they are passed in this request
+        $socialKeys = [
+            'google_client_id', 'google_client_secret',
+            'facebook_client_id', 'facebook_client_secret',
+            'twitter_client_id', 'twitter_client_secret'
+        ];
+        
+        foreach ($socialKeys as $key) {
+            if ($request->filled($key)) {
+                 SystemSetting::updateOrCreate(['key' => $key], ['value' => $request->input($key)]);
+            }
         }
 
         // Clear the Feature helper cache to ensure settings take effect immediately
@@ -700,70 +733,5 @@ class SystemSettingsController extends Controller
      * POST /admin/settings/payments
      * Persists payment gateway settings to system_settings table.
      */
-    public function updatePayments(Request $request)
-    {
-        $v = $request->validate([
-            'stripe_payment_enabled' => 'nullable',
-            'stripe_key'             => 'nullable|string',
-            'stripe_secret'          => 'nullable|string',
-            'stripe_webhook_secret'  => 'nullable|string',
-            'stripe_logo'            => 'nullable|image|mimes:jpeg,png,jpg,svg|max:2048',
-            'bkash_enabled'          => 'nullable',
-            'bkash_admin_number'     => 'nullable|string',
-            'bkash_instruction'      => 'nullable|string',
-            'bkash_logo'             => 'nullable|image|mimes:jpeg,png,jpg,svg|max:2048',
-        ]);
 
-        // 1. Save Toggles (Features)
-        SystemSetting::updateOrCreate(
-            ['key' => 'stripe_payment_enabled'],
-            ['value' => $request->boolean('stripe_payment_enabled')]
-        );
-        SystemSetting::updateOrCreate(
-            ['key' => 'bkash_enabled'],
-            ['value' => $request->boolean('bkash_enabled')]
-        );
-
-        // 2. Save Stripe Config
-        if ($request->has('stripe_key')) {
-             SystemSetting::updateOrCreate(['key' => 'stripe_key'], ['value' => $request->input('stripe_key')]);
-        }
-        if ($request->has('stripe_secret')) {
-             SystemSetting::updateOrCreate(['key' => 'stripe_secret'], ['value' => $request->input('stripe_secret')]);
-        }
-        if ($request->has('stripe_webhook_secret')) {
-             SystemSetting::updateOrCreate(['key' => 'stripe_webhook_secret'], ['value' => $request->input('stripe_webhook_secret')]);
-        }
-
-        // 3. Save Bkash Config
-        if ($request->has('bkash_admin_number')) {
-             SystemSetting::updateOrCreate(['key' => 'bkash_admin_number'], ['value' => $request->input('bkash_admin_number')]);
-        }
-        if ($request->has('bkash_instruction')) {
-             SystemSetting::updateOrCreate(['key' => 'bkash_instruction'], ['value' => $request->input('bkash_instruction')]);
-        }
-
-        // 4. Handle Logo Uploads
-        if ($request->hasFile('stripe_logo')) {
-            $old = SystemSetting::where('key', 'stripe_logo')->first()?->value;
-            $url = $this->storeManagedAndReturnUrl($request->file('stripe_logo'), $old);
-            SystemSetting::updateOrCreate(['key' => 'stripe_logo'], ['value' => $url]);
-        }
-
-        if ($request->hasFile('bkash_logo')) {
-            $old = SystemSetting::where('key', 'bkash_logo')->first()?->value;
-            $url = $this->storeManagedAndReturnUrl($request->file('bkash_logo'), $old);
-            SystemSetting::updateOrCreate(['key' => 'bkash_logo'], ['value' => $url]);
-        }
-
-        // Clear the Feature helper cache
-        Feature::clearCache();
-
-        $this->logAudit('settings.update', 'Updated payment gateway settings', [
-            'stripe_enabled' => $request->boolean('stripe_payment_enabled'),
-            'bkash_enabled'  => $request->boolean('bkash_enabled'),
-        ]);
-
-        return redirect()->route('admin.settings.index')->with('status', 'settings-payments-updated');
-    }
 }

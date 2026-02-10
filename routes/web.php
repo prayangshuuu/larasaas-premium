@@ -26,7 +26,8 @@ use App\Http\Controllers\Auth\SocialiteController;
 | Public landing page
 |--------------------------------------------------------------------------
 */
-Route::get('/', fn () => view('welcome'));
+Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+Route::get('/pricing', [App\Http\Controllers\PricingController::class, 'index'])->name('pricing.index');
 Route::get('/changelog', [App\Http\Controllers\ChangelogController::class, 'index'])
     ->middleware('feature:announcement_enabled')
     ->name('changelog');
@@ -215,7 +216,7 @@ Route::middleware(['auth', 'verified', 'admin', 'not-banned', 'impersonation'])
                 Route::post('/social',     'updateSocial')->name('social.update');        // POST /admin/settings/social
 
                 // Payment Gateway Settings
-                Route::post('/payments',   'updatePayments')->name('payments.update');    // POST /admin/settings/payments
+
 
                 // API Keys (Sanctum) — create, reveal, revoke (current admin only)
                 Route::post('/api-tokens', 'createApiToken')->name('api.create');           // POST   /admin/settings/api-tokens

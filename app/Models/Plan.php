@@ -19,13 +19,30 @@ class Plan extends Model
         'interval',
         'features',
         'is_active',
+        'is_featured',
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
         'features' => 'array',
         'is_active' => 'boolean',
+        'is_featured' => 'boolean',
     ];
+
+    protected static function booted()
+    {
+        static::creating(function ($plan) {
+            if (empty($plan->slug)) {
+                $plan->slug = \Illuminate\Support\Str::slug($plan->name);
+            }
+        });
+
+        static::updating(function ($plan) {
+            if ($plan->isDirty('name') && empty($plan->slug)) {
+                $plan->slug = \Illuminate\Support\Str::slug($plan->name);
+            }
+        });
+    }
 
     /**
      * Helper to get a specific feature limit.
