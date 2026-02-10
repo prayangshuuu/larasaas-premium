@@ -278,12 +278,30 @@ class SystemSettingsController extends Controller
             $old = SystemSetting::where('key', 'stripe_logo')->first()?->value;
             $url = $this->storeManagedAndReturnUrl($request->file('stripe_logo'), $old);
             SystemSetting::updateOrCreate(['key' => 'stripe_logo'], ['value' => $url]);
+        } elseif ($request->boolean('delete_stripe_logo')) {
+            $old = SystemSetting::where('key', 'stripe_logo')->first()?->value;
+            if ($old) {
+                $oldRel = $this->publicDiskRelativeFromUrl($old);
+                if ($oldRel && Storage::disk('public')->exists($oldRel)) {
+                    Storage::disk('public')->delete($oldRel);
+                }
+                SystemSetting::where('key', 'stripe_logo')->delete();
+            }
         }
 
         if ($request->hasFile('bkash_logo')) {
             $old = SystemSetting::where('key', 'bkash_logo')->first()?->value;
             $url = $this->storeManagedAndReturnUrl($request->file('bkash_logo'), $old);
             SystemSetting::updateOrCreate(['key' => 'bkash_logo'], ['value' => $url]);
+        } elseif ($request->boolean('delete_bkash_logo')) {
+            $old = SystemSetting::where('key', 'bkash_logo')->first()?->value;
+            if ($old) {
+                $oldRel = $this->publicDiskRelativeFromUrl($old);
+                if ($oldRel && Storage::disk('public')->exists($oldRel)) {
+                    Storage::disk('public')->delete($oldRel);
+                }
+                SystemSetting::where('key', 'bkash_logo')->delete();
+            }
         }
 
         // Also handle social login keys if they are passed in this request

@@ -372,9 +372,14 @@
                                         </div>
                                         <p class="text-xs text-zinc-500 mt-1">Displayed on checkout page instead of default.</p>
                                      </div>
-                                     <div class="shrink-0 w-16 h-16 rounded border border-zinc-700 bg-white grid place-items-center overflow-hidden">
-                                          <img x-show="previewUrl" :src="previewUrl" class="w-full h-full object-contain p-1">
-                                          <svg x-show="!previewUrl" class="w-8 h-8 text-zinc-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                     <div class="shrink-0 w-24 h-24 rounded border border-zinc-700 bg-white grid place-items-center overflow-hidden relative group">
+                                          <img x-show="previewUrl" :src="previewUrl" class="w-full h-full object-contain p-2">
+                                          <svg x-show="!previewUrl" class="w-10 h-10 text-zinc-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                          
+                                          <button type="button" x-show="previewUrl && previewUrl !== '{{ asset('') }}'" @click="remove()" class="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 shadow hover:bg-red-600 transition-colors" title="Remove Logo">
+                                              <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                                          </button>
+                                          <input type="hidden" name="delete_stripe_logo" :value="removed ? 1 : 0">
                                      </div>
                                 </div>
 
@@ -420,21 +425,28 @@
                                             <span class="text-xs text-zinc-500 font-mono" x-text="fileName || '{{ $bkashLogoName }}'"></span>
                                         </div>
                                      </div>
-                                     <div class="shrink-0 w-16 h-16 rounded border border-zinc-700 bg-white grid place-items-center overflow-hidden">
-                                          <img x-show="previewUrl" :src="previewUrl" class="w-full h-full object-contain p-1">
-                                          <svg x-show="!previewUrl" class="w-8 h-8 text-zinc-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                     <div class="shrink-0 w-24 h-24 rounded border border-zinc-700 bg-white grid place-items-center overflow-hidden relative group">
+                                          <img x-show="previewUrl" :src="previewUrl" class="w-full h-full object-contain p-2">
+                                          <svg x-show="!previewUrl" class="w-10 h-10 text-zinc-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                          
+                                          <button type="button" x-show="previewUrl && previewUrl !== '{{ asset('') }}'" @click="remove()" class="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 shadow hover:bg-red-600 transition-colors" title="Remove Logo">
+                                              <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                                          </button>
+                                          <input type="hidden" name="delete_bkash_logo" :value="removed ? 1 : 0">
                                      </div>
                                 </div>
 
-                                <div>
-                                    <label class="block text-sm font-medium text-zinc-300 mb-1">Admin Bkash Number</label>
-                                    <x-ui.input type="text" name="bkash_admin_number" value="{{ old('bkash_admin_number', $features['bkash_admin_number'] ?? '') }}" placeholder="01XXXXXXXXX" />
-                                    <p class="text-xs text-zinc-500 mt-1">Users will send money to this number.</p>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-zinc-300 mb-1">Payment Instructions</label>
-                                    <textarea name="bkash_instruction" rows="3" class="block w-full rounded-md border-0 bg-zinc-950 py-1.5 text-zinc-300 shadow-sm ring-1 ring-inset ring-zinc-800 placeholder:text-zinc-600 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">{{ old('bkash_instruction', $features['bkash_instruction'] ?? '') }}</textarea>
-                                    <p class="text-xs text-zinc-500 mt-1">Check *247#... etc.</p>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+                                    <div class="flex flex-col h-full">
+                                        <label class="block text-sm font-medium text-zinc-300 mb-1">Admin Bkash Number</label>
+                                        <x-ui.input type="text" name="bkash_admin_number" value="{{ old('bkash_admin_number', $features['bkash_admin_number'] ?? '') }}" placeholder="01XXXXXXXXX" class="h-[42px]" />
+                                        <p class="text-xs text-zinc-500 mt-1">Users will send money to this number.</p>
+                                    </div>
+                                    <div class="flex flex-col h-full">
+                                        <label class="block text-sm font-medium text-zinc-300 mb-1">Payment Instructions</label>
+                                        <textarea name="bkash_instruction" rows="1" class="block w-full h-[42px] rounded-md border-0 bg-zinc-950 py-1.5 text-zinc-300 shadow-sm ring-1 ring-inset ring-zinc-800 placeholder:text-zinc-600 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 resize-none overflow-hidden hover:overflow-y-auto">{{ old('bkash_instruction', $features['bkash_instruction'] ?? '') }}</textarea>
+                                        <p class="text-xs text-zinc-500 mt-1">Check *247#... etc.</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -825,12 +837,22 @@
             return {
                 fileName: '',
                 previewUrl: initial || null,
+                removed: false,
                 onChange(e) {
                      const file = e.target.files && e.target.files[0] ? e.target.files[0] : null;
                      if (!file) return;
                      this.fileName = file.name;
-                     if (this.previewUrl) URL.revokeObjectURL(this.previewUrl);
+                     this.removed = false;
+                     if (this.previewUrl && this.previewUrl.startsWith('blob:')) URL.revokeObjectURL(this.previewUrl);
                      this.previewUrl = URL.createObjectURL(file);
+                },
+                remove() {
+                    this.removed = true;
+                    this.fileName = '';
+                    if (this.previewUrl && this.previewUrl.startsWith('blob:')) URL.revokeObjectURL(this.previewUrl);
+                    this.previewUrl = null;
+                    const input = this.$el.querySelector('input[type="file"]');
+                    if (input) input.value = '';
                 }
             }
         }
