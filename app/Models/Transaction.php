@@ -16,6 +16,11 @@ class Transaction extends Model
         'invoice_pdf_url',
         'payment_method',
         'paid_at',
+        'sender_number',
+        'transaction_id',
+        'payment_date',
+        'payment_metadata',
+        'admin_note',
     ];
 
     /**
@@ -26,6 +31,8 @@ class Transaction extends Model
     protected $casts = [
         'amount' => 'decimal:2',
         'paid_at' => 'datetime',
+        'payment_date' => 'datetime',
+        'payment_metadata' => 'array',
     ];
 
     /**
@@ -34,6 +41,14 @@ class Transaction extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get the invoice associated with the transaction.
+     */
+    public function invoice()
+    {
+        return $this->belongsTo(Invoice::class);
     }
 
     /**

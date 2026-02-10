@@ -174,6 +174,60 @@
             </div>
         </div>
 
+        {{-- Transaction History (Manual Payments & Stripe) --}}
+        @if($transactions->isNotEmpty())
+        <div class="bg-zinc-900 border border-zinc-800 rounded-xl shadow-xl overflow-hidden mt-8">
+            <div class="p-6 border-b border-zinc-800">
+                <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+                    <svg class="w-5 h-5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    Transaction History
+                </h2>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-zinc-800 text-left">
+                    <thead class="bg-zinc-950/50">
+                        <tr>
+                            <th class="px-6 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">Date</th>
+                            <th class="px-6 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">Description</th>
+                            <th class="px-6 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">Amount</th>
+                            <th class="px-6 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-zinc-800 bg-zinc-900">
+                        @foreach($transactions as $trx)
+                            <tr class="hover:bg-zinc-800/50 transition-colors">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-300">
+                                    {{ $trx->created_at->format('M d, Y') }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-white">
+                                    {{ $trx->description }}
+                                    @if($trx->payment_method === 'bkash_manual')
+                                        <span class="text-xs text-zinc-500 ml-1">(Bkash {{ $trx->transaction_id }})</span>
+                                    @endif
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
+                                    {{ number_format($trx->amount, 2) }} <span class="text-zinc-500 text-xs uppercase">{{ $trx->currency }}</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                    @if($trx->status === 'paid')
+                                        <span class="inline-flex items-center rounded-full bg-emerald-400/10 px-2 py-1 text-xs font-medium text-emerald-400 ring-1 ring-inset ring-emerald-400/20">Paid</span>
+                                    @elseif($trx->status === 'pending')
+                                        <span class="inline-flex items-center rounded-full bg-yellow-400/10 px-2 py-1 text-xs font-medium text-yellow-500 ring-1 ring-inset ring-yellow-400/20">Pending</span>
+                                    @elseif($trx->status === 'rejected')
+                                        <span class="inline-flex items-center rounded-full bg-red-400/10 px-2 py-1 text-xs font-medium text-red-500 ring-1 ring-inset ring-red-400/20">Rejected</span>
+                                    @else
+                                        <span class="inline-flex items-center rounded-full bg-zinc-400/10 px-2 py-1 text-xs font-medium text-zinc-400 ring-1 ring-inset ring-zinc-400/20">{{ ucfirst($trx->status) }}</span>
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        @endif
+        </div>
+
         {{-- Right Column (Optional: Features, Stats, or FAQs) --}}
         <div class="space-y-6">
              <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-6 shadow-xl">

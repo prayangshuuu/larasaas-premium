@@ -138,7 +138,10 @@ Route::middleware(['auth', 'verified', 'not-banned', 'feature:subscription_modul
         Route::get('/portal', [\App\Http\Controllers\BillingController::class, 'portal'])->name('portal');
 
         // Subscription Management
-        Route::get('/checkout/{plan}', [SubscriptionController::class, 'checkout'])->name('checkout');
+        // Route::get('/checkout/{plan}', [SubscriptionController::class, 'checkout'])->name('checkout'); // OLD
+        Route::get('/checkout/{plan}', [\App\Http\Controllers\PaymentController::class, 'show'])->name('checkout');
+        Route::post('/checkout/{plan}/bkash', [\App\Http\Controllers\PaymentController::class, 'payWithBkash'])->name('payment.bkash');
+        Route::post('/checkout/{plan}/stripe', [\App\Http\Controllers\PaymentController::class, 'payWithStripe'])->name('payment.stripe');
 
         Route::post('/cancel', [SubscriptionController::class, 'cancel'])->name('cancel');
         Route::post('/resume', [SubscriptionController::class, 'resume'])->name('resume');
@@ -211,6 +214,9 @@ Route::middleware(['auth', 'verified', 'admin', 'not-banned', 'impersonation'])
                 // Social Authentication Settings
                 Route::post('/social',     'updateSocial')->name('social.update');        // POST /admin/settings/social
 
+                // Payment Gateway Settings
+                Route::post('/payments',   'updatePayments')->name('payments.update');    // POST /admin/settings/payments
+
                 // API Keys (Sanctum) — create, reveal, revoke (current admin only)
                 Route::post('/api-tokens', 'createApiToken')->name('api.create');           // POST   /admin/settings/api-tokens
                 Route::post('/api-tokens/{token}/reveal', 'revealApiToken')                 // POST   /admin/settings/api-tokens/{token}/reveal
@@ -236,6 +242,11 @@ Route::middleware(['auth', 'verified', 'admin', 'not-banned', 'impersonation'])
         // Revenue Resource
         Route::get('revenue/export', [\App\Http\Controllers\Admin\RevenueController::class, 'export'])->name('revenue.export');
         Route::resource('revenue', \App\Http\Controllers\Admin\RevenueController::class)->only(['index', 'show']);
+
+        // Transactions (Manual Payments)
+        Route::get('transactions', [\App\Http\Controllers\Admin\TransactionController::class, 'index'])->name('transactions.index');
+        Route::post('transactions/{transaction}/approve', [\App\Http\Controllers\Admin\TransactionController::class, 'approve'])->name('transactions.approve');
+        Route::post('transactions/{transaction}/reject', [\App\Http\Controllers\Admin\TransactionController::class, 'reject'])->name('transactions.reject');
         /*
         |------------------------------------------------------------------
         | Support Tickets (Admin)
