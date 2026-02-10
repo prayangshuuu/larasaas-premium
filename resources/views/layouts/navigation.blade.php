@@ -290,6 +290,11 @@
                             <a href="{{ route('profile.edit') }}" class="block px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors">
                                 Profile Settings
                             </a>
+                            @if(\App\Helpers\Feature::enabled('subscription_module_enabled'))
+                                <a href="{{ route('billing.index') }}" class="block px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors">
+                                    Billing & Subscription
+                                </a>
+                            @endif
                             <a href="{{ route('webhooks.index') }}" class="block px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors">
                                 Webhooks
                             </a>
@@ -344,6 +349,12 @@
                class="block rounded-md py-2 px-3 text-base font-medium {{ request()->routeIs('webhooks.*') ? 'bg-indigo-500/10 text-indigo-400' : 'text-zinc-400 hover:bg-zinc-800 hover:text-white' }}">
                 Webhooks
             </a>
+            @if(\App\Helpers\Feature::enabled('subscription_module_enabled'))
+                <a href="{{ route('billing.index') }}" 
+                   class="block rounded-md py-2 px-3 text-base font-medium {{ request()->routeIs('billing.*') ? 'bg-indigo-500/10 text-indigo-400' : 'text-zinc-400 hover:bg-zinc-800 hover:text-white' }}">
+                    Billing & Subscription
+                </a>
+            @endif
             
             @if(\App\Helpers\Feature::enabled('team_management_enabled') && $user->currentTeam)
                 <div class="border-t border-zinc-800 mt-2 pt-2 pb-1">

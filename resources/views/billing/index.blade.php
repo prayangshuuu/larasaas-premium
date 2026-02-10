@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-7xl mx-auto space-y-8">
+<div class="max-w-5xl mx-auto space-y-8">
     {{-- Header --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -12,7 +12,7 @@
             <a href="{{ route('billing.plans') }}" class="inline-flex items-center justify-center rounded-lg bg-zinc-800 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-zinc-700 hover:text-indigo-400 transition-all border border-zinc-700">
                 View Plans
             </a>
-            @if($subscription)
+            @if($subscription && $stripeEnabled)
             <a href="{{ route('billing.portal') }}" class="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 hover:scale-105 transition-all">
                 Update Payment Method
             </a>
@@ -32,212 +32,267 @@
             </div>
         </div>
     @endif
+    @if(session('error'))
+        <div class="rounded-md bg-red-500/10 p-4 border border-red-500/20">
+            <div class="flex">
+                <div class="shrink-0">
+                    <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3 text-sm text-red-400">{{ session('error') }}</div>
+            </div>
+        </div>
+    @endif
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {{-- Left Column: Subscription Details --}}
-        <div class="lg:col-span-2 space-y-6">
-            <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-6 shadow-xl relative overflow-hidden">
-                <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent pointer-events-none"></div>
-                
-                <h2 class="text-lg font-semibold text-white mb-6 flex items-center gap-2">
-                    <svg class="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
-                    Current Subscription
-                </h2>
+    {{-- Current Subscription --}}
+    <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-6 shadow-xl relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent pointer-events-none"></div>
+        
+        <h2 class="text-lg font-semibold text-white mb-6 flex items-center gap-2 relative z-10">
+            <svg class="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
+            Current Subscription
+        </h2>
 
-                @if($subscription)
-                    <div class="space-y-6">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                            <div class="bg-zinc-950/50 p-4 rounded-lg border border-zinc-800">
-                                <label class="block text-xs font-medium text-zinc-500 uppercase tracking-wider mb-1">Plan</label>
-                                <div class="text-xl font-bold text-white">{{ $plan->name ?? 'Unknown Plan' }}</div>
-                                <div class="text-sm text-zinc-400 mt-1">
-                                    {{ $plan->currency }} {{ $plan->price }} / {{ $plan->interval }}
-                                </div>
-                            </div>
-                            <div class="bg-zinc-950/50 p-4 rounded-lg border border-zinc-800">
-                                <label class="block text-xs font-medium text-zinc-500 uppercase tracking-wider mb-1">Status</label>
-                                <div class="flex items-center gap-2">
-                                    <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-sm font-medium
-                                        @if($subscription->status === 'active') bg-emerald-500/10 text-emerald-400 ring-1 ring-emerald-500/20
-                                        @elseif($subscription->status === 'canceled') bg-red-500/10 text-red-400 ring-1 ring-red-500/20
-                                        @else bg-yellow-500/10 text-yellow-400 ring-1 ring-yellow-500/20 @endif">
-                                        {{ ucfirst($subscription->status) }}
-                                    </span>
-                                </div>
-                                <div class="text-sm text-zinc-400 mt-1">
-                                    @if($subscription->status === 'active')
-                                        Renews on {{ $subscription->current_period_end ? $subscription->current_period_end->format('M d, Y') : 'N/A' }}
-                                    @elseif($subscription->status === 'canceled')
-                                        Ends on {{ $subscription->current_period_end ? $subscription->current_period_end->format('M d, Y') : 'N/A' }}
-                                    @endif
-                                </div>
-                            </div>
+        @if($subscription)
+            <div class="space-y-6 relative z-10">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                    <div class="bg-zinc-950/50 p-4 rounded-lg border border-zinc-800">
+                        <label class="block text-xs font-medium text-zinc-500 uppercase tracking-wider mb-1">Plan</label>
+                        <div class="text-xl font-bold text-white">{{ $plan->name ?? 'Unknown Plan' }}</div>
+                        <div class="text-sm text-zinc-400 mt-1">
+                            {{ $plan->currency ?? 'USD' }} {{ $plan->price ?? '0.00' }} / {{ $plan->interval ?? 'month' }}
                         </div>
-
-                        <div class="flex flex-wrap gap-4 pt-4 border-t border-zinc-800">
-                            <a href="{{ route('billing.plans') }}" class="text-sm text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
-                                Change Plan &rarr;
-                            </a>
-                            
-                            @if($subscription->status === 'active' && !$subscription->onGracePeriod())
-                                <form action="{{ route('billing.cancel') }}" method="POST" onsubmit="return confirm('Are you sure you want to cancel? You will keep access until the end of the billing period.');">
-                                    @csrf
-                                    <button type="submit" class="text-sm text-red-500 hover:text-red-400 font-medium transition-colors">
-                                        Cancel Subscription
-                                    </button>
-                                </form>
-                            @elseif($subscription->onGracePeriod())
-                                <form action="{{ route('billing.resume') }}" method="POST">
-                                    @csrf
-                                    <button type="submit" class="text-sm text-emerald-500 hover:text-emerald-400 font-medium transition-colors">
-                                        Resume Subscription
-                                    </button>
-                                </form>
+                    </div>
+                    <div class="bg-zinc-950/50 p-4 rounded-lg border border-zinc-800">
+                        <label class="block text-xs font-medium text-zinc-500 uppercase tracking-wider mb-1">Status</label>
+                        <div class="flex items-center gap-2">
+                            <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-sm font-medium
+                                @if($subscription->status === 'active') bg-emerald-500/10 text-emerald-400 ring-1 ring-emerald-500/20
+                                @elseif($subscription->status === 'canceled') bg-red-500/10 text-red-400 ring-1 ring-red-500/20
+                                @else bg-yellow-500/10 text-yellow-400 ring-1 ring-yellow-500/20 @endif">
+                                {{ ucfirst($subscription->status) }}
+                            </span>
+                        </div>
+                        <div class="text-sm text-zinc-400 mt-1">
+                            @if($subscription->status === 'active')
+                                Renews on {{ $subscription->current_period_end ? $subscription->current_period_end->format('M d, Y') : 'N/A' }}
+                            @elseif($subscription->status === 'canceled')
+                                Ends on {{ $subscription->current_period_end ? $subscription->current_period_end->format('M d, Y') : 'N/A' }}
                             @endif
                         </div>
                     </div>
-                @else
-                    <div class="text-center py-8">
-                        <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-zinc-800 mb-4">
-                            <svg class="w-6 h-6 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" /></svg>
-                        </div>
-                        <h3 class="text-lg font-medium text-white">No active subscription</h3>
-                        <p class="mt-2 text-sm text-zinc-500">You are currently on the free tier. Upgrade to unlock more features.</p>
-                        <div class="mt-6">
-                            <a href="{{ route('billing.plans') }}" class="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 hover:scale-105 transition-all">
-                                View Plans
-                            </a>
-                        </div>
+                    <div class="bg-zinc-950/50 p-4 rounded-lg border border-zinc-800">
+                        <label class="block text-xs font-medium text-zinc-500 uppercase tracking-wider mb-1">Payment Method</label>
+                        @if($stripeEnabled)
+                            <div class="text-sm font-medium text-white">Stripe / Card</div>
+                            <div class="text-xs text-zinc-500 mt-1">Managed via Stripe</div>
+                        @elseif($bkashEnabled)
+                            <div class="text-sm font-medium text-white">Bkash (Manual)</div>
+                            <div class="text-xs text-zinc-500 mt-1">{{ $bkashNumber ?? 'Contact admin' }}</div>
+                        @else
+                            <div class="text-sm text-zinc-500">No gateway configured</div>
+                        @endif
                     </div>
-                @endif
-            </div>
-
-            {{-- Invoice History --}}
-            <div class="bg-zinc-900 border border-zinc-800 rounded-xl shadow-xl overflow-hidden">
-                <div class="p-6 border-b border-zinc-800">
-                    <h2 class="text-lg font-semibold text-white flex items-center gap-2">
-                        <svg class="w-5 h-5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                        Invoice History
-                    </h2>
                 </div>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-zinc-800 text-left">
-                        <thead class="bg-zinc-950/50">
-                            <tr>
-                                <th class="px-6 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">Date</th>
-                                <th class="px-6 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">Amount</th>
-                                <th class="px-6 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">Status</th>
-                                <th class="px-6 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wider text-right">Invoice</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-zinc-800 bg-zinc-900">
-                            @forelse($invoices as $invoice)
-                                <tr class="hover:bg-zinc-800/50 transition-colors">
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-300">
-                                        {{ $invoice->created_at->format('M d, Y') }}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
-                                        {{ number_format($invoice->amount, 2) }} <span class="text-zinc-500 text-xs uppercase">USD</span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                        @if($invoice->status === 'paid')
-                                            <span class="inline-flex items-center rounded-full bg-emerald-400/10 px-2 py-1 text-xs font-medium text-emerald-400 ring-1 ring-inset ring-emerald-400/20">Paid</span>
-                                        @elseif($invoice->status === 'pending')
-                                            <span class="inline-flex items-center rounded-full bg-yellow-400/10 px-2 py-1 text-xs font-medium text-yellow-500 ring-1 ring-inset ring-yellow-400/20">Pending</span>
-                                        @elseif(in_array($invoice->status, ['failed', 'canceled']))
-                                            <span class="inline-flex items-center rounded-full bg-red-400/10 px-2 py-1 text-xs font-medium text-red-500 ring-1 ring-inset ring-red-400/20">{{ ucfirst($invoice->status) }}</span>
-                                        @else
-                                            <span class="inline-flex items-center rounded-full bg-zinc-400/10 px-2 py-1 text-xs font-medium text-zinc-400 ring-1 ring-inset ring-zinc-400/20">{{ ucfirst($invoice->status) }}</span>
-                                        @endif
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-right">
-                                        @if($invoice->invoice_pdf_url)
-                                            <a href="{{ route('billing.invoices.show', $invoice) }}" target="_blank" class="text-indigo-400 hover:text-indigo-300 font-medium inline-flex items-center gap-1">
-                                                Download
-                                                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                                            </a>
-                                        @else
-                                            <span class="text-zinc-600 italic">Unavailable</span>
-                                        @endif
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="4" class="px-6 py-10 text-center text-sm text-zinc-500">
-                                        No invoices found.
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+
+                <div class="flex flex-wrap gap-4 pt-4 border-t border-zinc-800">
+                    <a href="{{ route('billing.plans') }}" class="text-sm text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
+                        Change Plan &rarr;
+                    </a>
+                    
+                    @if($subscription->status === 'active' && !$subscription->onGracePeriod())
+                        <form action="{{ route('billing.cancel') }}" method="POST" onsubmit="return confirm('Are you sure you want to cancel? You will keep access until the end of the billing period.');">
+                            @csrf
+                            <button type="submit" class="text-sm text-red-500 hover:text-red-400 font-medium transition-colors">
+                                Cancel Subscription
+                            </button>
+                        </form>
+                    @elseif($subscription->onGracePeriod())
+                        <form action="{{ route('billing.resume') }}" method="POST">
+                            @csrf
+                            <button type="submit" class="text-sm text-emerald-500 hover:text-emerald-400 font-medium transition-colors">
+                                Resume Subscription
+                            </button>
+                        </form>
+                    @endif
                 </div>
             </div>
-        </div>
-
-        {{-- Transaction History (Manual Payments & Stripe) --}}
-        @if($transactions->isNotEmpty())
-        <div class="bg-zinc-900 border border-zinc-800 rounded-xl shadow-xl overflow-hidden mt-8">
-            <div class="p-6 border-b border-zinc-800">
-                <h2 class="text-lg font-semibold text-white flex items-center gap-2">
-                    <svg class="w-5 h-5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    Transaction History
-                </h2>
+        @else
+            <div class="text-center py-8 relative z-10">
+                <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-zinc-800 mb-4">
+                    <svg class="w-6 h-6 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" /></svg>
+                </div>
+                <h3 class="text-lg font-medium text-white">No active subscription</h3>
+                <p class="mt-2 text-sm text-zinc-500">You are currently on the free tier. Upgrade to unlock more features.</p>
+                <div class="mt-6">
+                    <a href="{{ route('billing.plans') }}" class="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 hover:scale-105 transition-all">
+                        View Plans
+                    </a>
+                </div>
             </div>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-zinc-800 text-left">
-                    <thead class="bg-zinc-950/50">
-                        <tr>
-                            <th class="px-6 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">Date</th>
-                            <th class="px-6 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">Description</th>
-                            <th class="px-6 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">Amount</th>
-                            <th class="px-6 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-zinc-800 bg-zinc-900">
-                        @foreach($transactions as $trx)
-                            <tr class="hover:bg-zinc-800/50 transition-colors">
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-300">
-                                    {{ $trx->created_at->format('M d, Y') }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-white">
-                                    {{ $trx->description }}
-                                    @if($trx->payment_method === 'bkash_manual')
-                                        <span class="text-xs text-zinc-500 ml-1">(Bkash {{ $trx->transaction_id }})</span>
-                                    @endif
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
-                                    {{ number_format($trx->amount, 2) }} <span class="text-zinc-500 text-xs uppercase">{{ $trx->currency }}</span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                    @if($trx->status === 'paid')
-                                        <span class="inline-flex items-center rounded-full bg-emerald-400/10 px-2 py-1 text-xs font-medium text-emerald-400 ring-1 ring-inset ring-emerald-400/20">Paid</span>
-                                    @elseif($trx->status === 'pending')
-                                        <span class="inline-flex items-center rounded-full bg-yellow-400/10 px-2 py-1 text-xs font-medium text-yellow-500 ring-1 ring-inset ring-yellow-400/20">Pending</span>
-                                    @elseif($trx->status === 'rejected')
-                                        <span class="inline-flex items-center rounded-full bg-red-400/10 px-2 py-1 text-xs font-medium text-red-500 ring-1 ring-inset ring-red-400/20">Rejected</span>
-                                    @else
-                                        <span class="inline-flex items-center rounded-full bg-zinc-400/10 px-2 py-1 text-xs font-medium text-zinc-400 ring-1 ring-inset ring-zinc-400/20">{{ ucfirst($trx->status) }}</span>
-                                    @endif
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        </div>
         @endif
-        </div>
+    </div>
 
-        {{-- Right Column (Optional: Features, Stats, or FAQs) --}}
-        <div class="space-y-6">
-             <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-6 shadow-xl">
-                 <h3 class="text-base font-semibold text-white mb-4">Payment Methods</h3>
-                 <p class="text-sm text-zinc-400 mb-6">Manage your saved cards and billing details securely via Stripe.</p>
-                 <a href="{{ route('billing.portal') }}" class="w-full inline-flex items-center justify-center rounded-lg bg-zinc-800 px-4 py-2.5 text-sm font-semibold text-white hover:bg-zinc-700 hover:text-indigo-400 transition-colors border border-zinc-700">
-                     Manage in Stripe Portal
-                 </a>
-             </div>
+    {{-- Payment Methods --}}
+    <div class="grid grid-cols-1 {{ ($stripeEnabled && $bkashEnabled) ? 'sm:grid-cols-2' : '' }} gap-6">
+        @if($stripeEnabled)
+            <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-6 shadow-xl">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 rounded-lg bg-indigo-500/10 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
+                    </div>
+                    <h3 class="text-base font-semibold text-white">Stripe / Card Payments</h3>
+                </div>
+                <p class="text-sm text-zinc-400 mb-6">Manage your saved cards and billing details securely via Stripe.</p>
+                <a href="{{ route('billing.portal') }}" class="w-full inline-flex items-center justify-center rounded-lg bg-zinc-800 px-4 py-2.5 text-sm font-semibold text-white hover:bg-zinc-700 hover:text-indigo-400 transition-colors border border-zinc-700">
+                    Manage in Stripe Portal
+                </a>
+            </div>
+        @endif
+
+        @if($bkashEnabled)
+            <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-6 shadow-xl">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 rounded-lg bg-pink-500/10 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-pink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    </div>
+                    <h3 class="text-base font-semibold text-white">Bkash (Manual Payment)</h3>
+                </div>
+                <p class="text-sm text-zinc-400 mb-2">Send payment manually via Bkash to subscribe or renew.</p>
+                @if($bkashNumber)
+                    <p class="text-sm text-zinc-300 mb-4">Send to: <span class="font-mono font-bold text-white">{{ $bkashNumber }}</span></p>
+                @endif
+                <a href="{{ route('billing.plans') }}" class="w-full inline-flex items-center justify-center rounded-lg bg-zinc-800 px-4 py-2.5 text-sm font-semibold text-white hover:bg-zinc-700 hover:text-pink-400 transition-colors border border-zinc-700">
+                    Choose a Plan
+                </a>
+            </div>
+        @endif
+
+        @if(!$stripeEnabled && !$bkashEnabled)
+            <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-6 shadow-xl text-center">
+                <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-zinc-800 mb-4">
+                    <svg class="w-6 h-6 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
+                </div>
+                <h3 class="text-base font-semibold text-white">No Payment Gateways</h3>
+                <p class="text-sm text-zinc-500 mt-1">No payment gateways are currently enabled. Please contact support.</p>
+            </div>
+        @endif
+    </div>
+
+    {{-- Invoice History --}}
+    <div class="bg-zinc-900 border border-zinc-800 rounded-xl shadow-xl overflow-hidden">
+        <div class="p-6 border-b border-zinc-800">
+            <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+                <svg class="w-5 h-5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                Invoice History
+            </h2>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-zinc-800 text-left">
+                <thead class="bg-zinc-950/50">
+                    <tr>
+                        <th class="px-6 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">Date</th>
+                        <th class="px-6 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">Amount</th>
+                        <th class="px-6 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wider text-right">Invoice</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-zinc-800 bg-zinc-900">
+                    @forelse($invoices as $invoice)
+                        <tr class="hover:bg-zinc-800/50 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-300">
+                                {{ $invoice->created_at->format('M d, Y') }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
+                                {{ number_format($invoice->amount, 2) }} <span class="text-zinc-500 text-xs uppercase">USD</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                @if($invoice->status === 'paid')
+                                    <span class="inline-flex items-center rounded-full bg-emerald-400/10 px-2 py-1 text-xs font-medium text-emerald-400 ring-1 ring-inset ring-emerald-400/20">Paid</span>
+                                @elseif($invoice->status === 'pending')
+                                    <span class="inline-flex items-center rounded-full bg-yellow-400/10 px-2 py-1 text-xs font-medium text-yellow-500 ring-1 ring-inset ring-yellow-400/20">Pending</span>
+                                @elseif(in_array($invoice->status, ['failed', 'canceled']))
+                                    <span class="inline-flex items-center rounded-full bg-red-400/10 px-2 py-1 text-xs font-medium text-red-500 ring-1 ring-inset ring-red-400/20">{{ ucfirst($invoice->status) }}</span>
+                                @else
+                                    <span class="inline-flex items-center rounded-full bg-zinc-400/10 px-2 py-1 text-xs font-medium text-zinc-400 ring-1 ring-inset ring-zinc-400/20">{{ ucfirst($invoice->status) }}</span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-right">
+                                @if($invoice->invoice_pdf_url)
+                                    <a href="{{ route('billing.invoices.show', $invoice) }}" target="_blank" class="text-indigo-400 hover:text-indigo-300 font-medium inline-flex items-center gap-1">
+                                        Download
+                                        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                                    </a>
+                                @else
+                                    <span class="text-zinc-600 italic">Unavailable</span>
+                                @endif
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="4" class="px-6 py-10 text-center text-sm text-zinc-500">
+                                No invoices found.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
     </div>
+
+    {{-- Transaction History --}}
+    @if($transactions->isNotEmpty())
+    <div class="bg-zinc-900 border border-zinc-800 rounded-xl shadow-xl overflow-hidden">
+        <div class="p-6 border-b border-zinc-800">
+            <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+                <svg class="w-5 h-5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                Transaction History
+            </h2>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-zinc-800 text-left">
+                <thead class="bg-zinc-950/50">
+                    <tr>
+                        <th class="px-6 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">Date</th>
+                        <th class="px-6 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">Description</th>
+                        <th class="px-6 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">Amount</th>
+                        <th class="px-6 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-zinc-800 bg-zinc-900">
+                    @foreach($transactions as $trx)
+                        <tr class="hover:bg-zinc-800/50 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-300">
+                                {{ $trx->created_at->format('M d, Y') }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-white">
+                                {{ $trx->description }}
+                                @if($trx->payment_method === 'bkash_manual')
+                                    <span class="text-xs text-zinc-500 ml-1">(Bkash {{ $trx->transaction_id }})</span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
+                                {{ number_format($trx->amount, 2) }} <span class="text-zinc-500 text-xs uppercase">{{ $trx->currency }}</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                @if($trx->status === 'paid')
+                                    <span class="inline-flex items-center rounded-full bg-emerald-400/10 px-2 py-1 text-xs font-medium text-emerald-400 ring-1 ring-inset ring-emerald-400/20">Paid</span>
+                                @elseif($trx->status === 'pending')
+                                    <span class="inline-flex items-center rounded-full bg-yellow-400/10 px-2 py-1 text-xs font-medium text-yellow-500 ring-1 ring-inset ring-yellow-400/20">Pending</span>
+                                @elseif($trx->status === 'rejected')
+                                    <span class="inline-flex items-center rounded-full bg-red-400/10 px-2 py-1 text-xs font-medium text-red-500 ring-1 ring-inset ring-red-400/20">Rejected</span>
+                                @else
+                                    <span class="inline-flex items-center rounded-full bg-zinc-400/10 px-2 py-1 text-xs font-medium text-zinc-400 ring-1 ring-inset ring-zinc-400/20">{{ ucfirst($trx->status) }}</span>
+                                @endif
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+    @endif
+
 </div>
 @endsection
