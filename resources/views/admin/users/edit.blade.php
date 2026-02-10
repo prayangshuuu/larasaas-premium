@@ -41,6 +41,20 @@
                                 <x-input-error class="mt-2" :messages="$errors->get('email')" />
                             </div>
 
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <x-input-label for="password" :value="__('New Password (Optional)')" />
+                                    <x-text-input id="password" name="password" type="password" class="mt-1 block w-full" autocomplete="new-password" />
+                                    <x-input-error class="mt-2" :messages="$errors->get('password')" />
+                                </div>
+
+                                <div>
+                                    <x-input-label for="password_confirmation" :value="__('Confirm Password')" />
+                                    <x-text-input id="password_confirmation" name="password_confirmation" type="password" class="mt-1 block w-full" autocomplete="new-password" />
+                                    <x-input-error class="mt-2" :messages="$errors->get('password_confirmation')" />
+                                </div>
+                            </div>
+
                             <div>
                                 <x-input-label for="role" :value="__('Role')" />
                                 <select id="role" name="role" class="mt-1 block w-full border-gray-300 dark:border-zinc-700 dark:bg-zinc-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm">

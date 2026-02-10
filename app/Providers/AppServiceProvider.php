@@ -22,5 +22,11 @@ class AppServiceProvider extends ServiceProvider
         \Illuminate\Support\Facades\Blade::if('subscribed', function () {
             return auth()->check() && auth()->user()->subscriptions()->where('status', 'active')->exists();
         });
+
+        // Manual Stripe Webhook Listener (Cashier-free)
+        \Illuminate\Support\Facades\Event::listen(
+            'stripe.webhook.received',
+            \App\Listeners\StripePaymentListener::class
+        );
     }
 }

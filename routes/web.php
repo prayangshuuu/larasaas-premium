@@ -233,6 +233,10 @@ Route::middleware(['auth', 'verified', 'admin', 'not-banned', 'impersonation'])
         Route::resource('announcements', \App\Http\Controllers\Admin\AnnouncementController::class)
             ->middleware('feature:announcement_enabled');
 
+        // Revenue Resource
+        Route::get('revenue/export', [\App\Http\Controllers\Admin\RevenueController::class, 'export'])->name('revenue.export');
+        Route::resource('revenue', \App\Http\Controllers\Admin\RevenueController::class)->only(['index', 'show']);
+
         /*
         |------------------------------------------------------------------
         | Support Tickets (Admin)
@@ -277,6 +281,9 @@ Route::middleware(['auth', 'verified', 'admin', 'not-banned', 'impersonation'])
             Route::post('/{user}/unban',   'unban')->name('unban');
             Route::post('/{user}/promote', 'promote')->name('promote');
             Route::post('/{user}/demote',  'demote')->name('demote');
+            
+            // Generate & Send Password
+            Route::post('/{user}/send-password', 'sendRandomPassword')->name('send-password');
             
             // Manual Subscription Management (Admin)
             Route::post('/{user}/subscriptions', [\App\Http\Controllers\Admin\UserSubscriptionController::class, 'store'])->name('subscriptions.store');

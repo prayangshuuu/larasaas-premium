@@ -55,6 +55,9 @@ class StripeWebhookController extends Controller
                 // Log::info('Received unknown event type ' . $event->type);
         }
 
+        // Dispatch generic event for listeners (e.g. Transaction creation)
+        \Illuminate\Support\Facades\Event::dispatch('stripe.webhook.received', new \Illuminate\Support\Fluent(['payload' => json_decode($payload, true)]));
+
         return response('Webhook Handled', 200);
     }
 

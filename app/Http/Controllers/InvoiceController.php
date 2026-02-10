@@ -12,7 +12,7 @@ class InvoiceController extends Controller
      */
     public function index(Request $request)
     {
-        $invoices = $request->user()->invoices()->latest()->get();
+        $invoices = $request->user()->localInvoices()->latest()->get();
 
         // Check if a specific invoice index view exists, otherwise fallback or potentially render partial.
         // User requested: "Return the view `billing.invoices.index` (or `billing.index`...)"

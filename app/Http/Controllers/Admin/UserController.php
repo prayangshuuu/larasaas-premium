@@ -70,7 +70,9 @@ class UserController extends Controller
         $data = $request->validated();
 
         // Handle password
+        $newPassword = null;
         if (!empty($data['password'])) {
+            $newPassword = $data['password'];
             $data['password'] = Hash::make($data['password']);
         } else {
             unset($data['password']);
@@ -95,6 +97,12 @@ class UserController extends Controller
         }
 
         $user->update($data);
+
+        // Send Email if requested
+        if ($newPassword && $request->boolean('send_password_email')) {
+             $user->notify(new \App\Notifications\PasswordResetByAdmin($newPassword));
+        }
+
         AuditLog::write($user, 'user.update', 'Admin updated user', ['fields'=>array_keys($data)]);
 
         return back()->with('status', 'User updated.');

@@ -13,6 +13,8 @@ use Illuminate\Support\Str;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Sanctum\HasApiTokens;
 
+
+
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable, TwoFactorAuthenticatable;
@@ -300,7 +302,10 @@ class User extends Authenticatable
     /**
      * Get the invoices for the user.
      */
-    public function invoices(): \Illuminate\Database\Eloquent\Relations\HasMany
+    /**
+     * Get the invoices for the user.
+     */
+    public function localInvoices(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Invoice::class);
     }

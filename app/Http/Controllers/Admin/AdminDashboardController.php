@@ -21,7 +21,7 @@ class AdminDashboardController extends Controller
             ->get(['id', 'name', 'email', 'email_verified_at', 'created_at']);
 
         // Billing Stats
-        $totalRevenue = \App\Models\Invoice::where('status', 'paid')->sum('amount');
+        $totalRevenue = \App\Models\Transaction::paid()->sum('amount');
         $activeSubscribers = \App\Models\Subscription::where('status', 'active')->count();
 
         // New Stats

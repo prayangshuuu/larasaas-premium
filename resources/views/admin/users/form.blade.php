@@ -23,6 +23,12 @@
 
         {{-- Card --}}
         <div class="bg-zinc-900 border border-zinc-800 shadow-xl rounded-xl p-6 sm:p-8">
+            @if($isEdit)
+                <form id="generate-password-form" action="{{ route('admin.users.send-password', $managedUser) }}" method="POST" class="hidden" onsubmit="return confirm('Are you sure? This will overwrite the current password and email a new one to the user.');">
+                    @csrf
+                </form>
+            @endif
+
             <form method="POST"
                   action="{{ $isEdit ? route('admin.users.update', $managedUser) : route('admin.users.store') }}"
                   class="space-y-6">
@@ -72,12 +78,13 @@
                             Password <span class="text-zinc-500 font-normal">{{ $isEdit ? '(leave blank to keep)' : '' }}</span>
                         </label>
                         <div class="relative">
-                            <x-ui.input type="password"
+                            <input type="password"
                                    name="password"
                                    id="password"
                                    placeholder="••••••••"
                                    {{ $isEdit ? '' : 'required' }}
-                                   autocomplete="new-password" />
+                                   autocomplete="new-password"
+                                   class="block w-full rounded-md border-0 bg-zinc-900 py-1.5 text-white shadow-sm ring-1 ring-inset ring-zinc-700 placeholder:text-zinc-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
                             <button type="button"
                                     class="absolute inset-y-0 right-0 flex items-center pr-3 text-zinc-500 hover:text-zinc-300 cursor-pointer"
                                     onclick="const p=document.getElementById('password'); p.type = p.type === 'password' ? 'text' : 'password'">
@@ -88,20 +95,50 @@
                             </button>
                         </div>
                         @error('password') <p class="text-red-400 text-sm mt-1">{{ $message }}</p> @enderror
+
+                        @if($isEdit)
+                            <div class="mt-4 flex items-center justify-between">
+                                <span class="flex-grow flex flex-col">
+                                    <span class="text-sm font-medium text-zinc-300">Email User</span>
+                                    <span class="text-xs text-zinc-500">Send the new password via email</span>
+                                </span>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" name="send_password_email" value="1" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-zinc-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                </label>
+                            </div>
+                        @endif
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium text-zinc-300 mb-1">Confirm Password</label>
                          <div class="relative">
-                            <x-ui.input type="password"
+                            <input type="password"
                                    name="password_confirmation"
                                    id="password_confirmation"
                                    placeholder="••••••••"
                                    {{ $isEdit ? '' : 'required' }}
-                                   autocomplete="new-password" />
+                                   autocomplete="new-password"
+                                   class="block w-full rounded-md border-0 bg-zinc-900 py-1.5 text-white shadow-sm ring-1 ring-inset ring-zinc-700 placeholder:text-zinc-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
                         </div>
                     </div>
                 </div>
+
+                @if($isEdit)
+                    <div class="mt-4 p-4 rounded-lg border border-zinc-700 bg-zinc-800/50">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="text-sm font-medium text-white">Generate & Send New Password</h3>
+                                <p class="text-xs text-zinc-400 mt-1">Instantly generate a random password and email it to the user.</p>
+                            </div>
+                            <button type="submit" 
+                                    form="generate-password-form"
+                                    class="inline-flex items-center rounded-md bg-white/10 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-white/20 transition-colors">
+                                Generate & Send
+                            </button>
+                        </div>
+                    </div>
+                @endif
 
                 {{-- Toggles --}}
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-4 border-t border-zinc-800/50">
