@@ -72,6 +72,21 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
                                 {{ $transaction->amount }} <span class="text-zinc-500 text-xs uppercase">{{ $transaction->currency }}</span>
+                                @if($transaction->discount_amount > 0)
+                                    <div class="mt-1 space-y-0.5">
+                                        <div class="text-xs text-zinc-500">
+                                            Subtotal: <span class="line-through">{{ $transaction->subtotal }}</span>
+                                        </div>
+                                        <div class="text-xs text-emerald-400">
+                                            -{{ $transaction->discount_amount }} discount
+                                        </div>
+                                        @if($transaction->coupon)
+                                            <span class="inline-flex items-center rounded-full bg-emerald-400/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-400 ring-1 ring-inset ring-emerald-400/20">
+                                                {{ $transaction->coupon->code }}
+                                            </span>
+                                        @endif
+                                    </div>
+                                @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm text-zinc-300">

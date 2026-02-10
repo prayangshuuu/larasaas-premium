@@ -45,7 +45,7 @@
                                     @endif
                                 </p>
                             </div>
-                            <a href="{{ route('billing.plans') }}" class="inline-flex items-center rounded-lg bg-zinc-800 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-700 transition-colors border border-zinc-700">
+                            <a href="{{ route('billing.index') }}" class="inline-flex items-center rounded-lg bg-zinc-800 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-700 transition-colors border border-zinc-700">
                                 Manage Plan
                             </a>
                         </div>

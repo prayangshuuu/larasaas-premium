@@ -46,7 +46,7 @@ class BillingController extends Controller
         $transactions = \App\Models\Transaction::where('user_id', $user->id)->latest()->get();
 
         // Payment gateway flags
-        $stripeEnabled = \App\Models\SystemSetting::where('key', 'stripe_enabled')->value('value') !== '0';
+        $stripeEnabled = \App\Models\SystemSetting::where('key', 'stripe_enabled')->value('value') === '1';
         $bkashEnabled = \App\Models\SystemSetting::where('key', 'bkash_enabled')->value('value') === '1';
         $bkashNumber = \App\Models\SystemSetting::where('key', 'bkash_admin_number')->value('value');
 

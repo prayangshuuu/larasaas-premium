@@ -59,6 +59,20 @@
                             <div class="text-xs text-zinc-500 mt-1">Current active plans</div>
                         </a>
 
+                        {{-- Pending Payments (Bkash Manual) --}}
+                        @if($bkashEnabled)
+                        <a href="{{ route('admin.transactions.index', ['status' => 'pending']) }}" class="group block p-4 bg-zinc-950/50 rounded-lg border border-zinc-800 hover:border-yellow-500/50 hover:bg-zinc-900 transition-all hover:scale-[1.02] hover:shadow-lg {{ $pendingPaymentsCount > 0 ? 'ring-1 ring-yellow-500/30' : '' }}">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="p-2 bg-yellow-500/10 rounded-lg text-yellow-400 group-hover:bg-yellow-500/20 transition-colors">
+                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                </div>
+                                <div class="text-sm font-medium text-zinc-400 group-hover:text-yellow-300 transition-colors">Pending Payments</div>
+                            </div>
+                            <div class="text-2xl font-bold text-white">{{ number_format($pendingPaymentsCount) }}</div>
+                            <div class="text-xs text-zinc-500 mt-1">Bkash awaiting review</div>
+                        </a>
+                        @endif
+
                         {{-- Total Users --}}
                         <a href="{{ route('admin.users.index') }}" class="group block p-4 bg-zinc-950/50 rounded-lg border border-zinc-800 hover:border-blue-500/50 hover:bg-zinc-900 transition-all hover:scale-[1.02] hover:shadow-lg">
                             <div class="flex items-center gap-3 mb-2">

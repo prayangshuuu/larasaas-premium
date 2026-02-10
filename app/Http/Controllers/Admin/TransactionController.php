@@ -16,7 +16,7 @@ class TransactionController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Transaction::query()->with('user');
+        $query = Transaction::query()->with(['user', 'coupon']);
 
         if ($request->has('status') && $request->status != '') {
             $query->where('status', $request->status);

@@ -24,6 +24,9 @@
                             Usage
                         </th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider">
+                            Status
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider">
                             Expires
                         </th>
                         <th scope="col" class="relative px-6 py-3">
@@ -51,6 +54,13 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-300">
                                 {{ $coupon->times_used }} / {{ $coupon->max_uses ?? '∞' }}
                             </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                @if($coupon->is_active)
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-emerald-500/20 text-emerald-400">Active</span>
+                                @else
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-500/20 text-red-400">Inactive</span>
+                                @endif
+                            </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-300">
                                 {{ $coupon->expires_at ? $coupon->expires_at->format('M d, Y') : 'Never' }}
                             </td>
@@ -67,7 +77,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-6 py-4 whitespace-nowrap text-sm text-zinc-500 text-center">
+                            <td colspan="6" class="px-6 py-4 whitespace-nowrap text-sm text-zinc-500 text-center">
                                 No coupons found.
                             </td>
                         </tr>

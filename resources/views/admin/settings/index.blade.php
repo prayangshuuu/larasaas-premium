@@ -245,7 +245,8 @@
                 socialLoginEnabled: {{ $socialEnabled ? 'true' : 'false' }},
                 googleEnabled: {{ $googleEnabled ? 'true' : 'false' }},
                 facebookEnabled: {{ $facebookEnabled ? 'true' : 'false' }},
-                twitterEnabled: {{ $twitterEnabled ? 'true' : 'false' }}
+                twitterEnabled: {{ $twitterEnabled ? 'true' : 'false' }},
+                couponEnabled: {{ old('coupon_enabled', (int)($features['coupon_enabled'] ?? 0)) ? 'true' : 'false' }}
              }">
             <h2 class="text-xl font-semibold text-white">Platform Features & Modules</h2>
             <p class="text-sm text-zinc-400 mt-1">Configure global system modules and feature flags.</p>
@@ -402,7 +403,7 @@
                         <div class="space-y-4">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center gap-2">
-                                     <img src="https://wiki.uhub.co.bd/uploads/images/wg/bkash-logo.png" alt="Bkash" class="h-8 w-auto">
+                                     <img src="{{ asset('images/bkash-logo.png') }}" alt="Bkash" class="h-8 w-auto">
                                 </div>
                                 <input type="hidden" name="bkash_enabled" :value="bkashEnabled ? 1 : 0">
                                 <button type="button"
@@ -448,6 +449,24 @@
                                         <p class="text-xs text-zinc-500 mt-1">Check *247#... etc.</p>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+
+                        {{-- Coupons --}}
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <div class="font-medium text-zinc-200">Enable Coupons</div>
+                                    <div class="text-sm text-zinc-500">Allow customers to use discount codes at checkout.</div>
+                                </div>
+                                <input type="hidden" name="coupon_enabled" :value="couponEnabled ? 1 : 0">
+                                <button type="button"
+                                        class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-zinc-900"
+                                        :class="{ 'bg-indigo-600': couponEnabled, 'bg-zinc-700': !couponEnabled }"
+                                        @click="couponEnabled = !couponEnabled">
+                                    <span class="sr-only">Use setting</span>
+                                    <span aria-hidden="true" class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out" :class="{ 'translate-x-5': couponEnabled, 'translate-x-0': !couponEnabled }"></span>
+                                </button>
                             </div>
                         </div>
 
@@ -709,12 +728,11 @@
             @if ($newTokenPlain)
                 <div class="mt-6 rounded-md bg-green-500/10 p-4 border border-green-500/20">
                     <div class="font-medium text-green-400">New token created</div>
-                    <div class="text-xs text-green-500/80 mb-3">Copy it now — you won’t be able to see it again.</div>
-                    <div class="flex gap-2" x-data="{ show: false }">
-                        <input id="newTokenPlain" :type="show ? 'text' : 'password'"
-                               class="block w-full rounded-md border-0 bg-green-950/30 py-1.5 text-green-400 font-mono text-sm ring-1 ring-inset ring-green-500/30 focus:ring-2 focus:ring-inset focus:ring-green-500"
-                               value="{{ $newTokenPlain }}" readonly>
-                        <button type="button" class="px-3 py-1.5 text-sm font-semibold text-green-400 bg-green-500/10 rounded-md hover:bg-green-500/20" @click="show = !show" x-text="show ? 'Hide' : 'Show'"></button>
+                    <div class="text-xs text-green-500/80 mb-3">Your new API token is shown below. You can also reveal it later from the token list.</div>
+                    <div class="flex gap-2">
+                        <input id="newTokenPlain" type="text"
+                               class="block w-full rounded-md border-0 bg-green-950/30 py-1.5 text-green-400 font-mono text-sm ring-1 ring-inset ring-green-500/30 focus:ring-2 focus:ring-inset focus:ring-green-500 select-all"
+                               value="{{ $newTokenPlain }}" readonly onclick="this.select()">
                         <button type="button" class="px-3 py-1.5 text-sm font-semibold text-green-400 bg-green-500/10 rounded-md hover:bg-green-500/20" onclick="copyText('newTokenPlain', this)">Copy</button>
                     </div>
                 </div>
@@ -724,11 +742,10 @@
                 <div class="mt-6 rounded-md bg-blue-500/10 p-4 border border-blue-500/20">
                      <div class="font-medium text-blue-400">Token revealed</div>
                     <div class="text-xs text-blue-500/80 mb-3">This is your token value.</div>
-                     <div class="flex gap-2" x-data="{ show: false }">
-                        <input id="revealedTokenPlain" :type="show ? 'text' : 'password'"
+                     <div class="flex gap-2">
+                        <input id="revealedTokenPlain" type="text"
                                class="block w-full rounded-md border-0 bg-blue-950/30 py-1.5 text-blue-400 font-mono text-sm ring-1 ring-inset ring-blue-500/30 focus:ring-2 focus:ring-inset focus:ring-blue-500"
-                               value="{{ $revealedTokenPlain }}" readonly>
-                        <button type="button" class="px-3 py-1.5 text-sm font-semibold text-blue-400 bg-blue-500/10 rounded-md hover:bg-blue-500/20" @click="show = !show" x-text="show ? 'Hide' : 'Show'"></button>
+                               value="{{ $revealedTokenPlain }}" readonly onclick="this.select()">
                         <button type="button" class="px-3 py-1.5 text-sm font-semibold text-blue-400 bg-blue-500/10 rounded-md hover:bg-blue-500/20" onclick="copyText('revealedTokenPlain', this)">Copy</button>
                     </div>
                 </div>
@@ -771,6 +788,7 @@
                     <thead>
                     <tr class="text-zinc-400 text-xs uppercase tracking-wider bg-zinc-900/50">
                         <th class="px-4 py-3 font-medium">Name</th>
+                        <th class="px-4 py-3 font-medium">Token</th>
                         <th class="px-4 py-3 font-medium">Abilities</th>
                         <th class="px-4 py-3 font-medium">Last Used</th>
                         <th class="px-4 py-3 font-medium">Expires</th>
@@ -780,8 +798,28 @@
                     </thead>
                     <tbody class="divide-y divide-zinc-800">
                     @forelse ($api_tokens as $t)
+                        @php
+                            $tokenPlain = null;
+                            try {
+                                if (!empty($t->token_plain_encrypted)) {
+                                    $tokenPlain = \Illuminate\Support\Facades\Crypt::decryptString($t->token_plain_encrypted);
+                                }
+                            } catch (\Throwable $e) {
+                                $tokenPlain = null;
+                            }
+                        @endphp
                         <tr class="hover:bg-zinc-800/50 transition-colors {{ $revealedTokenId && (int)$revealedTokenId === (int)$t->id ? 'bg-indigo-500/5' : '' }}">
                             <td class="px-4 py-4 text-sm font-medium text-white">{{ $t->name }}</td>
+                            <td class="px-4 py-4 text-sm">
+                                @if ($tokenPlain)
+                                    <div class="flex items-center gap-2">
+                                        <code id="token-{{ $t->id }}" class="text-xs font-mono text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded select-all cursor-pointer" onclick="this.ownerDocument.defaultView.getSelection().selectAllChildren(this)">{{ $tokenPlain }}</code>
+                                        <button type="button" class="text-xs text-zinc-400 hover:text-white transition-colors" onclick="navigator.clipboard.writeText('{{ $tokenPlain }}'); this.innerText='Copied!'; setTimeout(() => this.innerText='Copy', 900)">Copy</button>
+                                    </div>
+                                @else
+                                    <span class="text-xs text-zinc-600 italic">unavailable</span>
+                                @endif
+                            </td>
                             <td class="px-4 py-4 text-sm text-zinc-400 font-mono text-xs">
                                 {{ implode(',', is_array($t->abilities) ? $t->abilities : (array)$t->abilities) ?: '*' }}
                             </td>
@@ -790,10 +828,6 @@
                             <td class="px-4 py-4 text-sm text-zinc-500">{{ $t->created_at ? $t->created_at->format('d M Y, H:i') : '—' }}</td>
                             <td class="px-4 py-4 text-sm text-right">
                                 <div class="flex justify-end gap-3">
-                                    <form method="POST" action="{{ route('admin.settings.api.reveal', $t->id) }}">
-                                        @csrf
-                                        <button type="submit" class="text-zinc-400 hover:text-white transition-colors">Reveal</button>
-                                    </form>
                                     <form method="POST" action="{{ route('admin.settings.api.revoke', $t->id) }}" onsubmit="return confirm('Revoke token {{ $t->name }}?')">
                                         @csrf @method('DELETE')
                                         <button type="submit" class="text-red-500 hover:text-red-400 transition-colors">Revoke</button>
@@ -803,7 +837,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="text-center text-zinc-500 py-8">No API tokens yet.</td>
+                            <td colspan="7" class="text-center text-zinc-500 py-8">No API tokens yet.</td>
                         </tr>
                     @endforelse
                     </tbody>

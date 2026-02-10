@@ -105,6 +105,7 @@ class SystemSettingsController extends Controller
                 'announcement_enabled'                => Feature::enabled('announcement_enabled'),
                 'team_management_enabled'             => Feature::enabled('team_management_enabled'),
                 'bkash_enabled'                       => Feature::enabled('bkash_enabled'),
+                'coupon_enabled'                      => Feature::enabled('coupon_enabled'),
                 'bkash_admin_number'                  => SystemSetting::where('key', 'bkash_admin_number')->first()?->value,
                 'stripe_logo'                         => SystemSetting::where('key', 'stripe_logo')->first()?->value,
                 'bkash_logo'                          => SystemSetting::where('key', 'bkash_logo')->first()?->value,
@@ -243,6 +244,7 @@ class SystemSettingsController extends Controller
             'payment_gateways_enabled'            => $request->boolean('payment_gateways_enabled'),
             'stripe_payment_enabled'              => $request->boolean('stripe_payment_enabled'),
             'bkash_enabled'                       => $request->boolean('bkash_enabled'),
+            'coupon_enabled'                      => $request->boolean('coupon_enabled'),
         ];
 
         // Persist each feature flag to system_settings table
@@ -367,18 +369,28 @@ class SystemSettingsController extends Controller
             }
         }
 
+        // Generate a short 8-character alphanumeric API key
+        $shortKey = strtoupper(\Illuminate\Support\Str::random(8));
+
         /** @var \App\Models\User $user */
-        $user   = Auth::user();
-        $issued = $user->createToken($data['token_name'], $abilities, $expiresAt);
+        $user  = Auth::user();
 
-        $plain = $issued->plainTextToken;     //  "{id}|{random}"
-        $model = $issued->accessToken;        //  PersonalAccessToken Eloquent model
+        // Create the Sanctum token record manually with our short key
+        $model = $user->tokens()->create([
+            'name'       => $data['token_name'],
+            'token'      => hash('sha256', $shortKey),
+            'abilities'  => $abilities,
+            'expires_at' => $expiresAt,
+        ]);
 
-        // Store encrypted plaintext for always-on reveal (requires migration columns)
+        // The display token is just the short key (no id| prefix)
+        $plain = $shortKey;
+
+        // Store encrypted plaintext for always-on reveal
         try {
             $model->forceFill([
                 'token_plain_encrypted'     => Crypt::encryptString($plain),
-                'token_plain_show_count'    => (int) ($model->token_plain_show_count ?? 0),
+                'token_plain_show_count'    => 0,
                 'token_plain_last_shown_at' => null,
             ])->save();
         } catch (\Throwable $e) {
@@ -463,8 +475,8 @@ class SystemSettingsController extends Controller
         // Flash for the page to show in a banner/modal
         return back()
             ->with('status', 'settings-api-token-revealed')
-            ->with('reveal_token_plain', $plain)
-            ->with('reveal_token_id', $token->id);
+            ->with('revealed_token_plain', $plain)
+            ->with('revealed_token_id', $token->id);
     }
 
     /**

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\SystemSetting;
 use App\Models\User;
 
 class AdminDashboardController extends Controller
@@ -32,6 +33,15 @@ class AdminDashboardController extends Controller
             $pendingTicketsCount = \App\Models\SupportTicket::whereIn('status', ['open', 'pending'])->count();
         }
 
+        // Pending Bkash Payments
+        $bkashEnabled = (bool) SystemSetting::where('key', 'bkash_enabled')->value('value');
+        $pendingPaymentsCount = 0;
+        if ($bkashEnabled) {
+            $pendingPaymentsCount = \App\Models\Transaction::where('status', 'pending')
+                ->where('payment_method', 'bkash_manual')
+                ->count();
+        }
+
         return view('admin.dashboard', compact(
             'userCount',
             'verifiedCount',
@@ -40,7 +50,9 @@ class AdminDashboardController extends Controller
             'totalRevenue',
             'activeSubscribers',
             'newUsersCount',
-            'pendingTicketsCount'
+            'pendingTicketsCount',
+            'bkashEnabled',
+            'pendingPaymentsCount'
         ));
     }
 }

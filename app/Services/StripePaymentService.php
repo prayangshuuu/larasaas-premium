@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\User;
 use App\Models\Plan;
+use App\Models\Coupon;
 use App\Models\Subscription;
 use App\Models\Invoice;
 use Illuminate\Support\Facades\Log;
@@ -70,10 +71,28 @@ class StripePaymentService
 
     /**
      * Create a Checkout Session for a subscription.
+     *
+     * @param User $user
+     * @param Plan $plan
+     * @param Coupon|null $coupon Optional coupon to apply
      */
-    public function createCheckoutSession(User $user, Plan $plan)
+    public function createCheckoutSession(User $user, Plan $plan, ?Coupon $coupon = null)
     {
         $this->createCustomer($user);
+
+        // Calculate discount
+        $subtotal = $plan->price;
+        $discountAmount = 0;
+        $couponId = null;
+
+        if ($coupon) {
+            $discountAmount = $coupon->type === 'percent'
+                ? round(($subtotal * $coupon->value) / 100, 2)
+                : round(min($coupon->value, $subtotal), 2);
+            $couponId = $coupon->id;
+        }
+
+        $finalAmount = max(0, round($subtotal - $discountAmount, 2));
 
         if ($this->isMock) {
             // Immediately create subscription and invoice in DB for testing
@@ -87,8 +106,11 @@ class StripePaymentService
 
             Invoice::create([
                 'user_id' => $user->id,
+                'coupon_id' => $couponId,
                 'stripe_invoice_id' => 'in_mock_' . uniqid(),
-                'amount' => $plan->price,
+                'amount' => $finalAmount,
+                'subtotal' => $subtotal,
+                'discount_amount' => $discountAmount,
                 'status' => 'paid',
                 'invoice_pdf_url' => '#', 
                 'paid_at' => Carbon::now(),
@@ -101,7 +123,7 @@ class StripePaymentService
             ];
         }
 
-        return $this->stripe->checkout->sessions->create([
+        $sessionData = [
             'customer' => $user->stripe_id,
             'payment_method_types' => ['card'],
             'line_items' => [[
@@ -121,8 +143,17 @@ class StripePaymentService
                     'plan_id' => $plan->id,
                 ],
             ],
-            'allow_promotion_codes' => true,
-        ]);
+            'allow_promotion_codes' => $coupon ? false : true,
+        ];
+
+        // Apply Stripe promotion code if coupon has one
+        if ($coupon && $coupon->stripe_promotion_code_id) {
+            $sessionData['discounts'] = [[
+                'promotion_code' => $coupon->stripe_promotion_code_id,
+            ]];
+        }
+
+        return $this->stripe->checkout->sessions->create($sessionData);
     }
 
     /**
@@ -263,6 +294,27 @@ class StripePaymentService
             'coupon_id' => $coupon->id,
             'promo_code_id' => $promoCode->id,
         ];
+    }
+
+    /**
+     * Update a Stripe Promotion Code (e.g. toggle active status).
+     *
+     * @param string $promoCodeId  The Stripe Promotion Code ID (e.g. promo_xxx)
+     * @param array  $params       Parameters to update (e.g. ['active' => false])
+     * @return \Stripe\PromotionCode|null
+     */
+    public function updateStripePromoCode(string $promoCodeId, array $params)
+    {
+        if ($this->isMock) {
+            return null;
+        }
+
+        try {
+            return $this->stripe->promotionCodes->update($promoCodeId, $params);
+        } catch (\Exception $e) {
+            Log::error("Failed to update Stripe promo code: " . $e->getMessage());
+            throw $e;
+        }
     }
 
     /**

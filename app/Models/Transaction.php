@@ -9,8 +9,11 @@ class Transaction extends Model
     protected $fillable = [
         'user_id',
         'invoice_id',
+        'coupon_id',
         'description',
         'amount',
+        'subtotal',
+        'discount_amount',
         'currency',
         'status',
         'invoice_pdf_url',
@@ -30,6 +33,8 @@ class Transaction extends Model
      */
     protected $casts = [
         'amount' => 'decimal:2',
+        'subtotal' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
         'paid_at' => 'datetime',
         'payment_date' => 'datetime',
         'payment_metadata' => 'array',
@@ -49,6 +54,14 @@ class Transaction extends Model
     public function invoice()
     {
         return $this->belongsTo(Invoice::class);
+    }
+
+    /**
+     * Get the coupon used for this transaction.
+     */
+    public function coupon()
+    {
+        return $this->belongsTo(Coupon::class);
     }
 
     /**
