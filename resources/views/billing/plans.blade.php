@@ -63,7 +63,7 @@
                            Current Plan
                         </button>
                     @else
-                        <a href="{{ route('billing.checkout', $plan) }}" class="w-full inline-flex justify-center items-center rounded-lg bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 hover:scale-105 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-zinc-900 focus:ring-indigo-500">
+                        <a href="{{ route('billing.checkout', ['plan' => $plan->slug]) }}" class="w-full inline-flex justify-center items-center rounded-lg bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 hover:scale-105 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-zinc-900 focus:ring-indigo-500">
                            Subscribe
                         </a>
                     @endif

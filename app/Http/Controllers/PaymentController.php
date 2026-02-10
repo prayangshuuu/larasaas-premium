@@ -20,8 +20,10 @@ class PaymentController extends Controller
         $this->stripeService = $stripeService;
     }
 
-    public function show(Plan $plan)
+    public function show(Request $request)
     {
+        $plan = Plan::where('slug', $request->query('plan'))->firstOrFail();
+
         $bkashEnabled = (bool) SystemSetting::where('key', 'bkash_enabled')->value('value');
         $stripeEnabled = (bool) SystemSetting::where('key', 'stripe_enabled')->value('value');
         $bkashNumber = SystemSetting::where('key', 'bkash_admin_number')->value('value');
@@ -40,11 +42,14 @@ class PaymentController extends Controller
     /**
      * Validate a coupon code via AJAX.
      */
-    public function checkCoupon(Request $request, Plan $plan)
+    public function checkCoupon(Request $request)
     {
         $request->validate([
             'coupon_code' => 'required|string|max:50',
+            'plan' => 'required|string',
         ]);
+
+        $plan = Plan::where('slug', $request->input('plan'))->firstOrFail();
 
         $coupon = Coupon::where('code', strtoupper(trim($request->coupon_code)))
             ->where('is_active', true)
@@ -74,14 +79,17 @@ class PaymentController extends Controller
         ]);
     }
 
-    public function payWithBkash(Request $request, Plan $plan)
+    public function payWithBkash(Request $request)
     {
         $request->validate([
             'sender_number' => 'required|string',
             'transaction_id' => 'required|string',
             'payment_date' => 'required|date',
             'coupon_code' => 'nullable|string|max:50',
+            'plan' => 'required|string',
         ]);
+
+        $plan = Plan::where('slug', $request->input('plan'))->firstOrFail();
 
         // Calculate pricing with optional coupon
         $subtotal = $plan->price;
@@ -137,8 +145,14 @@ class PaymentController extends Controller
         return redirect()->route('billing.index')->with('success', 'Payment submitted for verification.');
     }
 
-    public function payWithStripe(Request $request, Plan $plan)
+    public function payWithStripe(Request $request)
     {
+        $request->validate([
+            'plan' => 'required|string',
+            'coupon_code' => 'nullable|string|max:50',
+        ]);
+
+        $plan = Plan::where('slug', $request->input('plan'))->firstOrFail();
         $user = $request->user();
         $coupon = null;
 

@@ -18,12 +18,25 @@
         {{-- Header / Plan Summary --}}
         <div class="p-8 border-b border-zinc-800 bg-zinc-950/30">
             <h1 class="text-2xl font-bold text-white mb-2">Checkout</h1>
-            <div class="flex items-center justify-between mt-4">
-                <div>
+            <div class="flex items-start justify-between mt-4">
+                <div class="space-y-1">
                     <h2 class="text-lg font-semibold text-white">{{ $plan->name }}</h2>
-                    <p class="text-zinc-400 text-sm">Billed {{ $plan->interval }}ly</p>
+                    @if($plan->description)
+                        <p class="text-zinc-400 text-sm">{{ $plan->description }}</p>
+                    @endif
+                    @if(!empty($plan->features) && is_array($plan->features))
+                        <div class="flex flex-wrap gap-2 pt-1">
+                            @foreach($plan->features as $feature)
+                                <span class="inline-flex items-center gap-1 text-xs text-zinc-400 bg-zinc-800 rounded-full px-2.5 py-1">
+                                    <svg class="w-3 h-3 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                                    {{ $feature }}
+                                </span>
+                            @endforeach
+                        </div>
+                    @endif
+                    <p class="text-zinc-500 text-xs pt-1">Billed {{ $plan->interval }}ly</p>
                 </div>
-                <div class="text-right">
+                <div class="text-right shrink-0 ml-4">
                     <div class="text-3xl font-bold text-white">{{ $plan->currency }} {{ $plan->price }}</div>
                 </div>
             </div>
@@ -176,8 +189,9 @@
                     </div>
                 </div>
 
-                <form action="{{ route('billing.payment.stripe', $plan) }}" method="POST">
+                <form action="{{ route('billing.payment.stripe') }}" method="POST">
                     @csrf
+                    <input type="hidden" name="plan" value="{{ $plan->slug }}">
                     <input type="hidden" name="coupon_code" :value="couponApplied ? appliedCode : ''">
                     <button type="submit" class="w-full flex justify-center items-center gap-2 rounded-lg bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 transition-colors">
                         <span x-text="'Proceed to Pay {{ $plan->currency }} ' + totalDisplay">Proceed to Pay {{ $plan->currency }} {{ $plan->price }}</span>
@@ -209,8 +223,9 @@
                     </ol>
                 </div>
 
-                <form action="{{ route('billing.payment.bkash', $plan) }}" method="POST" class="space-y-6">
+                <form action="{{ route('billing.payment.bkash') }}" method="POST" class="space-y-6">
                     @csrf
+                    <input type="hidden" name="plan" value="{{ $plan->slug }}">
                     <input type="hidden" name="coupon_code" :value="couponApplied ? appliedCode : ''">
                     
                     <div>
@@ -301,14 +316,14 @@ function checkoutCoupon() {
             this.errorMessage = '';
 
             try {
-                const response = await fetch('{{ route("billing.payment.check-coupon", $plan) }}', {
+                const response = await fetch('{{ route("billing.payment.check-coupon") }}', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}',
                         'Accept': 'application/json',
                     },
-                    body: JSON.stringify({ coupon_code: this.couponCode.trim() }),
+                    body: JSON.stringify({ coupon_code: this.couponCode.trim(), plan: '{{ $plan->slug }}' }),
                 });
 
                 const data = await response.json();

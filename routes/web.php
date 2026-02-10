@@ -141,10 +141,10 @@ Route::middleware(['auth', 'verified', 'not-banned', 'feature:subscription_modul
 
         // Subscription Management
         // Route::get('/checkout/{plan}', [SubscriptionController::class, 'checkout'])->name('checkout'); // OLD
-        Route::get('/checkout/{plan}', [\App\Http\Controllers\PaymentController::class, 'show'])->name('checkout');
-        Route::post('/checkout/{plan}/bkash', [\App\Http\Controllers\PaymentController::class, 'payWithBkash'])->name('payment.bkash');
-        Route::post('/checkout/{plan}/stripe', [\App\Http\Controllers\PaymentController::class, 'payWithStripe'])->name('payment.stripe');
-        Route::post('/checkout/{plan}/check-coupon', [\App\Http\Controllers\PaymentController::class, 'checkCoupon'])->name('payment.check-coupon');
+        Route::get('/checkout', [\App\Http\Controllers\PaymentController::class, 'show'])->name('checkout');
+        Route::post('/checkout/bkash', [\App\Http\Controllers\PaymentController::class, 'payWithBkash'])->name('payment.bkash');
+        Route::post('/checkout/stripe', [\App\Http\Controllers\PaymentController::class, 'payWithStripe'])->name('payment.stripe');
+        Route::post('/checkout/check-coupon', [\App\Http\Controllers\PaymentController::class, 'checkCoupon'])->name('payment.check-coupon');
 
         Route::post('/cancel', [SubscriptionController::class, 'cancel'])->name('cancel');
         Route::post('/resume', [SubscriptionController::class, 'resume'])->name('resume');
