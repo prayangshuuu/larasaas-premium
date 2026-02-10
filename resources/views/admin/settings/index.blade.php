@@ -348,8 +348,7 @@
                         <div class="space-y-4">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center gap-2">
-                                     <svg class="h-6 w-6 text-[#635BFF]" viewBox="0 0 32 32" fill="currentColor"><path d="M13.9 16.2c0 1.9 1.4 2.6 3.9 2.6 4.6 0 5.4-1.9 5.4-1.9l2.8 1.8s-1.8 3.5-8.2 3.5c-5.4 0-8.6-2.7-8.6-7.2 0-4.9 3.5-7.7 8.5-7.7 7.7 0 7.8 6.5 7.8 6.8H14c-0.1 1.2 0.3 2.1 -0.1 2.1zM17.7 9.8c-2.3 0-3.3 1.2-3.6 2.3h6.8c0-1.2-1.2-2.3-3.2-2.3z"/></svg>
-                                     <span class="font-medium text-zinc-200">Enable Stripe</span>
+                                     <img src="https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg" alt="Stripe" class="h-8 w-auto">
                                 </div>
                                 <input type="hidden" name="stripe_payment_enabled" :value="stripeEnabled ? 1 : 0">
                                 <button type="button"
@@ -398,8 +397,7 @@
                         <div class="space-y-4">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center gap-2">
-                                     <svg class="h-6 w-6 text-[#E2136E]" viewBox="0 0 24 24" fill="currentColor"><path d="M12.9 2L15.6 9.4H22L16.2 13.8L18.7 21.2L11 16L3.3 21.2L5.8 13.8L0 9.4H6.4L9.1 2H12.9Z"/></svg>
-                                     <span class="font-medium text-zinc-200">Enable Bkash (Manual)</span>
+                                     <img src="https://wiki.uhub.co.bd/uploads/images/wg/bkash-logo.png" alt="Bkash" class="h-8 w-auto">
                                 </div>
                                 <input type="hidden" name="bkash_enabled" :value="bkashEnabled ? 1 : 0">
                                 <button type="button"
