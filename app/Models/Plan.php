@@ -10,6 +10,14 @@ class Plan extends Model
 {
     use HasFactory, SoftDeletes;
 
+    /**
+     * Get the route key for the model.
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
+    }
+
     protected $fillable = [
         'slug',
         'logo',

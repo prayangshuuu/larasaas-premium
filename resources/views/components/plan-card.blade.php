@@ -32,7 +32,7 @@
         <span class="text-4xl font-bold tracking-tight text-white">${{ $plan->price }}</span>
         <span class="text-sm font-semibold leading-6 text-zinc-400">/{{ $plan->interval }}</span>
     </div>
-    <a href="{{ route('billing.checkout', ['plan' => $plan->slug]) }}"
+    <a href="{{ route('billing.checkout', $plan) }}"
        aria-describedby="tier-{{ $plan->slug }}"
        class="mt-6 block rounded-md py-2 px-3 text-center text-sm font-semibold leading-6 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 relative z-10 {{ $plan->is_featured ? 'bg-indigo-600 text-white hover:bg-indigo-500 shadow-sm' : 'bg-white/10 text-white hover:bg-white/20' }}">
         Subscribe now

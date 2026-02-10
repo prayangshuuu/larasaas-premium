@@ -39,13 +39,17 @@ class BillingController extends Controller
             ->latest()
             ->first();
 
-        // Fetch invoices
-        $invoices = $request->user()->invoices()->latest()->get();
+        // Fetch invoices (local database invoices)
+        $invoices = $user->localInvoices()->latest()->get();
+
+        // Fetch transactions (manual payments, Stripe, etc.)
+        $transactions = \App\Models\Transaction::where('user_id', $user->id)->latest()->get();
 
         return view('billing.index', [
             'subscription' => $subscription,
             'plan' => $subscription?->plan,
             'invoices' => $invoices,
+            'transactions' => $transactions,
         ]);
     }
 

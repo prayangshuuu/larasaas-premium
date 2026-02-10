@@ -77,7 +77,7 @@
                     </div>
                 </div>
 
-                <form action="{{ route('payment.stripe', $plan) }}" method="POST">
+                <form action="{{ route('billing.payment.stripe', $plan) }}" method="POST">
                     @csrf
                     <button type="submit" class="w-full flex justify-center items-center gap-2 rounded-lg bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 transition-colors">
                         Proceed to Pay {{ $plan->currency }} {{ $plan->price }}
@@ -107,7 +107,7 @@
                     </ol>
                 </div>
 
-                <form action="{{ route('payment.bkash', $plan) }}" method="POST" class="space-y-6">
+                <form action="{{ route('billing.payment.bkash', $plan) }}" method="POST" class="space-y-6">
                     @csrf
                     
                     <div>
