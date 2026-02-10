@@ -313,100 +313,6 @@
 
 
 
-                {{-- 3. Impersonation --}}
-                <div class="flex items-center justify-between py-4">
-                    <div>
-                        <div class="font-medium text-zinc-200">Impersonation</div>
-                        <div class="text-sm text-zinc-500">Allow admins to log in as other users.</div>
-                    </div>
-                    <input type="hidden" name="impersonation" :value="impersonationEnabled ? 1 : 0">
-                    <button type="button" 
-                            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-zinc-900" 
-                            :class="{ 'bg-indigo-600': impersonationEnabled, 'bg-zinc-700': !impersonationEnabled }"
-                            @click="impersonationEnabled = !impersonationEnabled">
-                        <span class="sr-only">Use setting</span>
-                        <span aria-hidden="true" 
-                              class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
-                              :class="{ 'translate-x-5': impersonationEnabled, 'translate-x-0': !impersonationEnabled }"></span>
-                    </button>
-                </div>
-
-                {{-- 4. Editable Usernames --}}
-                <div class="flex items-center justify-between py-4">
-                    <div>
-                        <div class="font-medium text-zinc-200">Editable Usernames</div>
-                        <div class="text-sm text-zinc-500">Allow admins to change user handles.</div>
-                    </div>
-                    <input type="hidden" name="allow_username_change" :value="usernameChangeEnabled ? 1 : 0">
-                    <button type="button" 
-                            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-zinc-900" 
-                            :class="{ 'bg-indigo-600': usernameChangeEnabled, 'bg-zinc-700': !usernameChangeEnabled }"
-                            @click="usernameChangeEnabled = !usernameChangeEnabled">
-                        <span class="sr-only">Use setting</span>
-                        <span aria-hidden="true" 
-                              class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
-                              :class="{ 'translate-x-5': usernameChangeEnabled, 'translate-x-0': !usernameChangeEnabled }"></span>
-                    </button>
-                </div>
-
-                {{-- 5. Require Admin MFA --}}
-                <div class="flex items-center justify-between py-4">
-                    <div>
-                        <div class="font-medium text-zinc-200">Require Admin MFA</div>
-                        <div class="text-sm text-zinc-500">Admins must have 2FA enabled to access sensitive tools.</div>
-                    </div>
-                    <input type="hidden" name="require_admin_mfa_for_impersonation" :value="adminMfaEnabled ? 1 : 0">
-                    <button type="button" 
-                            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-zinc-900" 
-                            :class="{ 'bg-indigo-600': adminMfaEnabled, 'bg-zinc-700': !adminMfaEnabled }"
-                            @click="adminMfaEnabled = !adminMfaEnabled">
-                        <span class="sr-only">Use setting</span>
-                        <span aria-hidden="true" 
-                              class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
-                              :class="{ 'translate-x-5': adminMfaEnabled, 'translate-x-0': !adminMfaEnabled }"></span>
-                    </button>
-                </div>
-
-                {{-- 6. Enable Support Desk --}}
-                <div class="py-4">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <div class="font-medium text-zinc-200">Enable Support Desk</div>
-                            <div class="text-sm text-zinc-500">Allow users to view and create support tickets.</div>
-                        </div>
-                        <input type="hidden" name="support_enabled" :value="supportEnabled ? 1 : 0">
-                        <button type="button" 
-                                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-zinc-900" 
-                                :class="{ 'bg-indigo-600': supportEnabled, 'bg-zinc-700': !supportEnabled }"
-                                @click="supportEnabled = !supportEnabled">
-                            <span class="sr-only">Use setting</span>
-                            <span aria-hidden="true" 
-                                  class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
-                                  :class="{ 'translate-x-5': supportEnabled, 'translate-x-0': !supportEnabled }"></span>
-                        </button>
-                    </div>
-
-                    {{-- Auto-Reply sub-toggle (visible when Support Desk enabled) --}}
-                    <div x-show="supportEnabled" x-transition.opacity.duration.300ms class="mt-6 pl-4 border-l-2 border-indigo-600/50">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <div class="font-medium text-zinc-200">Auto-Reply to New Tickets</div>
-                                <div class="text-sm text-zinc-500">Automatically post a system message when a user creates a ticket.</div>
-                            </div>
-                            <input type="hidden" name="support_auto_reply_enabled" :value="autoReplyEnabled ? 1 : 0">
-                            <button type="button" 
-                                    class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-zinc-900" 
-                                    :class="{ 'bg-indigo-600': autoReplyEnabled, 'bg-zinc-700': !autoReplyEnabled }"
-                                    @click="autoReplyEnabled = !autoReplyEnabled">
-                                <span class="sr-only">Use setting</span>
-                                <span aria-hidden="true" 
-                                      class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
-                                      :class="{ 'translate-x-5': autoReplyEnabled, 'translate-x-0': !autoReplyEnabled }"></span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
                 {{-- 2. Payment Gateways --}}
                 @php
                     $paymentGatewaysEnabled = old('payment_gateways_enabled', (int)($features['payment_gateways_enabled'] ?? 0));
@@ -416,7 +322,7 @@
                     $bkashLogoUrl   = isset($features['bkash_logo'])  ? asset($features['bkash_logo'])  : null;
                 @endphp
                 <div class="py-4" x-data="{
-                        paymentGatewaysEnabled: {{ $paymentGatewaysEnabled ? 'true' : 'false' }} 
+                        paymentGatewaysEnabled: {{ $paymentGatewaysEnabled ? 'true' : 'false' }}
                      }">
                     <div class="flex items-center justify-between">
                         <div>
@@ -424,12 +330,12 @@
                             <div class="text-sm text-zinc-500">Configure accepted payment methods and gateways.</div>
                         </div>
                         <input type="hidden" name="payment_gateways_enabled" :value="paymentGatewaysEnabled ? 1 : 0">
-                        <button type="button" 
-                                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-zinc-900" 
+                        <button type="button"
+                                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-zinc-900"
                                 :class="{ 'bg-indigo-600': paymentGatewaysEnabled, 'bg-zinc-700': !paymentGatewaysEnabled }"
                                 @click="paymentGatewaysEnabled = !paymentGatewaysEnabled">
                             <span class="sr-only">Use setting</span>
-                            <span aria-hidden="true" 
+                            <span aria-hidden="true"
                                   class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
                                   :class="{ 'translate-x-5': paymentGatewaysEnabled, 'translate-x-0': !paymentGatewaysEnabled }"></span>
                         </button>
@@ -437,7 +343,7 @@
 
                     {{-- Gateways (visible when enabled) --}}
                     <div x-show="paymentGatewaysEnabled" x-transition.opacity.duration.300ms class="mt-6 pl-4 border-l-2 border-indigo-600/50 space-y-6">
-                        
+
                         {{-- Stripe --}}
                         <div class="space-y-4">
                             <div class="flex items-center justify-between">
@@ -446,8 +352,8 @@
                                      <span class="font-medium text-zinc-200">Enable Stripe</span>
                                 </div>
                                 <input type="hidden" name="stripe_payment_enabled" :value="stripeEnabled ? 1 : 0">
-                                <button type="button" 
-                                        class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-zinc-900" 
+                                <button type="button"
+                                        class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-zinc-900"
                                         :class="{ 'bg-indigo-600': stripeEnabled, 'bg-zinc-700': !stripeEnabled }"
                                         @click="stripeEnabled = !stripeEnabled">
                                     <span class="sr-only">Use setting</span>
@@ -496,8 +402,8 @@
                                      <span class="font-medium text-zinc-200">Enable Bkash (Manual)</span>
                                 </div>
                                 <input type="hidden" name="bkash_enabled" :value="bkashEnabled ? 1 : 0">
-                                <button type="button" 
-                                        class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-zinc-900" 
+                                <button type="button"
+                                        class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-zinc-900"
                                         :class="{ 'bg-indigo-600': bkashEnabled, 'bg-zinc-700': !bkashEnabled }"
                                         @click="bkashEnabled = !bkashEnabled">
                                     <span class="sr-only">Use setting</span>
@@ -537,6 +443,103 @@
 
                     </div>
                 </div>
+
+
+                {{-- 3. Impersonation --}}
+                <div class="flex items-center justify-between py-4">
+                    <div>
+                        <div class="font-medium text-zinc-200">Impersonation</div>
+                        <div class="text-sm text-zinc-500">Allow admins to log in as other users.</div>
+                    </div>
+                    <input type="hidden" name="impersonation" :value="impersonationEnabled ? 1 : 0">
+                    <button type="button"
+                            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-zinc-900"
+                            :class="{ 'bg-indigo-600': impersonationEnabled, 'bg-zinc-700': !impersonationEnabled }"
+                            @click="impersonationEnabled = !impersonationEnabled">
+                        <span class="sr-only">Use setting</span>
+                        <span aria-hidden="true"
+                              class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                              :class="{ 'translate-x-5': impersonationEnabled, 'translate-x-0': !impersonationEnabled }"></span>
+                    </button>
+                </div>
+
+                {{-- 4. Editable Usernames --}}
+                <div class="flex items-center justify-between py-4">
+                    <div>
+                        <div class="font-medium text-zinc-200">Editable Usernames</div>
+                        <div class="text-sm text-zinc-500">Allow admins to change user handles.</div>
+                    </div>
+                    <input type="hidden" name="allow_username_change" :value="usernameChangeEnabled ? 1 : 0">
+                    <button type="button"
+                            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-zinc-900"
+                            :class="{ 'bg-indigo-600': usernameChangeEnabled, 'bg-zinc-700': !usernameChangeEnabled }"
+                            @click="usernameChangeEnabled = !usernameChangeEnabled">
+                        <span class="sr-only">Use setting</span>
+                        <span aria-hidden="true"
+                              class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                              :class="{ 'translate-x-5': usernameChangeEnabled, 'translate-x-0': !usernameChangeEnabled }"></span>
+                    </button>
+                </div>
+
+                {{-- 5. Require Admin MFA --}}
+                <div class="flex items-center justify-between py-4">
+                    <div>
+                        <div class="font-medium text-zinc-200">Require Admin MFA</div>
+                        <div class="text-sm text-zinc-500">Admins must have 2FA enabled to access sensitive tools.</div>
+                    </div>
+                    <input type="hidden" name="require_admin_mfa_for_impersonation" :value="adminMfaEnabled ? 1 : 0">
+                    <button type="button"
+                            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-zinc-900"
+                            :class="{ 'bg-indigo-600': adminMfaEnabled, 'bg-zinc-700': !adminMfaEnabled }"
+                            @click="adminMfaEnabled = !adminMfaEnabled">
+                        <span class="sr-only">Use setting</span>
+                        <span aria-hidden="true"
+                              class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                              :class="{ 'translate-x-5': adminMfaEnabled, 'translate-x-0': !adminMfaEnabled }"></span>
+                    </button>
+                </div>
+
+                {{-- 6. Enable Support Desk --}}
+                <div class="py-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="font-medium text-zinc-200">Enable Support Desk</div>
+                            <div class="text-sm text-zinc-500">Allow users to view and create support tickets.</div>
+                        </div>
+                        <input type="hidden" name="support_enabled" :value="supportEnabled ? 1 : 0">
+                        <button type="button"
+                                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-zinc-900"
+                                :class="{ 'bg-indigo-600': supportEnabled, 'bg-zinc-700': !supportEnabled }"
+                                @click="supportEnabled = !supportEnabled">
+                            <span class="sr-only">Use setting</span>
+                            <span aria-hidden="true"
+                                  class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                                  :class="{ 'translate-x-5': supportEnabled, 'translate-x-0': !supportEnabled }"></span>
+                        </button>
+                    </div>
+
+                    {{-- Auto-Reply sub-toggle (visible when Support Desk enabled) --}}
+                    <div x-show="supportEnabled" x-transition.opacity.duration.300ms class="mt-6 pl-4 border-l-2 border-indigo-600/50">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="font-medium text-zinc-200">Auto-Reply to New Tickets</div>
+                                <div class="text-sm text-zinc-500">Automatically post a system message when a user creates a ticket.</div>
+                            </div>
+                            <input type="hidden" name="support_auto_reply_enabled" :value="autoReplyEnabled ? 1 : 0">
+                            <button type="button"
+                                    class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-zinc-900"
+                                    :class="{ 'bg-indigo-600': autoReplyEnabled, 'bg-zinc-700': !autoReplyEnabled }"
+                                    @click="autoReplyEnabled = !autoReplyEnabled">
+                                <span class="sr-only">Use setting</span>
+                                <span aria-hidden="true"
+                                      class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                                      :class="{ 'translate-x-5': autoReplyEnabled, 'translate-x-0': !autoReplyEnabled }"></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+
 
                 {{-- 7. Enable Social Login (LAST) --}}
                 <div class="py-4">
