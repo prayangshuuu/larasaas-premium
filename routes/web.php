@@ -236,7 +236,6 @@ Route::middleware(['auth', 'verified', 'admin', 'not-banned', 'impersonation'])
         // Revenue Resource
         Route::get('revenue/export', [\App\Http\Controllers\Admin\RevenueController::class, 'export'])->name('revenue.export');
         Route::resource('revenue', \App\Http\Controllers\Admin\RevenueController::class)->only(['index', 'show']);
-
         /*
         |------------------------------------------------------------------
         | Support Tickets (Admin)

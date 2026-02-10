@@ -1,9 +1,9 @@
 <x-app-layout>
-    <div class="space-y-8">
-        {{-- Header Section --}}
-        <div class="relative bg-zinc-900 border border-zinc-800 rounded-2xl p-8 overflow-hidden">
-            <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-zinc-900/50 to-purple-500/10 opacity-50"></div>
-            <div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+    {{-- Header Background --}}
+    <div class="relative bg-zinc-900 border-b border-zinc-800 pb-32">
+        <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-zinc-900/50 to-purple-500/10 opacity-50"></div>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 relative z-10">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 
                 {{-- Team Info --}}
                 <div>
@@ -36,7 +36,9 @@
                 </div>
             </div>
         </div>
+    </div>
 
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-24 pb-12 relative z-20 space-y-8">
         {{-- Status Messages --}}
         @if (session('status'))
             <div x-data="{ show: true }" x-show="show" x-transition class="rounded-xl border border-green-500/20 bg-green-500/10 p-4 text-green-400 flex justify-between items-center backdrop-blur-md">
@@ -53,13 +55,16 @@
 
         {{-- Main Grid Layout --}}
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
             
             {{-- Left Column: Members & Invites --}}
             <div class="lg:col-span-2 space-y-8">
                 
                 {{-- Team Members --}}
+<<<<<<< HEAD
                 <div class="bg-zinc-900 border border-zinc-800 rounded-2xl shadow-xl backdrop-blur-xl">
+=======
+                <div class="bg-zinc-900 border border-zinc-800 rounded-2xl shadow-xl overflow-hidden backdrop-blur-xl">
+>>>>>>> feat/outgoing-webhooks
                     <div class="px-6 py-5 border-b border-zinc-800 flex justify-between items-center">
                         <h3 class="text-lg font-semibold text-white">Team Members</h3>
                         <span class="px-2 py-1 rounded-full bg-indigo-500/10 text-indigo-400 text-xs font-medium">{{ $team->users->count() }} Active</span>
@@ -124,7 +129,11 @@
 
                 {{-- Pending Invites --}}
                 @if($team->invitations->isNotEmpty())
+<<<<<<< HEAD
                 <div class="bg-zinc-900 border border-zinc-800 rounded-2xl shadow-xl backdrop-blur-xl">
+=======
+                <div class="bg-zinc-900 border border-zinc-800 rounded-2xl shadow-xl overflow-hidden backdrop-blur-xl">
+>>>>>>> feat/outgoing-webhooks
                     <div class="px-6 py-5 border-b border-zinc-800">
                         <h3 class="text-lg font-semibold text-white">Pending Invitations</h3>
                     </div>
