@@ -247,6 +247,9 @@
                                     <a href="{{ route('admin.subscriptions.index') }}" class="block px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors">
                                         Subscriptions
                                     </a>
+                                @endif
+
+                                @if(\App\Helpers\Feature::enabled('coupon_enabled'))
                                     <a href="{{ route('admin.coupons.index') }}" class="block px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors">
                                         Coupons
                                     </a>
