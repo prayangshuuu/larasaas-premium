@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Plan;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class PlanController extends Controller
@@ -41,6 +42,7 @@ class PlanController extends Controller
             'features' => 'nullable|string', // Expecting JSON string from generic frontend
             'stripe_price_id' => 'nullable|string|max:255',
             'is_active' => 'boolean',
+            'logo' => 'nullable|image|mimes:jpg,jpeg,png,svg,webp|max:2048',
         ]);
 
         if (!isset($validated['is_active'])) {
@@ -49,6 +51,11 @@ class PlanController extends Controller
 
         // Generate slug from name
         $validated['slug'] = Str::slug($validated['name']);
+
+        // Handle logo upload
+        if ($request->hasFile('logo')) {
+            $validated['logo'] = $request->file('logo')->store('plans', 'public');
+        }
 
         // Handle JSON features decode
         if (!empty($validated['features'])) {
@@ -89,6 +96,7 @@ class PlanController extends Controller
             'features' => 'nullable|string',
             'stripe_price_id' => 'nullable|string|max:255',
             'is_active' => 'boolean',
+            'logo' => 'nullable|image|mimes:jpg,jpeg,png,svg,webp|max:2048',
         ]);
         
         // Handle checkbox boolean (sometimes not sent if unchecked)
@@ -96,6 +104,15 @@ class PlanController extends Controller
 
         // Only update slug if name changed? Or always? Usually sync.
         $validated['slug'] = Str::slug($validated['name']);
+
+        // Handle logo upload
+        if ($request->hasFile('logo')) {
+            // Delete old logo if exists
+            if ($plan->logo && Storage::disk('public')->exists($plan->logo)) {
+                Storage::disk('public')->delete($plan->logo);
+            }
+            $validated['logo'] = $request->file('logo')->store('plans', 'public');
+        }
 
         // Handle JSON features decode
         if (isset($validated['features'])) {

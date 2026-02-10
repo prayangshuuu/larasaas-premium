@@ -12,6 +12,65 @@
             </div>
         </div>
 
+        {{-- Current Plan Card --}}
+        <div class="mb-8">
+            <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 relative overflow-hidden group hover:border-zinc-700 transition-colors">
+                <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+                <div class="relative z-10">
+                    <h3 class="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-4">Current Plan</h3>
+                    @if($currentSubscription && $currentSubscription->plan)
+                        <div class="flex items-center gap-4">
+                            {{-- Plan Logo --}}
+                            @if($currentSubscription->plan->logo)
+                                <img src="{{ asset('storage/' . $currentSubscription->plan->logo) }}" alt="{{ $currentSubscription->plan->name }}" class="h-14 w-14 rounded-xl object-cover border border-zinc-700 bg-zinc-800 shrink-0" />
+                            @else
+                                <div class="h-14 w-14 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center shrink-0">
+                                    <svg class="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                    </svg>
+                                </div>
+                            @endif
+                            <div class="flex-1">
+                                <div class="flex items-center gap-3">
+                                    <h4 class="text-xl font-bold text-white">{{ $currentSubscription->plan->name }}</h4>
+                                    <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold
+                                        {{ $currentSubscription->status === 'active' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20' }}">
+                                        {{ ucfirst(str_replace('_', ' ', $currentSubscription->status)) }}
+                                    </span>
+                                </div>
+                                <p class="text-sm text-zinc-400 mt-1">
+                                    ${{ $currentSubscription->plan->price }}/{{ $currentSubscription->plan->interval }}
+                                    @if($currentSubscription->current_period_end)
+                                        · Renews {{ $currentSubscription->current_period_end->format('M d, Y') }}
+                                    @endif
+                                </p>
+                            </div>
+                            <a href="{{ route('billing.plans') }}" class="inline-flex items-center rounded-lg bg-zinc-800 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-700 transition-colors border border-zinc-700">
+                                Manage Plan
+                            </a>
+                        </div>
+                    @else
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-4">
+                                <div class="h-14 w-14 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center">
+                                    <svg class="w-7 h-7 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h4 class="text-lg font-semibold text-white">No active plan</h4>
+                                    <p class="text-sm text-zinc-400">Subscribe to unlock premium features and boost your IELTS score.</p>
+                                </div>
+                            </div>
+                            <a href="{{ route('plans.index') }}" class="inline-flex items-center rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 hover:scale-105 transition-all hover:shadow-[0_0_20px_rgba(79,70,229,0.3)]">
+                                Upgrade Now
+                            </a>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+
         <x-ui.bento-grid class="mb-8">
             {{-- Stat 1 --}}
             <x-ui.bento-grid-item

@@ -19,7 +19,17 @@ class DashboardController extends Controller
             return redirect()->route('admin.dashboard');
         }
 
+        // Fetch the user's current active subscription with plan
+        $currentSubscription = null;
+        if ($user) {
+            $currentSubscription = $user->subscriptions()
+                ->with('plan')
+                ->whereIn('status', ['active', 'past_due'])
+                ->latest()
+                ->first();
+        }
+
         // Non-admins see the regular user dashboard
-        return view('dashboard');
+        return view('dashboard', compact('currentSubscription'));
     }
 }

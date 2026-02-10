@@ -10,7 +10,7 @@
         </div>
 
         <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-6 sm:p-8 shadow-xl">
-            <form action="{{ route('admin.plans.store') }}" method="POST" x-data="planForm()">
+            <form action="{{ route('admin.plans.store') }}" method="POST" enctype="multipart/form-data" x-data="planForm()">
                 @csrf
                 <div class="space-y-6">
                     {{-- Name --}}
@@ -55,6 +55,15 @@
                         <x-ui.input id="stripe_price_id" name="stripe_price_id" type="text" class="mt-1 block w-full bg-zinc-950 border-zinc-800 text-white font-mono text-sm" value="{{ old('stripe_price_id') }}" placeholder="price_..." />
                         <p class="text-xs text-zinc-500 mt-1">Optional. If generated dynamically, you can leave this blank (depending on backend logic).</p>
                         @error('stripe_price_id') <p class="text-red-400 text-sm mt-1">{{ $message }}</p> @enderror
+                    </div>
+
+                    {{-- Plan Logo --}}
+                    <div>
+                        <x-ui.label for="logo" value="Plan Logo" class="text-white" />
+                        <p class="text-xs text-zinc-400 mb-2">Upload an icon/logo for this plan (PNG, JPG, SVG, WebP — max 2MB).</p>
+                        <input type="file" id="logo" name="logo" accept="image/*"
+                               class="block w-full text-sm text-zinc-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-500 file:cursor-pointer file:transition-colors" />
+                        @error('logo') <p class="text-red-400 text-sm mt-1">{{ $message }}</p> @enderror
                     </div>
 
                     {{-- Features --}}

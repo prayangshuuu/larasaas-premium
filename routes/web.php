@@ -28,6 +28,7 @@ use App\Http\Controllers\Auth\SocialiteController;
 */
 Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 Route::get('/pricing', [App\Http\Controllers\PricingController::class, 'index'])->name('pricing.index');
+Route::get('/plans', [App\Http\Controllers\PricingController::class, 'index'])->name('plans.index');
 Route::get('/changelog', [App\Http\Controllers\ChangelogController::class, 'index'])
     ->middleware('feature:announcement_enabled')
     ->name('changelog');
@@ -231,7 +232,8 @@ Route::middleware(['auth', 'verified', 'admin', 'not-banned', 'impersonation'])
         Route::resource('plans', PlanController::class);
         
         // Coupons Resource
-        Route::resource('coupons', \App\Http\Controllers\Admin\CouponController::class);
+        Route::resource('coupons', \App\Http\Controllers\Admin\CouponController::class)
+            ->middleware('feature:coupon_enabled');
 
         // Global Subscriptions Resource
         Route::resource('subscriptions', \App\Http\Controllers\Admin\SubscriptionController::class);
