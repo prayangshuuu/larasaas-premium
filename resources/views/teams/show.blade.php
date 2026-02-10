@@ -60,11 +60,7 @@
             <div class="lg:col-span-2 space-y-8">
                 
                 {{-- Team Members --}}
-<<<<<<< HEAD
-                <div class="bg-zinc-900 border border-zinc-800 rounded-2xl shadow-xl backdrop-blur-xl">
-=======
                 <div class="bg-zinc-900 border border-zinc-800 rounded-2xl shadow-xl overflow-hidden backdrop-blur-xl">
->>>>>>> feat/outgoing-webhooks
                     <div class="px-6 py-5 border-b border-zinc-800 flex justify-between items-center">
                         <h3 class="text-lg font-semibold text-white">Team Members</h3>
                         <span class="px-2 py-1 rounded-full bg-indigo-500/10 text-indigo-400 text-xs font-medium">{{ $team->users->count() }} Active</span>
@@ -129,11 +125,7 @@
 
                 {{-- Pending Invites --}}
                 @if($team->invitations->isNotEmpty())
-<<<<<<< HEAD
-                <div class="bg-zinc-900 border border-zinc-800 rounded-2xl shadow-xl backdrop-blur-xl">
-=======
                 <div class="bg-zinc-900 border border-zinc-800 rounded-2xl shadow-xl overflow-hidden backdrop-blur-xl">
->>>>>>> feat/outgoing-webhooks
                     <div class="px-6 py-5 border-b border-zinc-800">
                         <h3 class="text-lg font-semibold text-white">Pending Invitations</h3>
                     </div>
