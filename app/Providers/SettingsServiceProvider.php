@@ -3,8 +3,10 @@
 namespace App\Providers;
 
 use App\Models\Setting;
-use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\ServiceProvider;
 
 class SettingsServiceProvider extends ServiceProvider
 {
@@ -13,53 +15,73 @@ class SettingsServiceProvider extends ServiceProvider
         //
     }
 
+    /**
+     * Boot: load database-stored settings into config() so the app
+     * reflects admin panel changes without touching .env.
+     */
     public function boot(): void
     {
         try {
-            // App
-            if ($name = Setting::get('app.name')) {
-                config(['app.name' => $name]);
+            // Bail if the settings table doesn't exist yet (fresh install / before migrations)
+            if (! Schema::hasTable('settings')) {
+                return;
             }
 
-            // Features
-            $impersonation = Setting::get('features.impersonation');
-            if (!is_null($impersonation)) {
-                config(['features.impersonation' => (bool) $impersonation]);
-            }
-            $allowUsername = Setting::get('features.allow_username_change');
-            if (!is_null($allowUsername)) {
-                config(['features.allow_username_change' => (bool) $allowUsername]);
-            }
-            $mfaForImpersonate = Setting::get('security.require_admin_mfa_for_impersonation');
-            if (!is_null($mfaForImpersonate)) {
-                config(['security.require_admin_mfa_for_impersonation' => (bool) $mfaForImpersonate]);
+            // Read settings directly from DB (bypass Setting model cache)
+            // to guarantee every request gets the latest values.
+            $row = DB::table('settings')->first();
+
+            if (! $row) {
+                // No row yet — seed a default so future writes have something to update
+                DB::table('settings')->insert([
+                    'app_name'   => config('app.name', 'Laravel'),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+                return;
             }
 
-            // SMTP (mail)
-            if ($host = Setting::get('mail.smtp.host')) {
-                config(['mail.default' => 'smtp']);
-                config(['mail.mailers.smtp.host' => $host]);
+            // ── App Identity ──────────────────────────────────────────
+            if (! empty($row->app_name)) {
+                config(['app.name' => $row->app_name]);
             }
-            if ($port = Setting::get('mail.smtp.port')) {
-                config(['mail.mailers.smtp.port' => (int) $port]);
+
+            // ── SMTP / Mail ───────────────────────────────────────────
+            if (! empty($row->smtp_host)) {
+                config([
+                    'mail.default'              => 'smtp',
+                    'mail.mailers.smtp.host'     => $row->smtp_host,
+                ]);
             }
-            if (!is_null(Setting::get('mail.smtp.encryption'))) {
-                config(['mail.mailers.smtp.encryption' => Setting::get('mail.smtp.encryption') ?: null]);
+
+            if (! empty($row->smtp_port)) {
+                config(['mail.mailers.smtp.port' => (int) $row->smtp_port]);
             }
-            if ($username = Setting::get('mail.smtp.username')) {
-                config(['mail.mailers.smtp.username' => $username]);
+
+            // encryption can be empty string (= none), tls, or ssl
+            if (property_exists($row, 'smtp_encryption')) {
+                config(['mail.mailers.smtp.encryption' => $row->smtp_encryption ?: null]);
             }
-            if ($password = Setting::get('mail.smtp.password')) {
-                config(['mail.mailers.smtp.password' => $password]);
+
+            if (! empty($row->smtp_username)) {
+                config(['mail.mailers.smtp.username' => $row->smtp_username]);
             }
-            if ($fromAddr = Setting::get('mail.from.address')) {
-                config(['mail.from.address' => $fromAddr]);
+
+            if (! empty($row->smtp_password)) {
+                config(['mail.mailers.smtp.password' => $row->smtp_password]);
             }
-            if ($fromName = Setting::get('mail.from.name')) {
-                config(['mail.from.name' => $fromName]);
+
+            if (! empty($row->smtp_from_address)) {
+                config(['mail.from.address' => $row->smtp_from_address]);
             }
+
+            if (! empty($row->smtp_from_name)) {
+                config(['mail.from.name' => $row->smtp_from_name]);
+            }
+
         } catch (\Throwable $e) {
-            Log::warning('SettingsServiceProvider failed to load settings: '.$e->getMessage());
+            // Never break boot; log and move on (e.g. DB not reachable, missing columns)
+            Log::warning('SettingsServiceProvider: ' . $e->getMessage());
         }
     }
 }

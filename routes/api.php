@@ -33,6 +33,7 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::get('/invoices/{invoice}', [\App\Http\Controllers\Api\V1\InvoiceController::class, 'show'])->name('invoices.show');
 
         // Subscription Management
+        Route::get('/subscriptions/current', [\App\Http\Controllers\Api\V1\SubscriptionController::class, 'current'])->name('subscriptions.current');
         Route::post('/subscriptions/checkout', [\App\Http\Controllers\Api\V1\SubscriptionController::class, 'checkout'])->name('subscriptions.checkout');
         Route::post('/subscriptions/cancel', [\App\Http\Controllers\Api\V1\SubscriptionController::class, 'cancel'])->name('subscriptions.cancel');
         Route::post('/subscriptions/resume', [\App\Http\Controllers\Api\V1\SubscriptionController::class, 'resume'])->name('subscriptions.resume');
@@ -66,7 +67,6 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
 
             // System Settings (Subscription Module)
             Route::post('settings/subscription', [\App\Http\Controllers\Api\V1\Admin\SubscriptionSettingsController::class, 'update'])->name('settings.subscription.update');
-            Route::put('system-settings', [\App\Http\Controllers\Admin\SystemSettingController::class, 'update'])->name('system-settings.update');
             Route::put('system-settings', [\App\Http\Controllers\Admin\SystemSettingController::class, 'update'])->name('system-settings.update');
             Route::get('system-settings/{key}', [\App\Http\Controllers\Admin\SystemSettingController::class, 'show'])->name('system-settings.show');
         });

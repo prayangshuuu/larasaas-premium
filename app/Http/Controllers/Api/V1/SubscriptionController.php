@@ -9,6 +9,36 @@ use Illuminate\Http\Request;
 class SubscriptionController extends Controller
 {
     /**
+     * Return the user's current active subscription details.
+     */
+    public function current(Request $request)
+    {
+        $user = $request->user();
+        $subscription = $user->subscription('default');
+
+        if (! $subscription || ! $subscription->active()) {
+            return response()->json([
+                'subscription' => null,
+                'message'      => 'No active subscription.',
+            ]);
+        }
+
+        // Resolve the plan name from the local plans table (stripe_id match)
+        $plan = Plan::where('stripe_id', $subscription->stripe_price)->first();
+
+        return response()->json([
+            'subscription' => [
+                'id'                 => $subscription->id,
+                'plan'               => $plan?->name ?? $subscription->stripe_price,
+                'status'             => $subscription->stripe_status,
+                'current_period_end' => $subscription->ends_at ?? $subscription->asStripeSubscription()?->current_period_end,
+                'on_grace_period'    => $subscription->onGracePeriod(),
+                'created_at'         => $subscription->created_at,
+            ],
+        ]);
+    }
+
+    /**
      * Initiate a checkout session.
      */
     public function checkout(Request $request)

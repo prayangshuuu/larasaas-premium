@@ -1,0 +1,62 @@
+name: 'Public & Authentication'
+description: |-
+
+  Public endpoints that do not require authentication.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/plans
+    metadata:
+      custom: []
+      groupName: 'Public & Authentication'
+      groupDescription: |-
+
+        Public endpoints that do not require authentication.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List Public Plans'
+      description: |-
+        Retrieve a list of all active subscription plans available for purchase.
+        This endpoint is public and does not require authentication.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "data": [
+              {
+                "id": 1,
+                "name": "Pro Plan",
+                "slug": "pro-plan",
+                "price": "29.00",
+                "currency": "USD",
+                "billing_interval": "month",
+                "features": ["Feature A", "Feature B"],
+                "is_active": true,
+                "created_at": "2026-01-01T00:00:00+00:00",
+                "updated_at": "2026-01-01T00:00:00+00:00"
+              }
+            ]
+          }
+        headers: []
+        description: success
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null

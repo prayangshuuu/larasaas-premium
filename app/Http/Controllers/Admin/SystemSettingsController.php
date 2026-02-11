@@ -150,8 +150,15 @@ class SystemSettingsController extends Controller
     {
         $data = $request->validated();
 
-        // Save name
+        // Save name to DB
         Setting::put('app.name', $data['app_name']);
+
+        // Immediately override runtime config so the redirected page reflects the change
+        config(['app.name' => $data['app_name']]);
+
+        // Clear all Setting caches to ensure fresh reads
+        Setting::forget('app.name');
+        \Illuminate\Support\Facades\Cache::forget('settings.__all');
 
         // Optional inline uploads on the same form
         $logosChanged = $this->handleLogoUploads($request, false);
@@ -203,6 +210,7 @@ class SystemSettingsController extends Controller
     {
         $v = $request->validated();
 
+        // Persist to DB via Setting model
         Setting::put('mail.smtp.host',       $v['host']);
         Setting::put('mail.smtp.port',       $v['port']);
         Setting::put('mail.smtp.username',   $v['username'] ?? null);
@@ -214,6 +222,26 @@ class SystemSettingsController extends Controller
         if (array_key_exists('password', $v) && $v['password'] !== '') {
             Setting::put('mail.smtp.password', $v['password']);
         }
+
+        // Immediately override runtime config so email sent on this request uses new settings
+        config([
+            'mail.default'               => 'smtp',
+            'mail.mailers.smtp.host'     => $v['host'],
+            'mail.mailers.smtp.port'     => (int) $v['port'],
+            'mail.mailers.smtp.username' => $v['username'] ?? null,
+            'mail.mailers.smtp.encryption' => $v['encryption'] ?: null,
+            'mail.from.name'             => $v['from_name'] ?? null,
+            'mail.from.address'          => $v['from_addr'] ?? null,
+        ]);
+        if (array_key_exists('password', $v) && $v['password'] !== '') {
+            config(['mail.mailers.smtp.password' => $v['password']]);
+        }
+
+        // Clear all Setting caches
+        foreach (['mail.smtp.host','mail.smtp.port','mail.smtp.username','mail.smtp.encryption','mail.smtp.password','mail.from.name','mail.from.address'] as $k) {
+            Setting::forget($k);
+        }
+        \Illuminate\Support\Facades\Cache::forget('settings.__all');
 
         $this->logAudit('settings.update', 'Updated SMTP settings', [
             'host' => $v['host'],

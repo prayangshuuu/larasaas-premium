@@ -1,0 +1,129 @@
+name: 'Admin — Impersonation'
+description: |-
+
+  Start/stop impersonating a user for debugging. Requires admin auth and feature flag.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/v1/admin/impersonate/start/{user_id}'
+    metadata:
+      custom: []
+      groupName: 'Admin — Impersonation'
+      groupDescription: |-
+
+        Start/stop impersonating a user for debugging. Requires admin auth and feature flag.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Start impersonating a user.'
+      description: |-
+        Body JSON:
+          { "code": "string", "mode": "readonly"|"full" }
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_BEARER_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      user_id:
+        custom: []
+        name: user_id
+        description: 'The ID of the user.'
+        required: true
+        example: 100001
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      user_id: 100001
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      code:
+        custom: []
+        name: code
+        description: 'Must not be greater than 64 characters.'
+        required: true
+        example: b
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      mode:
+        custom: []
+        name: mode
+        description: ''
+        required: false
+        example: readonly
+        type: string
+        enumValues:
+          - readonly
+          - full
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      code: b
+      mode: readonly
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+      - POST
+    uri: api/v1/admin/impersonate/stop
+    metadata:
+      custom: []
+      groupName: 'Admin — Impersonation'
+      groupDescription: |-
+
+        Start/stop impersonating a user for debugging. Requires admin auth and feature flag.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Stop impersonating and restore the original admin.'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_BEARER_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null

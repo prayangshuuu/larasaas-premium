@@ -1,0 +1,115 @@
+name: 'Admin — Audit Logs'
+description: |-
+
+  View and export the system audit trail. Requires admin authentication.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/admin/audit
+    metadata:
+      custom: []
+      groupName: 'Admin — Audit Logs'
+      groupDescription: |-
+
+        View and export the system audit trail. Requires admin authentication.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'GET /api/v1/admin/audit'
+      description: |-
+        Query params:
+        - page, per_page (1..100)
+        - sort: created_at | -created_at (default -created_at)
+        - actor_id, target_type, target_id, action, ip
+        - from, to (ISO date/time)
+        - q (free text over action, description, metadata, ip, user_agent)
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_BEARER_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/v1/admin/audit/{log}'
+    metadata:
+      custom: []
+      groupName: 'Admin — Audit Logs'
+      groupDescription: |-
+
+        View and export the system audit trail. Requires admin authentication.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'GET /api/v1/admin/audit/{auditLog}'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_BEARER_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      log:
+        custom: []
+        name: log
+        description: ''
+        required: true
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      log: architecto
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
