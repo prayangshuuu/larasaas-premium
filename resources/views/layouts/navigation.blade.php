@@ -17,8 +17,8 @@
                         <div class="p-1.5 rounded-lg border border-transparent group-hover:border-indigo-500/50 transition-colors">
                             <svg class="w-6 h-6 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                         </div>
-                        <span class="text-xl font-bold tracking-tight text-white group-hover:text-indigo-400 transition-colors">
-                            IELTS<span class="font-medium text-zinc-500">BandBooster</span>
+                        <span class="text-xl font-black tracking-tight text-white group-hover:text-indigo-400 transition-colors">
+                            Lara<span class="font-medium text-indigo-500">SaaS</span>
                         </span>
                     </a>
                 </div>

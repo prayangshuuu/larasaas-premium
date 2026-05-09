@@ -1,7 +1,7 @@
 <x-mail::message>
 # Payment Successful
 
-Your payment of **{{ $amount }}** for **IELTS Band Booster** was successful on {{ $date }}.
+Your payment of **{{ $amount }}** for **LaraSaaS Premium** was successful on {{ $date }}.
 
 You can download your invoice for your records below.
 

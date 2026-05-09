@@ -13,7 +13,7 @@ return new class extends Migration {
     {
         Schema::table('settings', function (Blueprint $table) {
             if (! Schema::hasColumn('settings', 'app_name')) {
-                $table->string('app_name')->default('IELTSBandBooster')->after('id');
+                $table->string('app_name')->default('LaraSaaS')->after('id');
             }
             if (! Schema::hasColumn('settings', 'app_logo_path')) {
                 $table->string('app_logo_path')->nullable()->after('app_name');

@@ -29,7 +29,7 @@
                     <h3 class="text-xl font-bold text-white">{{ $plan->name }}</h3>
                     <p class="text-sm text-zinc-400 mt-2 min-h-[40px]">
                         {{-- Description placeholder if plan has one, currently plan model doesn't have description field in migration, so generic text --}}
-                        Unlock premium features to boost your IELTS score.
+                        Unlock premium features to scale your business today.
                     </p>
                 </div>
 

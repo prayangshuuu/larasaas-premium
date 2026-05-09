@@ -29,7 +29,7 @@ class SubscriptionWelcome extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Welcome to IELTS Band Booster!',
+            subject: 'Welcome to LaraSaaS Premium!',
         );
     }
 

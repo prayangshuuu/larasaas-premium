@@ -128,19 +128,16 @@ class User extends Authenticatable
     }
 
     /**
-     * Get the IELTS stats (Reading, Writing, Listening, Speaking).
-     * Currently returns a structured array (DTO-like) to be replaced by a Relationship later.
+     * Get usage count for a specific feature key.
+     * 
+     * @param string $key
+     * @return int
      */
-    protected function ieltsStats(): \Illuminate\Database\Eloquent\Casts\Attribute
+    public function getUsage(string $key): int
     {
-        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
-            get: fn () => [
-                'reading'   => ['score' => 7.5, 'progress' => 75, 'desc' => '12 tests completed'],
-                'writing'   => ['score' => 6.5, 'progress' => 65, 'desc' => '8 essays submitted'],
-                'listening' => ['score' => 8.0, 'progress' => 80, 'desc' => '15 tests completed'],
-                'speaking'  => ['score' => 7.0, 'progress' => 70, 'desc' => '6 mock interviews'],
-            ]
-        );
+        // TODO: Implement actual usage tracking logic (e.g., query a usages table)
+        // For now, return 0 to allow testing without limits blocking immediately.
+        return 0;
     }
 
     /* -----------------------------------------------------------------
@@ -166,9 +163,6 @@ class User extends Authenticatable
         return $query->whereNotNull('banned_at');
     }
 
-    /**
-     * Scope: not banned users.
-     */
     /**
      * Scope: not banned users.
      */
@@ -302,9 +296,6 @@ class User extends Authenticatable
     /**
      * Get the invoices for the user.
      */
-    /**
-     * Get the invoices for the user.
-     */
     public function localInvoices(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Invoice::class);
@@ -317,17 +308,5 @@ class User extends Authenticatable
     {
         return $this->hasMany(Webhook::class);
     }
-
-    /**
-     * Get usage count for a specific feature key.
-     * 
-     * @param string $key
-     * @return int
-     */
-    public function getUsage(string $key): int
-    {
-        // TODO: Implement actual usage tracking logic (e.g., query a usages table)
-        // For now, return 0 to allow testing without limits blocking immediately.
-        return 0;
-    }
 }
+

@@ -17,7 +17,7 @@ return new class extends Migration {
             $table->id();
 
             // App settings
-            $table->string('app_name')->default('IELTSBandBooster');
+            $table->string('app_name')->default('LaraSaaS');
             $table->string('app_logo_path')->nullable();
 
             // SMTP settings

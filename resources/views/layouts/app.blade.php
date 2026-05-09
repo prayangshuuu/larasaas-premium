@@ -4,18 +4,21 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ config('app.name', 'IELTSBandBooster') }}</title>
+    <title>{{ config('app.name', 'LaraSaaS') }}</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap" rel="stylesheet">
 
     <!-- Styles / Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <style>[x-cloak]{display:none!important}</style>
+    <style>
+        [x-cloak]{display:none!important}
+        body { font-family: 'Outfit', sans-serif; }
+    </style>
 </head>
-<body class="font-sans antialiased bg-black text-slate-300 selection:bg-indigo-500/30" style="background-color: #000; color: #cbd5e1;">
+<body class="antialiased bg-[#030303] text-slate-300 selection:bg-indigo-500/30">
     <div class="min-h-screen relative w-full flex flex-col">
         {{-- Navigation can be injected or included here --}}
         @include('layouts.navigation')
