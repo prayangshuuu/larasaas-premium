@@ -1,7 +1,5 @@
 # LaraSaaS Premium — The Ultimate Laravel SaaS Starter Kit
 
-![LaraSaaS Banner](https://images.unsplash.com/photo-1618477247222-acbdb0e159b3?q=80&w=2000&auto=format&fit=crop)
-
 LaraSaaS Premium is a high-performance, feature-rich Laravel starter kit designed to help you launch production-ready SaaS applications in record time. Built with a focus on **Premium Aesthetics**, **Developer Experience**, and **Scalability**.
 
 ## 🚀 Key Features
